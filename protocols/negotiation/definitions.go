@@ -7,6 +7,10 @@ const (
 	Finalized EventType = `FINALIZED`
 )
 
+const (
+	RequestContractEndpoint = `/negotiations/request`
+)
+
 type State string
 
 const (

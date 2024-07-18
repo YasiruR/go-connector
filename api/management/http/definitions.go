@@ -2,5 +2,6 @@ package http
 
 // endpoints
 const (
-	createAssetEndpoint = `/management/assets`
+	createAssetEndpoint         = `/management/assets`
+	initContractRequestEndpoint = `/management/contract-request`
 )

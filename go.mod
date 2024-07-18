@@ -3,6 +3,7 @@ module github.com/YasiruR/connector
 go 1.22.2
 
 require (
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.8.1
 	github.com/tryfix/log v1.2.1
 )

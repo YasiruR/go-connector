@@ -1,24 +1,35 @@
 package http
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/YasiruR/connector/core"
 	"github.com/gorilla/mux"
 	"github.com/tryfix/log"
+	"io"
 	"net/http"
 	"strconv"
 )
 
+// management.http.Server contains the endpoints which will be used by a client to initiate
+// message flows or manage both control and data planes
+
 type Server struct {
-	port   int
-	ownr   core.Owner
-	router *mux.Router
-	log    log.Logger
+	port     int
+	router   *mux.Router
+	consumer core.Consumer
+	log      log.Logger
 }
 
-func NewServer(port int, log log.Logger) *Server {
-	s := Server{port: port, log: log}
+func NewServer(port int, consumer core.Consumer, log log.Logger) *Server {
 	r := mux.NewRouter()
+	s := Server{port: port, router: r, consumer: consumer, log: log}
+
+	// endpoints related to asset
 	r.HandleFunc(createAssetEndpoint, s.handleCreateAsset).Methods(http.MethodPost)
+
+	// endpoints related to negotiation
+	r.HandleFunc(initContractRequestEndpoint, s.handleInitContractRequest).Methods(http.MethodPost)
 
 	return &s
 }
@@ -31,5 +42,32 @@ func (s *Server) Start() {
 
 func (s *Server) handleCreateAsset(w http.ResponseWriter, r *http.Request) {
 	// check if authorized to create an asset
+}
 
+func (s *Server) handleInitContractRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("received init contract request")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.log.Error(fmt.Sprintf("reading request body failed in initializing contract request - %s", err))
+		w.WriteHeader(http.StatusBadRequest)
+		r.Body.Close()
+		return
+	}
+	defer r.Body.Close()
+
+	var req contractRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.log.Error(fmt.Sprintf("unmarshalling failed in initializing contract request - %s", err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget, req.Assigner, req.Action); err != nil {
+		s.log.Error(fmt.Sprintf("consumer failed to send contract request in initializing contract request - %s", err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("sent req contract")
+	w.WriteHeader(http.StatusOK)
 }
