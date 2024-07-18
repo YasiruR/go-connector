@@ -1,11 +1,11 @@
-package dcat
+package models
 
-type Distribution struct {
+type DCATDistribution struct {
 	Id          string
 	EndpointURL string
 }
 
-type Dataset struct {
+type DCATDataset struct {
 	Id          string
 	Title       string
 	Keyword     string

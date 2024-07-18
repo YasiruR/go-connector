@@ -3,7 +3,7 @@ package core
 import "github.com/YasiruR/connector/protocols/negotiation"
 
 type Provider interface {
-	DataOwner
+	Owner
 	negotiation.Provider
 }
 
@@ -11,7 +11,7 @@ type Consumer interface {
 	negotiation.Consumer
 }
 
-type DataOwner interface {
+type Owner interface {
 	CreateAsset()
 	CreatePolicy()
 	CreateContractDef()

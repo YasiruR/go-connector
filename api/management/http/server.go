@@ -10,7 +10,7 @@ import (
 
 type Server struct {
 	port   int
-	ownr   core.DataOwner
+	ownr   core.Owner
 	router *mux.Router
 	log    log.Logger
 }
@@ -25,10 +25,11 @@ func NewServer(port int, log log.Logger) *Server {
 
 func (s *Server) Start() {
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
-		s.log.Fatal(`http server initialization failed - %v`, err)
+		s.log.Fatal(`http server (management API) initialization failed - %v`, err)
 	}
 }
 
 func (s *Server) handleCreateAsset(w http.ResponseWriter, r *http.Request) {
+	// check if authorized to create an asset
 
 }

@@ -2,9 +2,7 @@ package services
 
 type Owner struct{}
 
-func (o *Owner) CreateAsset() {
-
-}
+func (o *Owner) CreateAsset(key string, val any) {}
 
 func (o *Owner) CreatePolicy() {
 
