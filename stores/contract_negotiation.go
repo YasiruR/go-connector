@@ -2,13 +2,13 @@ package stores
 
 import (
 	"fmt"
-	"github.com/YasiruR/connector/core"
+	"github.com/YasiruR/connector/core/dsp/negotiation"
+	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/pkg/store/memory"
-	"github.com/YasiruR/connector/protocols/negotiation"
 )
 
 type ContractNegotiation struct {
-	store core.Store
+	store pkg.Store
 }
 
 func NewContractNegotiationStore() *ContractNegotiation {

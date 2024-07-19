@@ -1,17 +1,17 @@
-package pkg
+package urn
 
 import (
 	"fmt"
 	"github.com/google/uuid"
 )
 
-type URN struct{}
+type Generator struct{}
 
-func NewURN() *URN {
-	return &URN{}
+func NewGenerator() *Generator {
+	return &Generator{}
 }
 
-func (u *URN) New() (string, error) {
+func (g *Generator) New() (string, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return ``, fmt.Errorf("failed to generate UUID - %w", err)
@@ -24,6 +24,6 @@ func (u *URN) New() (string, error) {
 	return `urn:uuid:` + id.String(), nil
 }
 
-func (u *URN) Validate(urn string) bool {
+func (g *Generator) Validate(urn string) bool {
 	return true
 }

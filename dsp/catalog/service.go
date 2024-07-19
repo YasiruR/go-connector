@@ -1,13 +1,13 @@
 package catalog
 
 import (
-	"github.com/YasiruR/connector/core"
+	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/pkg/store/memory"
 )
 
 type Catalog struct {
-	store  core.Store
-	states core.Store
+	store  pkg.Store
+	states pkg.Store
 }
 
 func NewCatalog() *Catalog {

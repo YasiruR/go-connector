@@ -1,6 +1,8 @@
-package core
+package dsp
 
-import "github.com/YasiruR/connector/protocols/negotiation"
+import (
+	"github.com/YasiruR/connector/core/dsp/negotiation"
+)
 
 type Provider interface {
 	Owner

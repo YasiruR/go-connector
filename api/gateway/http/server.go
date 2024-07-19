@@ -3,32 +3,34 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/YasiruR/connector/core"
+	"github.com/YasiruR/connector/core/api/gateway"
+	"github.com/YasiruR/connector/core/dsp"
+	"github.com/YasiruR/connector/core/pkg"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"strconv"
 )
 
-// management.http.Server contains the endpoints which will be used by a client to initiate
+// gateway.http.Server contains the endpoints which will be used by a client to initiate
 // message flows or manage both control and data planes
 
 type Server struct {
 	port     int
 	router   *mux.Router
-	consumer core.Consumer
-	log      core.Log
+	consumer dsp.Consumer
+	log      pkg.Log
 }
 
-func NewServer(port int, consumer core.Consumer, log core.Log) *Server {
+func NewServer(port int, consumer dsp.Consumer, log pkg.Log) *Server {
 	r := mux.NewRouter()
 	s := Server{port: port, router: r, consumer: consumer, log: log}
 
 	// endpoints related to asset
-	r.HandleFunc(createAssetEndpoint, s.handleCreateAsset).Methods(http.MethodPost)
+	r.HandleFunc(gateway.CreateAssetEndpoint, s.CreateAsset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
-	r.HandleFunc(initContractRequestEndpoint, s.handleInitContractRequest).Methods(http.MethodPost)
+	r.HandleFunc(gateway.ContractRequestEndpoint, s.InitContractRequest).Methods(http.MethodPost)
 
 	return &s
 }
@@ -39,11 +41,11 @@ func (s *Server) Start() {
 	}
 }
 
-func (s *Server) handleCreateAsset(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreateAsset(w http.ResponseWriter, r *http.Request) {
 	// check if authorized to create an asset
 }
 
-func (s *Server) handleInitContractRequest(w http.ResponseWriter, r *http.Request) {
+func (s *Server) InitContractRequest(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		s.error(w, fmt.Sprintf("reading request body failed in initializing contract request - %s", err), http.StatusBadRequest)
@@ -52,7 +54,7 @@ func (s *Server) handleInitContractRequest(w http.ResponseWriter, r *http.Reques
 	}
 	defer r.Body.Close()
 
-	var req contractRequest
+	var req gateway.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
 		s.error(w, fmt.Sprintf("unmarshalling failed in initializing contract request - %s", err), http.StatusBadRequest)
 		return
@@ -64,6 +66,16 @@ func (s *Server) handleInitContractRequest(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request) {
+	//body, err := io.ReadAll(r.Body)
+	//if err != nil {
+	//	s.error(w, fmt.Sprintf("reading request body failed in agreeing contract request - %s", err), http.StatusBadRequest)
+	//	r.Body.Close()
+	//	return
+	//}
+	//defer r.Body.Close()
 }
 
 func (s *Server) error(w http.ResponseWriter, message string, code int) {
