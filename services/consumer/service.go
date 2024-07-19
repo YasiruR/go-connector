@@ -6,30 +6,31 @@ import (
 	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/pkg"
 	"github.com/YasiruR/connector/protocols/negotiation"
+	"github.com/YasiruR/connector/stores"
 	"strconv"
 )
 
 type Service struct {
 	callbackAddr string
-	states       *stateStore
-	providers    *providerStore
+	cnStore      *stores.ContractNegotiation
 	urn          core.URN
 	client       core.HTTPClient
+	log          core.Log
 }
 
-func New(port int, client core.HTTPClient) core.Consumer {
+func New(port int, cnStore *stores.ContractNegotiation, hc core.HTTPClient, log core.Log) core.Consumer {
 	return &Service{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
-		states:       newStateStore(),
-		providers:    newProviderStore(),
+		cnStore:      cnStore,
 		urn:          pkg.NewURN(),
-		client:       client,
+		client:       hc,
+		log:          log,
 	}
 }
 
 func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, odrlTarget, assigner, action string) error {
 	// generate consumerPid
-	consId, err := s.urn.New()
+	consPId, err := s.urn.New()
 	if err != nil {
 		return fmt.Errorf("generating URN failed - %w", err)
 	}
@@ -37,7 +38,7 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, odrlTa
 	// construct payload
 	req := negotiation.ContractRequest{
 		ProvPId: providerPid,
-		ConsPId: consId,
+		ConsPId: consPId,
 		Offer: negotiation.Offer{
 			Id:          offerId,
 			Target:      odrlTarget,
@@ -57,16 +58,17 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, odrlTa
 		return fmt.Errorf("posting request failed - %w", err)
 	}
 
+	var ack negotiation.Ack
 	switch statusCode {
 	case 400:
 		// read and output error message
-		s.states.set(consId, negotiation.StateTerminated)
+		return fmt.Errorf("received 400 status code")
 	case 201:
-		var ack negotiation.Ack
 		if err = json.Unmarshal(res, &ack); err != nil {
 			return fmt.Errorf("unmarshalling ack failed - %w", err)
 		}
-		s.states.set(consId, negotiation.StateRequested)
+		s.cnStore.Set(consPId, ack)
+		s.log.Info("received ack for contract request", ack)
 	default:
 		return fmt.Errorf("unexpected status code %d (expected 201 or 400)", statusCode)
 	}

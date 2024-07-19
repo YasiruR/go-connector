@@ -49,7 +49,7 @@ type ContractNegotiation struct {
 
 type ContractTermination struct {
 	Ctx     string   `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
-	Type    string   `json:"@type" default:"dspace:ContractNegotiationEventMessage"`
+	Type    string   `json:"@type" default:"dspace:ContractNegotiationTerminationMessage"`
 	ProvPId string   `json:"dspace:providerPid"`
 	ConsPId string   `json:"dspace:consumerPid"`
 	Code    string   `json:"dspace:code"`
@@ -60,15 +60,22 @@ type ContractTermination struct {
 
 type Ack struct {
 	Ctx     string `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
-	Type    string `json:"@type" default:"dspace:ContractNegotiationEventMessage"`
+	Type    string `json:"@type" default:"dspace:ContractNegotiation"`
 	ProvPId string `json:"dspace:providerPid"`
 	ConsPId string `json:"dspace:consumerPid"`
 	State   State  `json:"dspace:state"`
 }
 
+func NewAck() Ack {
+	return Ack{
+		Ctx:  "https://w3id.org/dspace/2024/1/context.json",
+		Type: "dspace:ContractNegotiationAckMessage",
+	}
+}
+
 type Error struct {
 	Ctx     string        `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
-	Type    string        `json:"@type" default:"dspace:ContractNegotiationEventMessage"`
+	Type    string        `json:"@type" default:"dspace:ContractNegotiationError"`
 	ProvPId string        `json:"dspace:providerPid"`
 	ConsPId string        `json:"dspace:consumerPid"`
 	Code    string        `json:"dspace:code"`

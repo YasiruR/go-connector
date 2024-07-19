@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/YasiruR/connector/core"
 	"github.com/gorilla/mux"
-	"github.com/tryfix/log"
 	"io"
 	"net/http"
 	"strconv"
@@ -18,10 +17,10 @@ type Server struct {
 	port     int
 	router   *mux.Router
 	consumer core.Consumer
-	log      log.Logger
+	log      core.Log
 }
 
-func NewServer(port int, consumer core.Consumer, log log.Logger) *Server {
+func NewServer(port int, consumer core.Consumer, log core.Log) *Server {
 	r := mux.NewRouter()
 	s := Server{port: port, router: r, consumer: consumer, log: log}
 
@@ -45,11 +44,9 @@ func (s *Server) handleCreateAsset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleInitContractRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("received init contract request")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.log.Error(fmt.Sprintf("reading request body failed in initializing contract request - %s", err))
-		w.WriteHeader(http.StatusBadRequest)
+		s.error(w, fmt.Sprintf("reading request body failed in initializing contract request - %s", err), http.StatusBadRequest)
 		r.Body.Close()
 		return
 	}
@@ -57,17 +54,19 @@ func (s *Server) handleInitContractRequest(w http.ResponseWriter, r *http.Reques
 
 	var req contractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.log.Error(fmt.Sprintf("unmarshalling failed in initializing contract request - %s", err))
-		w.WriteHeader(http.StatusBadRequest)
+		s.error(w, fmt.Sprintf("unmarshalling failed in initializing contract request - %s", err), http.StatusBadRequest)
 		return
 	}
 
 	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget, req.Assigner, req.Action); err != nil {
-		s.log.Error(fmt.Sprintf("consumer failed to send contract request in initializing contract request - %s", err))
-		w.WriteHeader(http.StatusBadRequest)
+		s.error(w, fmt.Sprintf("consumer failed to send contract request in initializing contract request - %s", err), http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println("sent req contract")
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) error(w http.ResponseWriter, message string, code int) {
+	w.WriteHeader(code)
+	s.log.Error(message)
 }

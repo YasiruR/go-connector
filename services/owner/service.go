@@ -1,4 +1,4 @@
-package services
+package owner
 
 type Owner struct{}
 

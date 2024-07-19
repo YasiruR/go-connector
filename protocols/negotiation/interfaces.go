@@ -14,7 +14,8 @@ type Provider interface {
 }
 
 type ProviderHandler interface {
-	HandleContractRequest(cr ContractRequest) error
+	HandleNegotiationsRequest(providerPid string) (Ack, error)
+	HandleContractRequest(cr ContractRequest) (Ack, error)
 }
 
 type StateMachine interface {

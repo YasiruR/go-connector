@@ -8,6 +8,7 @@ const (
 )
 
 const (
+	NegotiationsEndpoint    = `/negotiations/{providerPid}`
 	RequestContractEndpoint = `/negotiations/request`
 )
 

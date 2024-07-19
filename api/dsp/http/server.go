@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/protocols/catalog"
 	"github.com/YasiruR/connector/protocols/negotiation"
 	"github.com/gorilla/mux"
-	"github.com/tryfix/log"
 	"io"
 	"net/http"
 	"strconv"
@@ -21,18 +19,15 @@ type Server struct {
 	ownr     core.Owner
 	router   *mux.Router
 	provider core.Provider
-	log      log.Logger // todo interface
+	log      core.Log
 }
 
-func NewServer(port int, provider core.Provider, log log.Logger) *Server {
+func NewServer(port int, provider core.Provider, log core.Log) *Server {
 	r := mux.NewRouter()
 	s := Server{port: port, router: r, provider: provider, log: log}
 
-	// catalog protocol related endpoints
-	r.HandleFunc(catalog.RequestEndpoint, s.handleCatalogRequest).Methods(http.MethodPost)
-	r.HandleFunc(catalog.RequestDatasetEndpoint, s.handleDatasetRequest).Methods(http.MethodGet)
-
 	// negotiation protocol related endpoints
+	r.HandleFunc(negotiation.NegotiationsEndpoint, s.handleNegotiations).Methods(http.MethodGet)
 	r.HandleFunc(negotiation.RequestContractEndpoint, s.handleContractRequest).Methods(http.MethodPost)
 
 	return &s
@@ -44,27 +39,26 @@ func (s *Server) Start() {
 	}
 }
 
-func (s *Server) handleCatalogRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+func (s *Server) handleNegotiations(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	providerPid, ok := params["providerPid"]
+	if !ok {
+		s.sendError(w, "", http.StatusBadRequest)
+		return
+	}
+
+	neg, err := s.provider.HandleNegotiationsRequest(providerPid)
 	if err != nil {
+		s.sendError(w, fmt.Sprintf("handler failed - %s", err), http.StatusBadRequest)
 	}
-	defer r.Body.Close()
 
-	var req catalog.Request
-	if err = json.Unmarshal(body, &req); err != nil {
-	}
-}
-
-func (s *Server) handleDatasetRequest(w http.ResponseWriter, r *http.Request) {
-
+	s.sendAck(w, neg, http.StatusOK)
 }
 
 func (s *Server) handleContractRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("received contract requesttt veeeeee")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.log.Error(fmt.Sprintf("reading request body failed in handling contract request - %s", err))
-		w.WriteHeader(http.StatusBadRequest)
+		s.sendError(w, fmt.Sprintf("reading request body failed in handling contract request - %s", err), http.StatusBadRequest)
 		r.Body.Close()
 		return
 	}
@@ -72,40 +66,33 @@ func (s *Server) handleContractRequest(w http.ResponseWriter, r *http.Request) {
 
 	var req negotiation.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.log.Error(fmt.Sprintf("unmarshalling failed in handling contract request - %s", err))
-		w.WriteHeader(http.StatusBadRequest)
+		s.sendError(w, fmt.Sprintf("unmarshalling failed in handling contract request - %s", err), http.StatusBadRequest)
 		return
 	}
 
-	if err = s.provider.HandleContractRequest(req); err != nil {
-		s.log.Error(fmt.Sprintf("provider failed to handle contract request in handling contract request - %s", err))
-		w.WriteHeader(http.StatusBadRequest)
+	negAck, err := s.provider.HandleContractRequest(req)
+	if err != nil {
+		s.sendError(w, fmt.Sprintf("provider failed to handle contract request in handling contract request - %s", err), http.StatusBadRequest)
 		return
 	}
 
-	s.sendAck(w, negotiation.StateRequested, http.StatusCreated)
+	s.sendAck(w, negAck, http.StatusCreated)
 }
 
-func (s *Server) sendAck(w http.ResponseWriter, st negotiation.State, code int) {
-	res := negotiation.Ack{
-		State: st,
-	}
-
-	body, err := json.Marshal(res)
+func (s *Server) sendAck(w http.ResponseWriter, data any, code int) {
+	body, err := json.Marshal(data)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		s.log.Error(fmt.Errorf("failed to send ack - %w", err))
+		s.sendError(w, fmt.Sprintf("marshalling failed - %s", err), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(code)
 	if _, err = w.Write(body); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		s.log.Error(fmt.Errorf("failed when writing the ack response body - %w", err))
+		s.sendError(w, fmt.Sprintf("writing failed - %s", err), http.StatusInternalServerError)
 	}
-
-	w.WriteHeader(http.StatusCreated)
 }
 
-func (s *Server) sendError() {
-
+func (s *Server) sendError(w http.ResponseWriter, message string, code int) {
+	w.WriteHeader(code)
+	s.log.Error(message)
 }

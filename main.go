@@ -4,25 +4,27 @@ import (
 	dspServer "github.com/YasiruR/connector/api/dsp/http"
 	managementServer "github.com/YasiruR/connector/api/management/http"
 	"github.com/YasiruR/connector/pkg/client/http"
+	"github.com/YasiruR/connector/pkg/log"
 	"github.com/YasiruR/connector/services/consumer"
 	"github.com/YasiruR/connector/services/provider"
-	"github.com/tryfix/log"
+	"github.com/YasiruR/connector/stores"
 )
 
 const (
-	consumerDSPPort        = 8080
-	consumerManagementPort = 8081
+	dspPort        = 8080
+	managementPort = 8081
 )
 
 func main() {
 	hc := http.NewClient()
-	logger := log.Constructor.Log(log.WithColors(true), log.WithLevel("DEBUG"), log.WithFilePath(true))
+	cnStore := stores.NewContractNegotiationStore() // initialize all stores in single execution
+	logger := log.NewLogger()
 
-	cons := consumer.New(consumerDSPPort, hc)
-	prov := provider.New(hc)
+	cons := consumer.New(dspPort, cnStore, hc, logger)
+	prov := provider.New(dspPort, cnStore, hc, logger)
 
-	ds := dspServer.NewServer(consumerDSPPort, prov, logger)
-	ms := managementServer.NewServer(consumerManagementPort, cons, logger)
+	ds := dspServer.NewServer(dspPort, prov, logger)
+	ms := managementServer.NewServer(managementPort, cons, logger)
 
 	go ds.Start()
 	ms.Start()

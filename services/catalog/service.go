@@ -1,4 +1,4 @@
-package services
+package catalog
 
 import (
 	"github.com/YasiruR/connector/core"
