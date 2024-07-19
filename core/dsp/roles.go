@@ -2,10 +2,10 @@ package dsp
 
 import (
 	"github.com/YasiruR/connector/core/dsp/negotiation"
+	"github.com/YasiruR/connector/core/models/odrl"
 )
 
 type Provider interface {
-	Owner
 	negotiation.Provider
 	negotiation.ProviderHandler
 }
@@ -15,7 +15,6 @@ type Consumer interface {
 }
 
 type Owner interface {
-	CreateAsset()
-	CreatePolicy()
-	CreateContractDef()
+	CreatePolicy(t odrl.Target, permissions, prohibitions []odrl.Rule) (policyId string, err error)
+	CreateContractDefinition()
 }

@@ -41,11 +41,11 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid string,
 	req := negotiation.ContractRequest{
 		ProvPId: providerPid,
 		ConsPId: consPId,
-		Offer: negotiation.Offer{
+		Offer: odrl.Offer{
 			Id:          offerId,
 			Target:      ot,
 			Assigner:    a,
-			Permissions: []odrl.Permission{{Action: act}}, // should handle constraints
+			Permissions: []odrl.Rule{{Action: act}}, // should handle constraints
 		},
 		CallbackAddr: s.callbackAddr,
 	}

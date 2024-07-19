@@ -2,6 +2,6 @@ package gateway
 
 // endpoints
 const (
-	CreateAssetEndpoint     = `/gateway/assets`
+	CreatePolicyEndpoint    = `/gateway/policy`
 	ContractRequestEndpoint = `/gateway/contract-request`
 )

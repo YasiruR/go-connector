@@ -7,17 +7,12 @@ import "github.com/YasiruR/connector/core/models/odrl"
 type Keyword string
 
 type Dataset struct {
-	ID             string        `json:"@id"`
-	Type           string        `json:"@type"`
-	DctTitle       string        `json:"dct:title"`
-	DctDescription []Description `json:"dct:description"`
-	DcatKeyword    []Keyword     `json:"dcat:keyword"`
-	OdrlHasPolicy  []struct {
-		ID             string            `json:"@id"`
-		Type           string            `json:"@type"`
-		OdrlAssigner   odrl.Assigner     `json:"odrl:assigner"`
-		OdrlPermission []odrl.Permission `json:"odrl:permission"`
-	} `json:"odrl:hasPolicy"`
+	ID               string         `json:"@id"`
+	Type             string         `json:"@type" default:"dcat:Dataset"`
+	DctTitle         string         `json:"dct:title"`
+	DctDescription   []Description  `json:"dct:description"`
+	DcatKeyword      []Keyword      `json:"dcat:keyword"`
+	OdrlHasPolicy    []odrl.Offer   `json:"odrl:hasPolicy"`
 	DcatDistribution []Distribution `json:"dcat:distribution"`
 }
 

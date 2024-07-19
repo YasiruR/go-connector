@@ -20,15 +20,16 @@ type Server struct {
 	port     int
 	router   *mux.Router
 	consumer dsp.Consumer
+	owner    dsp.Owner
 	log      pkg.Log
 }
 
-func NewServer(port int, consumer dsp.Consumer, log pkg.Log) *Server {
+func NewServer(port int, c dsp.Consumer, o dsp.Owner, log pkg.Log) *Server {
 	r := mux.NewRouter()
-	s := Server{port: port, router: r, consumer: consumer, log: log}
+	s := Server{port: port, router: r, consumer: c, owner: o, log: log}
 
-	// endpoints related to asset
-	r.HandleFunc(gateway.CreateAssetEndpoint, s.CreateAsset).Methods(http.MethodPost)
+	// endpoints related to data assets
+	r.HandleFunc(gateway.CreatePolicyEndpoint, s.CreatePolicy).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
 	r.HandleFunc(gateway.ContractRequestEndpoint, s.RequestContract).Methods(http.MethodPost)
@@ -42,14 +43,52 @@ func (s *Server) Start() {
 	}
 }
 
-func (s *Server) CreateAsset(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.sendError(w, fmt.Sprintf("reading request body failed in creating policy - %s", err), http.StatusBadRequest)
+		r.Body.Close()
+		return
+	}
+	defer r.Body.Close()
+
+	var req gateway.PolicyRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, fmt.Sprintf("unmarshalling failed in creating policy - %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var perms []odrl.Rule // handle other policy types
+	for _, p := range req.Permissions {
+		var cons []odrl.Constraint
+		for _, c := range p.Constraints {
+			cons = append(cons, odrl.Constraint{
+				LeftOperand:  c.LeftOperand,
+				Operator:     c.Operator,
+				RightOperand: c.RightOperand,
+			})
+		}
+		perms = append(perms, odrl.Rule{Action: odrl.Action(p.Action), Constraints: cons})
+	}
+
+	// todo check if target is required here
+	id, err := s.owner.CreatePolicy("test", perms, []odrl.Rule{})
+	if err != nil {
+		s.sendError(w, fmt.Sprintf("creating policy failed in creating policy - %s", err), http.StatusBadRequest)
+		return
+	}
+
+	s.sendAck(w, gateway.PolicyResponse{Id: id}, http.StatusOK)
+}
+
+func (s *Server) CreateDataset(w http.ResponseWriter, r *http.Request) {
 	// check if authorized to create an asset
 }
 
 func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.error(w, fmt.Sprintf("reading request body failed in initializing contract request - %s", err), http.StatusBadRequest)
+		s.sendError(w, fmt.Sprintf("reading request body failed in initializing contract request - %s", err), http.StatusBadRequest)
 		r.Body.Close()
 		return
 	}
@@ -57,7 +96,7 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 
 	var req gateway.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.error(w, fmt.Sprintf("unmarshalling failed in initializing contract request - %s", err), http.StatusBadRequest)
+		s.sendError(w, fmt.Sprintf("unmarshalling failed in initializing contract request - %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -66,7 +105,7 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 	act := odrl.Action(req.Action)
 
 	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, ot, a, act); err != nil {
-		s.error(w, fmt.Sprintf("consumer failed to send contract request in initializing contract request - %s", err), http.StatusBadRequest)
+		s.sendError(w, fmt.Sprintf("consumer failed to send contract request in initializing contract request - %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -76,15 +115,29 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
 	//body, err := io.ReadAll(r.Body)
 	//if err != nil {
-	//	s.error(w, fmt.Sprintf("reading request body failed in agreeing contract request - %s", err), http.StatusBadRequest)
+	//	s.sendError(w, fmt.Sprintf("reading request body failed in agreeing contract request - %s", err), http.StatusBadRequest)
 	//	r.Body.Close()
 	//	return
 	//}
 	//defer r.Body.Close()
-
+	//
+	//var req gateway.ContractRequest
 }
 
-func (s *Server) error(w http.ResponseWriter, message string, code int) {
+func (s *Server) sendAck(w http.ResponseWriter, data any, code int) {
+	body, err := json.Marshal(data)
+	if err != nil {
+		s.sendError(w, fmt.Sprintf("marshalling failed - %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(code)
+	if _, err = w.Write(body); err != nil {
+		s.sendError(w, fmt.Sprintf("writing failed - %s", err), http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) sendError(w http.ResponseWriter, message string, code int) {
 	w.WriteHeader(code)
 	s.log.Error(message)
 }
