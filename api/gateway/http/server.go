@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/YasiruR/connector/core/api/gateway"
 	"github.com/YasiruR/connector/core/dsp"
+	"github.com/YasiruR/connector/core/models/odrl"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/gorilla/mux"
 	"io"
@@ -30,7 +31,7 @@ func NewServer(port int, consumer dsp.Consumer, log pkg.Log) *Server {
 	r.HandleFunc(gateway.CreateAssetEndpoint, s.CreateAsset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
-	r.HandleFunc(gateway.ContractRequestEndpoint, s.InitContractRequest).Methods(http.MethodPost)
+	r.HandleFunc(gateway.ContractRequestEndpoint, s.RequestContract).Methods(http.MethodPost)
 
 	return &s
 }
@@ -45,7 +46,7 @@ func (s *Server) CreateAsset(w http.ResponseWriter, r *http.Request) {
 	// check if authorized to create an asset
 }
 
-func (s *Server) InitContractRequest(w http.ResponseWriter, r *http.Request) {
+func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		s.error(w, fmt.Sprintf("reading request body failed in initializing contract request - %s", err), http.StatusBadRequest)
@@ -60,7 +61,11 @@ func (s *Server) InitContractRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget, req.Assigner, req.Action); err != nil {
+	ot := odrl.Target(req.OdrlTarget)
+	a := odrl.Assigner(req.Assigner)
+	act := odrl.Action(req.Action)
+
+	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, ot, a, act); err != nil {
 		s.error(w, fmt.Sprintf("consumer failed to send contract request in initializing contract request - %s", err), http.StatusBadRequest)
 		return
 	}
@@ -68,7 +73,7 @@ func (s *Server) InitContractRequest(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request) {
+func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
 	//body, err := io.ReadAll(r.Body)
 	//if err != nil {
 	//	s.error(w, fmt.Sprintf("reading request body failed in agreeing contract request - %s", err), http.StatusBadRequest)
@@ -76,6 +81,7 @@ func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request)
 	//	return
 	//}
 	//defer r.Body.Close()
+
 }
 
 func (s *Server) error(w http.ResponseWriter, message string, code int) {

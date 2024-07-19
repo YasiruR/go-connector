@@ -1,7 +1,9 @@
 package negotiation
 
+import "github.com/YasiruR/connector/core/models/odrl"
+
 type Consumer interface {
-	RequestContract(offerId, providerEndpoint, providerPid, odrlTarget, assigner, action string) error
+	RequestContract(offerId, providerEndpoint, providerPid string, ot odrl.Target, a odrl.Assigner, act odrl.Action) error
 	AcceptContract()
 	VerifyAgreement()
 	TerminateContract()

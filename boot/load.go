@@ -1,8 +1,8 @@
 package boot
 
 const (
-	dspPort        = 9080
-	managementPort = 9081
+	dspPort        = 8080
+	managementPort = 8081
 )
 
 // load configurations from file

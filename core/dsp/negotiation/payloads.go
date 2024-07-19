@@ -1,7 +1,12 @@
 package negotiation
 
+import "github.com/YasiruR/connector/core/models/odrl"
+
 // Data models required for the negotiation process as specified by
 // https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/contract-negotiation/contract.negotiation.protocol
+
+type ProviderPid string
+type ConsumerPid string
 
 // request payloads used in Negotiation Protocol
 
@@ -58,20 +63,7 @@ type ContractTermination struct {
 
 // response types used in Negotiation Protocol
 
-type Ack struct {
-	Ctx     string `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
-	Type    string `json:"@type" default:"dspace:ContractNegotiation"`
-	ProvPId string `json:"dspace:providerPid"`
-	ConsPId string `json:"dspace:consumerPid"`
-	State   State  `json:"dspace:state"`
-}
-
-func NewAck() Ack {
-	return Ack{
-		Ctx:  "https://w3id.org/dspace/2024/1/context.json",
-		Type: "dspace:ContractNegotiationAckMessage",
-	}
-}
+type Ack Negotiation
 
 type Error struct {
 	Ctx     string        `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
@@ -88,37 +80,30 @@ type Error struct {
 
 // nested payload structures required by Negotiation Protocol
 
+type Negotiation struct {
+	Ctx     string `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
+	Type    string `json:"@type" default:"dspace:ContractNegotiation"`
+	ProvPId string `json:"dspace:providerPid"`
+	ConsPId string `json:"dspace:consumerPid"`
+	State   State  `json:"dspace:state"`
+}
+
 type Offer struct {
-	Id          string       `json:"@id"`
-	Type        string       `json:"@type" default:"odrl:Offer"`
-	Target      string       `json:"odrl:target"`
-	Assigner    string       `json:"odrl:assigner"`
-	Permissions []Permission `json:"odrl:permission"`
+	Id          string            `json:"@id"`
+	Type        string            `json:"@type" default:"odrl:Offer"`
+	Target      odrl.Target       `json:"odrl:target"`
+	Assigner    odrl.Assigner     `json:"odrl:assigner"`
+	Permissions []odrl.Permission `json:"odrl:permission"`
 }
 
 type Agreement struct {
-	Id        string `json:"@id"`
-	Type      string `json:"@type" default:"odrl:Agreement"`
-	Target    string `json:"odrl:target"`
-	Assigner  string `json:"odrl:assigner"`
-	Assignee  string `json:"odrl:assignee"`
-	Timestamp string `json:"dspace:timestamp"`
+	Id        string        `json:"@id"`
+	Type      string        `json:"@type" default:"odrl:Agreement"`
+	Target    odrl.Target   `json:"odrl:target"`
+	Assigner  odrl.Assigner `json:"odrl:assigner"`
+	Assignee  odrl.Assignee `json:"odrl:assignee"`
+	Timestamp string        `json:"dspace:timestamp"`
 }
-
-type Permission struct {
-	Action      string       `json:"odrl:action"`
-	Constraints []Constraint `json:"odrl:constraint"`
-}
-
-type Constraint struct {
-	LeftOperand  string `json:"odrl:leftOperand"`
-	Operand      string `json:"odrl:operand"`
-	RightOperand struct {
-		Value string `json:"@value"`
-		Type  string `json:"@type"`
-	} `json:"odrl:rightOperand"`
-}
-
 type Reason struct {
 	Value    string `json:"@value"`
 	Language string `json:"@language"`
