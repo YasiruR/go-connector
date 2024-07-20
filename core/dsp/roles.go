@@ -7,6 +7,12 @@ import (
 
 // maybe implement submodules in Provider and Consumer to separate control and data plane
 
+const (
+	RoleProvider = `provider`
+	RoleConsumer = `consumer`
+	RoleOwner    = `owner`
+)
+
 type Provider interface {
 	negotiation.Provider
 	negotiation.ProviderHandler

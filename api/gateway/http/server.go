@@ -2,9 +2,9 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/YasiruR/connector/core/api/gateway"
 	"github.com/YasiruR/connector/core/dsp"
+	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/odrl"
 	"github.com/gorilla/mux"
@@ -40,14 +40,14 @@ func NewServer(port int, c dsp.Consumer, o dsp.Owner, log pkg.Log) *Server {
 
 func (s *Server) Start() {
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
-		s.log.Fatal(`http server (management API) initialization failed - %v`, err)
+		s.log.Fatal(errors.InitFailed(`gateway API`, err))
 	}
 }
 
 func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.sendError(w, fmt.Sprintf("reading request body failed in creating policy - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.InvalidRequestBody(gateway.CreatePolicyEndpoint, err), http.StatusBadRequest)
 		r.Body.Close()
 		return
 	}
@@ -55,7 +55,7 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 
 	var req gateway.PolicyRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, fmt.Sprintf("unmarshalling failed in creating policy - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.UnmarshalError(gateway.CreatePolicyEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -76,17 +76,17 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	// todo check if target is required here
 	id, err := s.owner.CreatePolicy("test", perms, []odrl.Rule{})
 	if err != nil {
-		s.sendError(w, fmt.Sprintf("creating policy failed - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.DSPFailed(dsp.RoleOwner, `CreatePolicy`, err), http.StatusBadRequest)
 		return
 	}
 
-	s.sendAck(w, gateway.PolicyResponse{Id: id}, http.StatusOK)
+	s.sendAck(w, gateway.CreatePolicyEndpoint, gateway.PolicyResponse{Id: id}, http.StatusOK)
 }
 
 func (s *Server) CreateDataset(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.sendError(w, fmt.Sprintf("reading request body failed in creating dataset - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.InvalidRequestBody(gateway.CreateDatasetEndpoint, err), http.StatusBadRequest)
 		r.Body.Close()
 		return
 	}
@@ -94,21 +94,21 @@ func (s *Server) CreateDataset(w http.ResponseWriter, r *http.Request) {
 
 	var req gateway.DatasetRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, fmt.Sprintf("unmarshalling failed in creating dataset - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.UnmarshalError(gateway.CreateDatasetEndpoint, err), http.StatusBadRequest)
 	}
 
 	id, err := s.owner.CreateDataset(req.Title, req.Descriptions, req.Keywords, req.Endpoints, req.PolicyIds)
 	if err != nil {
-		s.sendError(w, fmt.Sprintf("creating dataset failed - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.DSPFailed(dsp.RoleOwner, `CreateDataset`, err), http.StatusBadRequest)
 	}
 
-	s.sendAck(w, gateway.DatasetResponse{Id: id}, http.StatusOK)
+	s.sendAck(w, gateway.CreateDatasetEndpoint, gateway.DatasetResponse{Id: id}, http.StatusOK)
 }
 
 func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		s.sendError(w, fmt.Sprintf("reading request body failed in initializing contract request - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.InvalidRequestBody(gateway.ContractRequestEndpoint, err), http.StatusBadRequest)
 		r.Body.Close()
 		return
 	}
@@ -116,7 +116,7 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 
 	var req gateway.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, fmt.Sprintf("unmarshalling failed in initializing contract request - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.UnmarshalError(gateway.ContractRequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 	act := odrl.Action(req.Action)
 
 	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, ot, a, act); err != nil {
-		s.sendError(w, fmt.Sprintf("consumer failed to send contract request in initializing contract request - %s", err), http.StatusBadRequest)
+		s.sendError(w, errors.DSPFailed(dsp.RoleConsumer, `RequestContract`, err), http.StatusBadRequest)
 		return
 	}
 
@@ -144,20 +144,20 @@ func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
 	//var req gateway.ContractRequest
 }
 
-func (s *Server) sendAck(w http.ResponseWriter, data any, code int) {
+func (s *Server) sendAck(w http.ResponseWriter, endpoint string, data any, code int) {
 	body, err := json.Marshal(data)
 	if err != nil {
-		s.sendError(w, fmt.Sprintf("marshalling failed - %s", err), http.StatusInternalServerError)
+		s.sendError(w, errors.MarshalError(endpoint, err), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(code)
 	if _, err = w.Write(body); err != nil {
-		s.sendError(w, fmt.Sprintf("writing failed - %s", err), http.StatusInternalServerError)
+		s.sendError(w, errors.WriteBodyError(endpoint, err), http.StatusInternalServerError)
 	}
 }
 
-func (s *Server) sendError(w http.ResponseWriter, message string, code int) {
+func (s *Server) sendError(w http.ResponseWriter, err error, code int) {
 	w.WriteHeader(code)
-	s.log.Error(message)
+	s.log.Error(err)
 }

@@ -2,6 +2,10 @@ package negotiation
 
 import "github.com/YasiruR/connector/core/protocols/odrl"
 
+const (
+	TypeProviderHandler = `ProviderHandler`
+)
+
 type Consumer interface {
 	RequestContract(offerId, providerEndpoint, providerPid string, ot odrl.Target, a odrl.Assigner, act odrl.Action) error
 	AcceptContract()
