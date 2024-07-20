@@ -1,5 +1,12 @@
 package negotiation
 
+const (
+	Context            = `https://w3id.org/dspace/2024/1/context.json`
+	TypeNegotiation    = `dspace:ContractNegotiation`
+	TypeOffer          = `dspace:ContractOfferMessage`
+	TypeNegotiationAck = `dspace:ContractNegotiationAckMessage`
+)
+
 type EventType string
 
 const (

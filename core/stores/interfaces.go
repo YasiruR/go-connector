@@ -2,8 +2,8 @@ package stores
 
 import (
 	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/models/dcat"
-	"github.com/YasiruR/connector/core/models/odrl"
+	"github.com/YasiruR/connector/core/protocols/dcat"
+	"github.com/YasiruR/connector/core/protocols/odrl"
 )
 
 type ContractNegotiation interface {

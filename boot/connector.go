@@ -18,4 +18,10 @@ type connector struct {
 	gatewayServer    gateway.HTTPServer
 }
 
+type Stores struct {
+	Policy      stores.Policy
+	Dataset     stores.Dataset
+	Negotiation stores.ContractNegotiation
+}
+
 type plugins struct{}

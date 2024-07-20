@@ -1,8 +1,14 @@
 package dcat
 
-import "github.com/YasiruR/connector/core/models/odrl"
+import "github.com/YasiruR/connector/core/protocols/odrl"
 
 // namespace prefix reference: https://www.w3.org/TR/vocab-dcat-2/#normative-namespaces
+
+const (
+	TypeDataset      = `dcat:Dataset`
+	TypeDistribution = `dcat:Distribution`
+	LanguageEnglish  = `en`
+)
 
 type Keyword string
 

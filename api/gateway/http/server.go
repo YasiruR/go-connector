@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/YasiruR/connector/core/api/gateway"
 	"github.com/YasiruR/connector/core/dsp"
-	"github.com/YasiruR/connector/core/models/odrl"
 	"github.com/YasiruR/connector/core/pkg"
+	"github.com/YasiruR/connector/core/protocols/odrl"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -30,6 +30,7 @@ func NewServer(port int, c dsp.Consumer, o dsp.Owner, log pkg.Log) *Server {
 
 	// endpoints related to data assets
 	r.HandleFunc(gateway.CreatePolicyEndpoint, s.CreatePolicy).Methods(http.MethodPost)
+	r.HandleFunc(gateway.CreateDatasetEndpoint, s.CreateDataset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
 	r.HandleFunc(gateway.ContractRequestEndpoint, s.RequestContract).Methods(http.MethodPost)
@@ -58,6 +59,7 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// todo remove odrl bindings from this func
 	var perms []odrl.Rule // handle other policy types
 	for _, p := range req.Permissions {
 		var cons []odrl.Constraint
@@ -74,7 +76,7 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	// todo check if target is required here
 	id, err := s.owner.CreatePolicy("test", perms, []odrl.Rule{})
 	if err != nil {
-		s.sendError(w, fmt.Sprintf("creating policy failed in creating policy - %s", err), http.StatusBadRequest)
+		s.sendError(w, fmt.Sprintf("creating policy failed - %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -82,7 +84,25 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) CreateDataset(w http.ResponseWriter, r *http.Request) {
-	// check if authorized to create an asset
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.sendError(w, fmt.Sprintf("reading request body failed in creating dataset - %s", err), http.StatusBadRequest)
+		r.Body.Close()
+		return
+	}
+	defer r.Body.Close()
+
+	var req gateway.DatasetRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, fmt.Sprintf("unmarshalling failed in creating dataset - %s", err), http.StatusBadRequest)
+	}
+
+	id, err := s.owner.CreateDataset(req.Title, req.Descriptions, req.Keywords, req.Endpoints, req.PolicyIds)
+	if err != nil {
+		s.sendError(w, fmt.Sprintf("creating dataset failed - %s", err), http.StatusBadRequest)
+	}
+
+	s.sendAck(w, gateway.DatasetResponse{Id: id}, http.StatusOK)
 }
 
 func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {

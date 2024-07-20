@@ -2,16 +2,15 @@ package catalog
 
 import (
 	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/pkg/store/memory"
 )
 
 type Catalog struct {
-	store  pkg.Store
-	states pkg.Store
+	store  pkg.Database
+	states pkg.Database
 }
 
 func NewCatalog() *Catalog {
-	return &Catalog{store: memory.NewStore(), states: memory.NewStore()}
+	return &Catalog{}
 }
 
 func (c *Catalog) GetCatalog(filter any) error {

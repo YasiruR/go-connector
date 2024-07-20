@@ -18,10 +18,11 @@ type Constraint struct {
 }
 
 type DatasetRequest struct {
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Keywords    []string `json:"keywords"`
-	PolicyId    string   `json:"policyId"`
+	Title        string   `json:"title"`
+	Descriptions []string `json:"descriptions"`
+	Endpoints    []string `json:"endpoints"`
+	PolicyIds    []string `json:"policyIds"`
+	Keywords     []string `json:"keywords"`
 }
 
 type ContractRequest struct {

@@ -5,7 +5,6 @@ import (
 	"github.com/YasiruR/connector/core/dsp"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/dsp/util/payloads"
 	"github.com/YasiruR/connector/pkg/urn"
 	"github.com/YasiruR/connector/stores"
 	"strconv"
@@ -83,10 +82,13 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 			return negotiation.Ack{}, fmt.Errorf("generate new URN failed - %w", err)
 		}
 
-		cn = payloads.NewNegotiation()
-		cn.ConsPId = cr.ConsPId
-		cn.ProvPId = provPId
-		cn.State = negotiation.StateRequested
+		cn = negotiation.Negotiation{
+			Ctx:     negotiation.Context,
+			Type:    negotiation.TypeNegotiationAck,
+			ConsPId: cr.ConsPId,
+			ProvPId: provPId,
+			State:   negotiation.StateRequested,
+		}
 		s.log.Info("stored new contract negotiation", cn)
 	}
 

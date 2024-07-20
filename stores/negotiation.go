@@ -4,25 +4,24 @@ import (
 	"fmt"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/pkg/store/memory"
 )
 
 type ContractNegotiation struct {
-	store pkg.Store
+	db pkg.Database
 }
 
-func NewContractNegotiationStore() *ContractNegotiation {
-	return &ContractNegotiation{store: memory.NewStore()}
+func NewContractNegotiationStore(db pkg.Database) *ContractNegotiation {
+	return &ContractNegotiation{db: db}
 }
 
 func (cn *ContractNegotiation) Set(cnId string, val negotiation.Negotiation) {
-	_ = cn.store.Set(cnId, val)
+	_ = cn.db.Set(cnId, val)
 }
 
 func (cn *ContractNegotiation) Get(cnId string) (negotiation.Negotiation, error) {
-	val, err := cn.store.Get(cnId)
+	val, err := cn.db.Get(cnId)
 	if err != nil {
-		return negotiation.Negotiation{}, fmt.Errorf("store failure - %w", err)
+		return negotiation.Negotiation{}, fmt.Errorf("database failure - %w", err)
 	}
 	return val.(negotiation.Negotiation), nil
 }

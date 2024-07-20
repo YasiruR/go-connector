@@ -21,7 +21,7 @@ func (s *Store) Set(key string, value any) error {
 func (s *Store) Get(key string) (any, error) {
 	val, ok := s.data.Load(key)
 	if val == nil || !ok {
-		return nil, fmt.Errorf("key (%s) not found in memory store", key)
+		return nil, fmt.Errorf("key (%s) not found in memory database", key)
 	}
 
 	return val, nil
