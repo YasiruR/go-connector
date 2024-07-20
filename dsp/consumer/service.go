@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/YasiruR/connector/core/dsp"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
+	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/odrl"
-	"github.com/YasiruR/connector/pkg/urn"
 	"github.com/YasiruR/connector/stores"
 	"strconv"
 )
@@ -20,11 +20,11 @@ type Service struct {
 	log          pkg.Log
 }
 
-func New(port int, cnStore *stores.ContractNegotiation, hc pkg.HTTPClient, log pkg.Log) dsp.Consumer {
+func New(port int, cnStore *stores.ContractNegotiation, urn pkg.URN, hc pkg.HTTPClient, log pkg.Log) dsp.Consumer {
 	return &Service{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		cnStore:      cnStore,
-		urn:          urn.NewGenerator(),
+		urn:          urn,
 		client:       hc,
 		log:          log,
 	}
@@ -34,7 +34,7 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid string,
 	// generate consumerPid
 	consPId, err := s.urn.New()
 	if err != nil {
-		return fmt.Errorf("generating URN failed - %w", err)
+		return errors.URNFailed(`consumerPid`, `New`, err)
 	}
 
 	// construct payload
@@ -52,19 +52,19 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid string,
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("marshalling request failed - %w", err)
+		return errors.MarshalError(``, err)
 	}
 
 	statusCode, res, err := s.client.Post(providerEndpoint+negotiation.RequestContractEndpoint, data)
 	if err != nil {
-		return fmt.Errorf("posting request failed - %w", err)
+		return errors.PkgFailed(pkg.TypeHTTPClient, `Post`, err)
 	}
 
 	var ack negotiation.Ack
 	switch statusCode {
 	case 400:
 		// read and output error message
-		return fmt.Errorf("received 400 status code")
+		return errors.InvalidStatusCode(400, 200)
 	case 201:
 		if err = json.Unmarshal(res, &ack); err != nil {
 			return fmt.Errorf("unmarshalling ack failed - %w", err)
@@ -72,7 +72,7 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid string,
 		s.log.Info("received ack for contract request", ack)
 		s.cnStore.Set(consPId, negotiation.Negotiation(ack))
 	default:
-		return fmt.Errorf("unexpected status code %d (expected 201 or 400)", statusCode)
+		return errors.InvalidStatusCode(statusCode, 200)
 	}
 
 	return nil

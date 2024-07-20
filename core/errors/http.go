@@ -9,6 +9,7 @@ const (
 	marshalError       = "marshal error (endpoint: %s) - %s"
 	writeBodyError     = "writing response body failed (endpoint: %s) - %s"
 	handlerFailed      = "handler failed (endpoint: %s, handler: %s) - %s"
+	invalidStatusCode  = "received an invalid status code (received: %d, expected: %d)"
 )
 
 func PathParamNotFound(endpoint, param string) error {
@@ -33,4 +34,8 @@ func WriteBodyError(endpoint string, err error) error {
 
 func HandlerFailed(endpoint, handler string, err error) error {
 	return fmt.Errorf(handlerFailed, endpoint, handler, err)
+}
+
+func InvalidStatusCode(received, expected int) error {
+	return fmt.Errorf(invalidStatusCode, received, expected)
 }

@@ -6,6 +6,12 @@ import (
 	"github.com/YasiruR/connector/core/protocols/odrl"
 )
 
+const (
+	TypeContractNegotiation = `ContractNegotiation`
+	TypePolicy              = `Policy`
+	TypeDataset             = `Dataset`
+)
+
 type ContractNegotiation interface {
 	Set(cnId string, val negotiation.Negotiation)
 	Get(cnId string) (negotiation.Negotiation, error)

@@ -1,12 +1,11 @@
 package owner
 
 import (
-	"fmt"
+	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/dcat"
 	"github.com/YasiruR/connector/core/protocols/odrl"
 	"github.com/YasiruR/connector/core/stores"
-	"github.com/YasiruR/connector/pkg/urn"
 )
 
 type Owner struct {
@@ -17,12 +16,12 @@ type Owner struct {
 	log          pkg.Log
 }
 
-func New(ps stores.Policy, ds stores.Dataset, log pkg.Log) *Owner {
+func New(ps stores.Policy, ds stores.Dataset, urn pkg.URN, log pkg.Log) *Owner {
 	return &Owner{
 		host:         `http://localhost:`,
 		policyStore:  ps,
 		datasetStore: ds,
-		urn:          urn.NewGenerator(), // pass this
+		urn:          urn,
 		log:          log,
 	}
 }
@@ -30,7 +29,7 @@ func New(ps stores.Policy, ds stores.Dataset, log pkg.Log) *Owner {
 func (o *Owner) CreatePolicy(t odrl.Target, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
 	policyId, err = o.urn.New()
 	if err != nil {
-		return ``, fmt.Errorf("generate new URN failed - %w", err)
+		return ``, errors.URNFailed(`policyId`, `New`, err)
 	}
 
 	// handle other policy types
@@ -44,7 +43,7 @@ func (o *Owner) CreatePolicy(t odrl.Target, permissions, prohibitions []odrl.Rul
 	}
 
 	o.policyStore.SetOffer(policyId, ofr)
-	o.log.Info("new policy was created and stored", ofr)
+	o.log.Info("created and stored the new policy", ofr)
 	return policyId, nil
 }
 
@@ -55,7 +54,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	for _, pId := range policyIds {
 		ofr, err := o.policyStore.GetOffer(pId)
 		if err != nil {
-			return ``, fmt.Errorf("get offer failed - %w", err)
+			return ``, errors.StoreFailed(stores.TypePolicy, `GetOffer`, err)
 		}
 
 		policies = append(policies, ofr)
@@ -66,7 +65,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	for _, e := range endpoints {
 		accessServiceId, err := o.urn.New()
 		if err != nil {
-			return ``, fmt.Errorf("generate new URN for access service failed - %w", err)
+			return ``, errors.URNFailed(`accessServiceId`, `New`, err)
 		}
 
 		svcList = append(svcList, dcat.AccessService{
@@ -85,7 +84,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	// construct and store final dataset
 	datasetId, err = o.urn.New()
 	if err != nil {
-		return ``, fmt.Errorf("generate new URN for dataset failed - %w", err)
+		return ``, errors.URNFailed(`datasetId`, `New`, err)
 	}
 
 	var descs []dcat.Description

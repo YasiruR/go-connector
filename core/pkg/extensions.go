@@ -1,5 +1,11 @@
 package pkg
 
+const (
+	TypeDatabase   = `Database`
+	TypeURN        = `URN`
+	TypeHTTPClient = `HTTPClient`
+)
+
 type IAM interface {
 	Register()
 	Verify()

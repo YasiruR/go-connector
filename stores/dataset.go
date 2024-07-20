@@ -1,7 +1,7 @@
 package stores
 
 import (
-	"fmt"
+	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/dcat"
 )
@@ -21,7 +21,7 @@ func (d *Dataset) Set(id string, val dcat.Dataset) {
 func (d *Dataset) Get(id string) (dcat.Dataset, error) {
 	val, err := d.store.Get(id)
 	if err != nil {
-		return dcat.Dataset{}, fmt.Errorf("get from database failed - %w", err)
+		return dcat.Dataset{}, errors.QueryFailed(`get`, err)
 	}
 	return val.(dcat.Dataset), nil
 }

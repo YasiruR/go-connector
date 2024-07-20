@@ -1,11 +1,11 @@
 package provider
 
 import (
-	"fmt"
 	"github.com/YasiruR/connector/core/dsp"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
+	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/pkg/urn"
+	coreStores "github.com/YasiruR/connector/core/stores"
 	"github.com/YasiruR/connector/stores"
 	"strconv"
 )
@@ -18,11 +18,11 @@ type Service struct {
 	log          pkg.Log
 }
 
-func New(port int, cnStore *stores.ContractNegotiation, c pkg.HTTPClient, log pkg.Log) dsp.Provider {
+func New(port int, cnStore *stores.ContractNegotiation, urn pkg.URN, c pkg.HTTPClient, log pkg.Log) dsp.Provider {
 	return &Service{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		cnStore:      cnStore,
-		urn:          urn.NewGenerator(),
+		urn:          urn,
 		client:       c,
 		log:          log,
 	}
@@ -45,7 +45,7 @@ func (s *Service) FinalizeContract() {}
 func (s *Service) HandleNegotiationsRequest(providerPid string) (negotiation.Ack, error) {
 	ack, err := s.cnStore.Get(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, fmt.Errorf("get negotiation failed - %w", err)
+		return negotiation.Ack{}, errors.StoreFailed(coreStores.TypeContractNegotiation, `Get`, err)
 	}
 
 	return negotiation.Ack(ack), nil
@@ -63,15 +63,15 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 	if provPId != `` {
 		cn, err = s.cnStore.Get(provPId)
 		if err != nil {
-			return negotiation.Ack{}, fmt.Errorf("get state failed - %w", err)
+			return negotiation.Ack{}, errors.StoreFailed(coreStores.TypeContractNegotiation, `Get`, err)
 		}
 
 		if cn.State != negotiation.StateOffered {
-			return negotiation.Ack{}, fmt.Errorf("incompatible state '%s' (expected '%s')", cn.State, negotiation.StateOffered)
+			return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
 		}
 
 		if cn.ConsPId != cr.ConsPId {
-			return negotiation.Ack{}, fmt.Errorf("incompatible consumerPid '%s' (expected '%s')", cn.ConsPId, cr.ConsPId)
+			return negotiation.Ack{}, errors.IncompatibleValues(`consumerPid`, cn.ConsPId, cr.ConsPId)
 		}
 
 		cn.State = negotiation.StateRequested
@@ -79,7 +79,7 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 	} else {
 		provPId, err = s.urn.New()
 		if err != nil {
-			return negotiation.Ack{}, fmt.Errorf("generate new URN failed - %w", err)
+			return negotiation.Ack{}, errors.URNFailed(`providerPid`, `New`, err)
 		}
 
 		cn = negotiation.Negotiation{

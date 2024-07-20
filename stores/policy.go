@@ -1,7 +1,7 @@
 package stores
 
 import (
-	"fmt"
+	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/odrl"
 )
@@ -21,7 +21,7 @@ func (p *Policy) SetOffer(id string, val odrl.Offer) {
 func (p *Policy) GetOffer(id string) (odrl.Offer, error) {
 	val, err := p.db.Get(id)
 	if err != nil {
-		return odrl.Offer{}, fmt.Errorf("get from database failed - %w", err)
+		return odrl.Offer{}, errors.QueryFailed(`get`, err)
 	}
 	return val.(odrl.Offer), nil
 }

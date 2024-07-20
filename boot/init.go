@@ -9,21 +9,23 @@ import (
 	"github.com/YasiruR/connector/pkg/client/http"
 	"github.com/YasiruR/connector/pkg/database/memory"
 	"github.com/YasiruR/connector/pkg/log"
+	"github.com/YasiruR/connector/pkg/urn"
 	"github.com/YasiruR/connector/stores"
 )
 
 func Start() {
 	hc := http.NewClient()
 	memDb := memory.NewStore()
+	ur := urn.NewGenerator()
 	logger := log.NewLogger()
 
 	cnStore := stores.NewContractNegotiationStore(memDb)
 	pStore := stores.NewPolicyStore(memDb)
 	dsStore := stores.NewDatasetStore(memDb)
 
-	cons := consumer.New(dspPort, cnStore, hc, logger)
-	prov := provider.New(dspPort, cnStore, hc, logger)
-	ownr := owner.New(pStore, dsStore, logger)
+	cons := consumer.New(dspPort, cnStore, ur, hc, logger)
+	prov := provider.New(dspPort, cnStore, ur, hc, logger)
+	ownr := owner.New(pStore, dsStore, ur, logger)
 
 	ds := dspServer.NewServer(dspPort, prov, logger)
 	ms := managementServer.NewServer(managementPort, cons, ownr, logger)
