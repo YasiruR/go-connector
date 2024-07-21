@@ -36,6 +36,6 @@ type ContractRequest struct {
 }
 
 type ContractAgreementRequest struct {
-	OfferId  string `json:"offerId"`
-	Assigner string `json:"assigner"`
+	OfferId       string `json:"offerId"`
+	NegotiationId string `json:"negotiationId"`
 }

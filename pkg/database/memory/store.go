@@ -7,14 +7,14 @@ import (
 )
 
 type Store struct {
-	maps []pkg.DataStore
+	maps []pkg.Collection
 }
 
 func NewStore() *Store {
-	return &Store{maps: make([]pkg.DataStore, 0)}
+	return &Store{maps: make([]pkg.Collection, 0)}
 }
 
-func (s *Store) NewDataStore() pkg.DataStore {
+func (s *Store) NewDataStore() pkg.Collection {
 	m := &Map{data: new(sync.Map)}
 	s.maps = append(s.maps, m)
 	return m

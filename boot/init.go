@@ -20,15 +20,15 @@ func Start() {
 	logger := log.NewLogger()
 
 	cnStore := stores.NewContractNegotiationStore(memDb)
-	pStore := stores.NewPolicyStore(memDb)
+	polStore := stores.NewPolicyStore(memDb)
 	dsStore := stores.NewDatasetStore(memDb)
 
 	cons := consumer.New(dspPort, cnStore, ur, hc, logger)
-	prov := provider.New(dspPort, cnStore, ur, hc, logger)
-	ownr := owner.New(pStore, dsStore, ur, logger)
+	prov := provider.New(dspPort, cnStore, polStore, ur, hc, logger)
+	ownr := owner.New(polStore, dsStore, ur, logger)
 
-	ds := dspServer.NewServer(dspPort, prov, logger)
-	ms := managementServer.NewServer(managementPort, cons, ownr, logger)
+	ds := dspServer.NewServer(dspPort, prov, cons, logger)
+	ms := managementServer.NewServer(managementPort, prov, cons, ownr, logger)
 
 	go ds.Start()
 	ms.Start()

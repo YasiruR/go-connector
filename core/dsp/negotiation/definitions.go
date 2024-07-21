@@ -1,10 +1,11 @@
 package negotiation
 
 const (
-	Context            = `https://w3id.org/dspace/2024/1/context.json`
-	TypeNegotiation    = `dspace:ContractNegotiation`
-	TypeOffer          = `dspace:ContractOfferMessage`
-	TypeNegotiationAck = `dspace:ContractNegotiationAckMessage`
+	Context               = `https://w3id.org/dspace/2024/1/context.json`
+	TypeNegotiation       = `dspace:ContractNegotiation`
+	TypeOffer             = `dspace:ContractOfferMessage`
+	TypeNegotiationAck    = `dspace:ContractNegotiationAckMessage`
+	TypeContractAgreement = `dspace:ContractAgreementMessage`
 )
 
 type EventType string
@@ -15,8 +16,9 @@ const (
 )
 
 const (
-	NegotiationsEndpoint    = `/negotiations/{providerPid}`
-	RequestContractEndpoint = `/negotiations/request`
+	NegotiationsEndpoint      = `/negotiations/{providerPid}`
+	RequestContractEndpoint   = `/negotiations/request`
+	ContractAgreementEndpoint = `/negotiations/{consumerPid}/agreement`
 )
 
 type State string

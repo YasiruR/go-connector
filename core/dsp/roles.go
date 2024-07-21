@@ -20,9 +20,10 @@ type Provider interface {
 
 type Consumer interface {
 	negotiation.Consumer
+	negotiation.ConsumerHandler
 }
 
 type Owner interface {
-	CreatePolicy(t odrl.Target, permissions, prohibitions []odrl.Rule) (policyId string, err error)
+	CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error)
 	CreateDataset(title string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error)
 }

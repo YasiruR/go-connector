@@ -26,7 +26,7 @@ func New(ps stores.Policy, ds stores.Dataset, urn pkg.URN, log pkg.Log) *Owner {
 	}
 }
 
-func (o *Owner) CreatePolicy(t odrl.Target, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
+func (o *Owner) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
 	policyId, err = o.urn.New()
 	if err != nil {
 		return ``, errors.URNFailed(`policyId`, `New`, err)
@@ -36,7 +36,7 @@ func (o *Owner) CreatePolicy(t odrl.Target, permissions, prohibitions []odrl.Rul
 	ofr := odrl.Offer{
 		Id:           policyId,
 		Type:         odrl.TypeOffer,
-		Target:       t,
+		Target:       odrl.Target(target),
 		Assigner:     odrl.Assigner(o.host),
 		Permissions:  permissions,
 		Prohibitions: prohibitions,

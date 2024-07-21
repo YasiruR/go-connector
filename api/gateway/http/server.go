@@ -19,14 +19,15 @@ import (
 type Server struct {
 	port     int
 	router   *mux.Router
+	provider dsp.Provider
 	consumer dsp.Consumer
 	owner    dsp.Owner
 	log      pkg.Log
 }
 
-func NewServer(port int, c dsp.Consumer, o dsp.Owner, log pkg.Log) *Server {
+func NewServer(port int, p dsp.Provider, c dsp.Consumer, o dsp.Owner, log pkg.Log) *Server {
 	r := mux.NewRouter()
-	s := Server{port: port, router: r, consumer: c, owner: o, log: log}
+	s := Server{port: port, router: r, provider: p, consumer: c, owner: o, log: log}
 
 	// endpoints related to data assets
 	r.HandleFunc(gateway.CreatePolicyEndpoint, s.CreatePolicy).Methods(http.MethodPost)
@@ -34,6 +35,7 @@ func NewServer(port int, c dsp.Consumer, o dsp.Owner, log pkg.Log) *Server {
 
 	// endpoints related to negotiation
 	r.HandleFunc(gateway.ContractRequestEndpoint, s.RequestContract).Methods(http.MethodPost)
+	r.HandleFunc(gateway.ContractAgreementEndpoint, s.AgreeContract).Methods(http.MethodPost)
 
 	return &s
 }
@@ -74,7 +76,7 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// todo check if target is required here
-	id, err := s.owner.CreatePolicy("test", perms, []odrl.Rule{})
+	id, err := s.owner.CreatePolicy(`test`, perms, []odrl.Rule{})
 	if err != nil {
 		s.sendError(w, errors.DSPFailed(dsp.RoleOwner, `CreatePolicy`, err), http.StatusBadRequest)
 		return
@@ -120,25 +122,38 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget,
-		req.Assigner, req.Assignee, req.Action); err != nil {
+	negId, err := s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget,
+		req.Assigner, req.Assignee, req.Action)
+	if err != nil {
 		s.sendError(w, errors.DSPFailed(dsp.RoleConsumer, `RequestContract`, err), http.StatusBadRequest)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	s.sendAck(w, gateway.ContractRequestEndpoint, gateway.ContractRequestResponse{Id: negId}, http.StatusOK)
 }
 
 func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
-	//body, err := io.ReadAll(r.Body)
-	//if err != nil {
-	//	s.sendError(w, fmt.Sprintf("reading request body failed in agreeing contract request - %s", err), http.StatusBadRequest)
-	//	r.Body.Close()
-	//	return
-	//}
-	//defer r.Body.Close()
-	//
-	//var req gateway.ContractRequest
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.sendError(w, errors.InvalidRequestBody(gateway.ContractAgreementEndpoint, err), http.StatusBadRequest)
+		r.Body.Close()
+		return
+	}
+	defer r.Body.Close()
+
+	var req gateway.ContractAgreementRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, errors.UnmarshalError(gateway.ContractAgreementEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	agrId, err := s.provider.AgreeContract(req.OfferId, req.NegotiationId)
+	if err != nil {
+		s.sendError(w, errors.DSPFailed(dsp.RoleProvider, `AgreeContract`, err), http.StatusBadRequest)
+		return
+	}
+
+	s.sendAck(w, gateway.ContractAgreementEndpoint, gateway.ContractAgreementResponse{Id: agrId}, http.StatusOK)
 }
 
 func (s *Server) sendAck(w http.ResponseWriter, endpoint string, data any, code int) {
@@ -154,6 +169,7 @@ func (s *Server) sendAck(w http.ResponseWriter, endpoint string, data any, code 
 	}
 }
 
+// todo remove
 func (s *Server) sendError(w http.ResponseWriter, err error, code int) {
 	w.WriteHeader(code)
 	s.log.Error(err)

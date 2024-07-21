@@ -11,21 +11,21 @@ type IAM interface {
 	Verify()
 }
 
-// Database contains one or more DataStore to support data storage required
+// Database contains one or more Collection to support data storage required
 // by the connector
 type Database interface {
-	NewDataStore() DataStore
+	NewDataStore() Collection
 }
 
-// DataStore provides an isolated storage for a single context. For example,
-// DataStore can be a table, a collection or an in-memory map.
-type DataStore interface {
+// Collection provides an isolated storage for a single context. For example,
+// Collection can be an SQL table, a NoSQL collection or an in-memory map.
+type Collection interface {
 	Set(key string, value interface{}) error
 	Get(key string) (interface{}, error)
 }
 
 type HTTPClient interface {
-	Post(url string, data []byte) (statusCode int, resData []byte, err error)
+	Post(url string, data []byte) (resData []byte, statusCode int, err error)
 }
 
 type URN interface {

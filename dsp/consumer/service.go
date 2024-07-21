@@ -8,19 +8,19 @@ import (
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/odrl"
-	"github.com/YasiruR/connector/stores"
+	"github.com/YasiruR/connector/core/stores"
 	"strconv"
 )
 
 type Service struct {
 	callbackAddr string
-	cnStore      *stores.ContractNegotiation
+	cnStore      stores.ContractNegotiation
 	urn          pkg.URN
 	client       pkg.HTTPClient
 	log          pkg.Log
 }
 
-func New(port int, cnStore *stores.ContractNegotiation, urn pkg.URN, hc pkg.HTTPClient, log pkg.Log) dsp.Consumer {
+func New(port int, cnStore stores.ContractNegotiation, urn pkg.URN, hc pkg.HTTPClient, log pkg.Log) dsp.Consumer {
 	return &Service{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		cnStore:      cnStore,
@@ -30,11 +30,11 @@ func New(port int, cnStore *stores.ContractNegotiation, urn pkg.URN, hc pkg.HTTP
 	}
 }
 
-func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) error {
+func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error) {
 	// generate consumerPid
 	consPId, err := s.urn.New()
 	if err != nil {
-		return errors.URNFailed(`consumerPid`, `New`, err)
+		return ``, errors.URNFailed(`consumerPid`, `New`, err)
 	}
 
 	// construct payload
@@ -53,33 +53,33 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, target
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return errors.MarshalError(``, err)
+		return ``, errors.MarshalError(``, err)
 	}
 
-	statusCode, res, err := s.client.Post(providerEndpoint+negotiation.RequestContractEndpoint, data)
+	res, statusCode, err := s.client.Post(providerEndpoint+negotiation.RequestContractEndpoint, data)
 	if err != nil {
-		return errors.PkgFailed(pkg.TypeHTTPClient, `Post`, err)
+		return ``, errors.PkgFailed(pkg.TypeHTTPClient, `Post`, err)
 	}
 
 	var ack negotiation.Ack
 	switch statusCode {
 	case 400:
 		// read and output error message
-		return errors.InvalidStatusCode(400, 200)
+		return ``, errors.InvalidStatusCode(400, 200)
 	case 201:
 		if err = json.Unmarshal(res, &ack); err != nil {
-			return fmt.Errorf("unmarshalling ack failed - %w", err)
+			return ``, errors.UnmarshalError(``, err)
 		}
+
 		s.log.Trace("received ack for the contract request", ack)
 		s.cnStore.Set(consPId, negotiation.Negotiation(ack))
-		s.cnStore.SetAssigner(consPId, odrl.Assigner(assigner))
 		s.cnStore.SetAssignee(consPId, odrl.Assignee(assignee))
-		s.log.Info(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, assigner, assignee))
 	default:
-		return errors.InvalidStatusCode(statusCode, 200)
+		return ``, errors.InvalidStatusCode(statusCode, 200)
 	}
 
-	return nil
+	s.log.Info(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, assigner, assignee))
+	return consPId, nil
 }
 
 func (s *Service) AcceptContract() {}
@@ -87,3 +87,20 @@ func (s *Service) AcceptContract() {}
 func (s *Service) VerifyAgreement() {}
 
 func (s *Service) TerminateContract() {}
+
+func (s *Service) HandleContractAgreement(consumerPid string, ca negotiation.ContractAgreement) (negotiation.Ack, error) {
+	// validate agreement (e.g. consumerPid, target)
+
+	if err := s.cnStore.UpdateState(ca.ConsPId, negotiation.StateAgreed); err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+	}
+
+	s.cnStore.SetCallbackAddr(ca.ConsPId, s.callbackAddr)
+	neg, err := s.cnStore.Get(ca.ConsPId)
+	if err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Get`, err)
+	}
+
+	s.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
+	return negotiation.Ack(neg), nil
+}

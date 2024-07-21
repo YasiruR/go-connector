@@ -1,7 +1,8 @@
 package odrl
 
 const (
-	TypeOffer = `odrl:Offer`
+	TypeOffer     = `odrl:Offer`
+	TypeAgreement = `odrl:Agreement`
 )
 
 type Action string
@@ -9,7 +10,9 @@ type Assigner string
 type Assignee string
 type Target string
 
-// Offer is a subclass of Policy that supports offerings of Rules from assigner Parties
+// Offer is a subclass of Policy that supports offerings of Rules from assigner Parties. It
+// usually does not contain Assignee but DSP defines Assignee in ContractRequest
+// (see: https://github.com/International-Data-Spaces-Association/ids-specification/blob/main/negotiation/message/example/contract-offer-message.json).
 type Offer struct {
 	Id           string   `json:"@id"`
 	Type         string   `json:"@type" default:"odrl:Offer"`

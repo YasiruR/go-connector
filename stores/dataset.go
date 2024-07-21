@@ -7,7 +7,7 @@ import (
 )
 
 type Dataset struct {
-	store pkg.DataStore
+	store pkg.Collection
 }
 
 func NewDatasetStore(db pkg.Database) *Dataset {
@@ -21,7 +21,7 @@ func (d *Dataset) Set(id string, val dcat.Dataset) {
 func (d *Dataset) Get(id string) (dcat.Dataset, error) {
 	val, err := d.store.Get(id)
 	if err != nil {
-		return dcat.Dataset{}, errors.QueryFailed(`get`, err)
+		return dcat.Dataset{}, errors.QueryFailed(`dataset`, `get`, err)
 	}
 	return val.(dcat.Dataset), nil
 }

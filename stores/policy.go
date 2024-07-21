@@ -7,7 +7,7 @@ import (
 )
 
 type Policy struct {
-	store pkg.DataStore
+	store pkg.Collection
 }
 
 func NewPolicyStore(db pkg.Database) *Policy {
@@ -21,7 +21,7 @@ func (p *Policy) SetOffer(id string, val odrl.Offer) {
 func (p *Policy) Offer(id string) (odrl.Offer, error) {
 	val, err := p.store.Get(id)
 	if err != nil {
-		return odrl.Offer{}, errors.QueryFailed(`get`, err)
+		return odrl.Offer{}, errors.QueryFailed(`policy`, `get`, err)
 	}
 	return val.(odrl.Offer), nil
 }

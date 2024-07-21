@@ -15,23 +15,28 @@ import (
 // dsp.http.Server contains the endpoints defined in data space protocols which will be used
 // for the communication between connectors
 
-const paramProviderPid = `providerPid`
+const (
+	paramProviderPid = `providerPid`
+	paramConsumerPid = `consumerPid`
+)
 
 type Server struct {
 	port     int
 	ownr     dsp.Owner
 	router   *mux.Router
 	provider dsp.Provider
+	consumer dsp.Consumer
 	log      pkg.Log
 }
 
-func NewServer(port int, provider dsp.Provider, log pkg.Log) *Server {
+func NewServer(port int, p dsp.Provider, c dsp.Consumer, log pkg.Log) *Server {
 	r := mux.NewRouter()
-	s := Server{port: port, router: r, provider: provider, log: log}
+	s := Server{port: port, router: r, provider: p, consumer: c, log: log}
 
 	// negotiation protocol related endpoints
 	r.HandleFunc(negotiation.NegotiationsEndpoint, s.GetNegotiation).Methods(http.MethodGet)
 	r.HandleFunc(negotiation.RequestContractEndpoint, s.HandleContractRequest).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.HandleContractAgreement).Methods(http.MethodPost)
 
 	return &s
 }
@@ -73,13 +78,43 @@ func (s *Server) HandleContractRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	negAck, err := s.provider.HandleContractRequest(req)
+	ack, err := s.provider.HandleContractRequest(req)
 	if err != nil {
 		s.sendError(w, errors.HandlerFailed(negotiation.RequestContractEndpoint, negotiation.TypeProviderHandler, err), http.StatusBadRequest)
 		return
 	}
 
-	s.sendAck(w, negotiation.RequestContractEndpoint, negAck, http.StatusCreated)
+	s.sendAck(w, negotiation.RequestContractEndpoint, ack, http.StatusCreated)
+}
+
+func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	consumerPid, ok := params[paramConsumerPid]
+	if !ok {
+		s.sendError(w, errors.PathParamNotFound(negotiation.ContractAgreementEndpoint, paramConsumerPid), http.StatusBadRequest)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.sendError(w, errors.InvalidRequestBody(negotiation.ContractAgreementEndpoint, err), http.StatusBadRequest)
+		r.Body.Close()
+		return
+	}
+	defer r.Body.Close()
+
+	var req negotiation.ContractAgreement
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, errors.UnmarshalError(negotiation.ContractAgreementEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	ack, err := s.consumer.HandleContractAgreement(consumerPid, req)
+	if err != nil {
+		s.sendError(w, errors.HandlerFailed(negotiation.ContractAgreementEndpoint, negotiation.TypeConsumerHandler, err), http.StatusBadRequest)
+	}
+
+	s.sendAck(w, negotiation.ContractAgreementEndpoint, ack, http.StatusOK)
 }
 
 func (s *Server) sendAck(w http.ResponseWriter, endpoint string, data any, code int) {
