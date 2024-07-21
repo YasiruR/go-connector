@@ -8,9 +8,9 @@ import (
 // maybe implement submodules in Provider and Consumer to separate control and data plane
 
 const (
-	RoleProvider = `provider`
-	RoleConsumer = `consumer`
-	RoleOwner    = `owner`
+	RoleProvider = `Provider`
+	RoleConsumer = `Consumer`
+	RoleOwner    = `Owner`
 )
 
 type Provider interface {

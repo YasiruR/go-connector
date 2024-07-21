@@ -52,9 +52,9 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	// construct policies (handle policies than offers later)
 	var policies []odrl.Offer
 	for _, pId := range policyIds {
-		ofr, err := o.policyStore.GetOffer(pId)
+		ofr, err := o.policyStore.Offer(pId)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypePolicy, `GetOffer`, err)
+			return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
 		}
 
 		policies = append(policies, ofr)

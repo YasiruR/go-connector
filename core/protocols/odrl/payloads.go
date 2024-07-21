@@ -15,6 +15,7 @@ type Offer struct {
 	Type         string   `json:"@type" default:"odrl:Offer"`
 	Target       Target   `json:"odrl:target"`
 	Assigner     Assigner `json:"odrl:assigner"`
+	Assignee     Assignee `json:"odrl:assignee"`
 	Permissions  []Rule   `json:"odrl:permission"`
 	Prohibitions []Rule   `json:"odrl:prohibition"`
 	// duties/obligations should be included

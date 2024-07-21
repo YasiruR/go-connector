@@ -7,19 +7,19 @@ import (
 )
 
 type Policy struct {
-	db pkg.Database
+	store pkg.DataStore
 }
 
 func NewPolicyStore(db pkg.Database) *Policy {
-	return &Policy{db: db}
+	return &Policy{store: db.NewDataStore()}
 }
 
 func (p *Policy) SetOffer(id string, val odrl.Offer) {
-	_ = p.db.Set(id, val)
+	_ = p.store.Set(id, val)
 }
 
-func (p *Policy) GetOffer(id string) (odrl.Offer, error) {
-	val, err := p.db.Get(id)
+func (p *Policy) Offer(id string) (odrl.Offer, error) {
+	val, err := p.store.Get(id)
 	if err != nil {
 		return odrl.Offer{}, errors.QueryFailed(`get`, err)
 	}

@@ -120,11 +120,8 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ot := odrl.Target(req.OdrlTarget)
-	a := odrl.Assigner(req.Assigner)
-	act := odrl.Action(req.Action)
-
-	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, ot, a, act); err != nil {
+	if err = s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget,
+		req.Assigner, req.Assignee, req.Action); err != nil {
 		s.sendError(w, errors.DSPFailed(dsp.RoleConsumer, `RequestContract`, err), http.StatusBadRequest)
 		return
 	}

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"github.com/YasiruR/connector/core/dsp"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/errors"
@@ -36,7 +37,7 @@ func (s *Service) CreateContractDef() {}
 
 func (s *Service) OfferContract() {}
 
-func (s *Service) AgreeContract() {
+func (s *Service) AgreeContract(offerId string) {
 
 }
 
@@ -75,7 +76,7 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 		}
 
 		cn.State = negotiation.StateRequested
-		s.log.Info("updated existing contract negotiation", cn)
+		s.log.Trace("a valid contract negotiation already exists", cn)
 	} else {
 		provPId, err = s.urn.New()
 		if err != nil {
@@ -89,9 +90,12 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 			ProvPId: provPId,
 			State:   negotiation.StateRequested,
 		}
-		s.log.Info("stored new contract negotiation", cn)
+		s.log.Trace("a new contract negotiation was created", cn)
 	}
 
 	s.cnStore.Set(provPId, cn)
+	s.cnStore.SetAssigner(provPId, cr.Offer.Assigner)
+	s.cnStore.SetAssignee(provPId, cr.Offer.Assignee)
+	s.log.Info(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", provPId, cr.Offer.Assigner, cr.Offer.Assignee))
 	return negotiation.Ack(cn), nil
 }

@@ -11,7 +11,15 @@ type IAM interface {
 	Verify()
 }
 
+// Database contains one or more DataStore to support data storage required
+// by the connector
 type Database interface {
+	NewDataStore() DataStore
+}
+
+// DataStore provides an isolated storage for a single context. For example,
+// DataStore can be a table, a collection or an in-memory map.
+type DataStore interface {
 	Set(key string, value interface{}) error
 	Get(key string) (interface{}, error)
 }

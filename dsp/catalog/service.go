@@ -5,8 +5,8 @@ import (
 )
 
 type Catalog struct {
-	store  pkg.Database
-	states pkg.Database
+	store  pkg.DataStore
+	states pkg.DataStore
 }
 
 func NewCatalog() *Catalog {

@@ -7,11 +7,11 @@ import (
 )
 
 type Dataset struct {
-	store pkg.Database
+	store pkg.DataStore
 }
 
-func NewDatasetStore(store pkg.Database) *Dataset {
-	return &Dataset{store: store}
+func NewDatasetStore(db pkg.Database) *Dataset {
+	return &Dataset{store: db.NewDataStore()}
 }
 
 func (d *Dataset) Set(id string, val dcat.Dataset) {

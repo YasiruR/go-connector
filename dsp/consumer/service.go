@@ -30,7 +30,7 @@ func New(port int, cnStore *stores.ContractNegotiation, urn pkg.URN, hc pkg.HTTP
 	}
 }
 
-func (s *Service) RequestContract(offerId, providerEndpoint, providerPid string, ot odrl.Target, a odrl.Assigner, act odrl.Action) error {
+func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) error {
 	// generate consumerPid
 	consPId, err := s.urn.New()
 	if err != nil {
@@ -43,9 +43,10 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid string,
 		ConsPId: consPId,
 		Offer: odrl.Offer{
 			Id:          offerId,
-			Target:      ot,
-			Assigner:    a,
-			Permissions: []odrl.Rule{{Action: act}}, // should handle constraints
+			Target:      odrl.Target(target),
+			Assigner:    odrl.Assigner(assigner),
+			Assignee:    odrl.Assignee(assignee),
+			Permissions: []odrl.Rule{{Action: odrl.Action(action)}}, // should handle constraints
 		},
 		CallbackAddr: s.callbackAddr,
 	}
@@ -69,8 +70,11 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid string,
 		if err = json.Unmarshal(res, &ack); err != nil {
 			return fmt.Errorf("unmarshalling ack failed - %w", err)
 		}
-		s.log.Info("received ack for contract request", ack)
+		s.log.Trace("received ack for the contract request", ack)
 		s.cnStore.Set(consPId, negotiation.Negotiation(ack))
+		s.cnStore.SetAssigner(consPId, odrl.Assigner(assigner))
+		s.cnStore.SetAssignee(consPId, odrl.Assignee(assignee))
+		s.log.Info(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, assigner, assignee))
 	default:
 		return errors.InvalidStatusCode(statusCode, 200)
 	}

@@ -31,8 +31,11 @@ type ContractRequest struct {
 	ProviderPId      string `json:"providerPId"`
 	OdrlTarget       string `json:"odrlTarget"`
 	Assigner         string `json:"assigner"`
+	Assignee         string `json:"assignee"`
 	Action           string `json:"action"`
 }
 
 type ContractAgreementRequest struct {
+	OfferId  string `json:"offerId"`
+	Assigner string `json:"assigner"`
 }
