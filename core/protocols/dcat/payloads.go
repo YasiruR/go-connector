@@ -7,6 +7,7 @@ import "github.com/YasiruR/connector/core/protocols/odrl"
 const (
 	TypeDataset      = `dcat:Dataset`
 	TypeDistribution = `dcat:Distribution`
+	TypeDataService  = `dcat:DataService`
 	LanguageEnglish  = `en`
 )
 
@@ -34,7 +35,8 @@ type Distribution struct {
 }
 
 type AccessService struct {
-	ID              string `json:"@id"`
-	Type            string `json:"@type"`
-	DcatEndpointURL string `json:"dcat:endpointURL"`
+	ID                  string `json:"@id"`
+	Type                string `json:"@type"`
+	EndpointURL         string `json:"dcat:endpointURL"`
+	EndpointDescription string `json:"dcat:endpointDescription"`
 }

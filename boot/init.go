@@ -1,8 +1,8 @@
 package boot
 
 import (
-	dspServer "github.com/YasiruR/connector/api/dsp/http"
-	managementServer "github.com/YasiruR/connector/api/gateway/http"
+	dspSHttp "github.com/YasiruR/connector/api/dsp/http"
+	gatewayHttp "github.com/YasiruR/connector/api/gateway/http"
 	"github.com/YasiruR/connector/dsp/consumer"
 	"github.com/YasiruR/connector/dsp/owner"
 	"github.com/YasiruR/connector/dsp/provider"
@@ -14,22 +14,22 @@ import (
 )
 
 func Start() {
-	hc := http.NewClient()
+	client := http.NewClient()
 	memDb := memory.NewStore()
-	ur := urn.NewGenerator()
+	urnGen := urn.NewGenerator()
 	logger := log.NewLogger()
 
 	cnStore := stores.NewContractNegotiationStore(memDb)
 	polStore := stores.NewPolicyStore(memDb)
 	dsStore := stores.NewDatasetStore(memDb)
 
-	cons := consumer.New(dspPort, cnStore, ur, hc, logger)
-	prov := provider.New(dspPort, cnStore, polStore, ur, hc, logger)
-	ownr := owner.New(polStore, dsStore, ur, logger)
+	cons := consumer.New(dspPort, cnStore, urnGen, client, logger)
+	prov := provider.New(dspPort, cnStore, polStore, urnGen, client, logger)
+	ownr := owner.New(polStore, dsStore, urnGen, logger)
 
-	ds := dspServer.NewServer(dspPort, prov, cons, logger)
-	ms := managementServer.NewServer(managementPort, prov, cons, ownr, logger)
+	dspSvr := dspSHttp.NewServer(dspPort, prov, cons, logger)
+	gatewaySvr := gatewayHttp.NewServer(managementPort, prov, cons, ownr, logger)
 
-	go ds.Start()
-	ms.Start()
+	go dspSvr.Start()
+	gatewaySvr.Start()
 }

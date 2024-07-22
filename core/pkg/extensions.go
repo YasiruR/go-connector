@@ -1,9 +1,9 @@
 package pkg
 
 const (
-	TypeDatabase   = `Database`
-	TypeURN        = `URN`
-	TypeHTTPClient = `HTTPClient`
+	TypeDatabase = `Database`
+	TypeURN      = `URNService`
+	TypeClient   = `Client`
 )
 
 type IAM interface {
@@ -24,12 +24,12 @@ type Collection interface {
 	Get(key string) (interface{}, error)
 }
 
-type HTTPClient interface {
-	Post(url string, data []byte) (resData []byte, statusCode int, err error)
+type Client interface {
+	Send(data []byte, destination string) (response []byte, err error)
 }
 
-type URN interface {
-	New() (string, error)
+type URNService interface {
+	NewURN() (string, error)
 	Validate(urn string) bool
 }
 

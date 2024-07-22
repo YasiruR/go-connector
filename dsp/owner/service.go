@@ -12,24 +12,24 @@ type Owner struct {
 	host         string
 	policyStore  stores.Policy
 	datasetStore stores.Dataset
-	urn          pkg.URN
+	us           pkg.URNService
 	log          pkg.Log
 }
 
-func New(ps stores.Policy, ds stores.Dataset, urn pkg.URN, log pkg.Log) *Owner {
+func New(ps stores.Policy, ds stores.Dataset, urn pkg.URNService, log pkg.Log) *Owner {
 	return &Owner{
 		host:         `http://localhost:`,
 		policyStore:  ps,
 		datasetStore: ds,
-		urn:          urn,
+		us:           urn,
 		log:          log,
 	}
 }
 
 func (o *Owner) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
-	policyId, err = o.urn.New()
+	policyId, err = o.us.NewURN()
 	if err != nil {
-		return ``, errors.URNFailed(`policyId`, `New`, err)
+		return ``, errors.URNFailed(`policyId`, `NewURN`, err)
 	}
 
 	// handle other policy types
@@ -63,15 +63,15 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	// construct data distribution
 	var svcList []dcat.AccessService
 	for _, e := range endpoints {
-		accessServiceId, err := o.urn.New()
+		accessServiceId, err := o.us.NewURN()
 		if err != nil {
-			return ``, errors.URNFailed(`accessServiceId`, `New`, err)
+			return ``, errors.URNFailed(`accessServiceId`, `NewURN`, err)
 		}
 
 		svcList = append(svcList, dcat.AccessService{
-			ID:              accessServiceId,
-			Type:            "", // add type
-			DcatEndpointURL: e,
+			ID:          accessServiceId,
+			Type:        dcat.TypeDataService,
+			EndpointURL: e,
 		})
 	}
 
@@ -82,9 +82,9 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	}
 
 	// construct and store final dataset
-	datasetId, err = o.urn.New()
+	datasetId, err = o.us.NewURN()
 	if err != nil {
-		return ``, errors.URNFailed(`datasetId`, `New`, err)
+		return ``, errors.URNFailed(`datasetId`, `NewURN`, err)
 	}
 
 	var descs []dcat.Description

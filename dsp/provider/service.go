@@ -17,12 +17,12 @@ type Service struct {
 	callbackAddr string
 	cnStore      stores.ContractNegotiation
 	polStore     stores.Policy
-	urn          pkg.URN
-	client       pkg.HTTPClient
+	urn          pkg.URNService
+	client       pkg.Client
 	log          pkg.Log
 }
 
-func New(port int, cnStore stores.ContractNegotiation, polStore stores.Policy, urn pkg.URN, c pkg.HTTPClient, log pkg.Log) dsp.Provider {
+func New(port int, cnStore stores.ContractNegotiation, polStore stores.Policy, urn pkg.URNService, c pkg.Client, log pkg.Log) dsp.Provider {
 	return &Service{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		cnStore:      cnStore,
@@ -42,9 +42,9 @@ func (s *Service) CreateContractDef() {}
 func (s *Service) OfferContract() {}
 
 func (s *Service) AgreeContract(offerId, negotiationId string) (agreementId string, err error) {
-	agreementId, err = s.urn.New()
+	agreementId, err = s.urn.NewURN()
 	if err != nil {
-		return ``, errors.URNFailed(`providerPid`, `New`, err)
+		return ``, errors.URNFailed(`providerPid`, `NewURN`, err)
 	}
 
 	offer, err := s.polStore.Offer(offerId)
@@ -88,23 +88,18 @@ func (s *Service) AgreeContract(offerId, negotiationId string) (agreementId stri
 		return ``, errors.MarshalError(``, err)
 	}
 
-	res, statusCode, err := s.client.Post(url+`/negotiations/`+cn.ConsPId+`/agreement`, data)
+	res, err := s.client.Send(data, url+`/negotiations/`+cn.ConsPId+`/agreement`)
 	if err != nil {
-		return ``, errors.PkgFailed(pkg.TypeHTTPClient, `Post`, err)
+		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
 	var ack negotiation.Ack
-	switch statusCode {
-	case 200:
-		if err = json.Unmarshal(res, &ack); err != nil {
-			return ``, errors.UnmarshalError(``, err)
-		}
+	if err = json.Unmarshal(res, &ack); err != nil {
+		return ``, errors.UnmarshalError(``, err)
+	}
 
-		if err = s.cnStore.UpdateState(negotiationId, negotiation.StateAgreed); err != nil {
-			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
-		}
-	default:
-		return ``, errors.InvalidStatusCode(statusCode, 200)
+	if err = s.cnStore.UpdateState(negotiationId, negotiation.StateAgreed); err != nil {
+		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
 	s.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", negotiationId, negotiation.StateAgreed))
@@ -148,9 +143,9 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 		cn.State = negotiation.StateRequested
 		s.log.Trace("a valid contract negotiation already exists", cn)
 	} else {
-		provPId, err = s.urn.New()
+		provPId, err = s.urn.NewURN()
 		if err != nil {
-			return negotiation.Ack{}, errors.URNFailed(`providerPid`, `New`, err)
+			return negotiation.Ack{}, errors.URNFailed(`providerPid`, `NewURN`, err)
 		}
 
 		cn = negotiation.Negotiation{
@@ -166,6 +161,7 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 	s.cnStore.Set(provPId, cn)
 	s.cnStore.SetAssignee(provPId, cr.Offer.Assignee)
 	s.cnStore.SetCallbackAddr(provPId, cr.CallbackAddr)
-	s.log.Info(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", provPId, cr.Offer.Assigner, cr.Offer.Assignee))
+	s.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", provPId, cr.Offer.Assigner, cr.Offer.Assignee))
+	s.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", provPId, negotiation.StateRequested))
 	return negotiation.Ack(cn), nil
 }

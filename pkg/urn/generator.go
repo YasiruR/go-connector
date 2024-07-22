@@ -11,7 +11,7 @@ func NewGenerator() *Generator {
 	return &Generator{}
 }
 
-func (g *Generator) New() (string, error) {
+func (g *Generator) NewURN() (string, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return ``, fmt.Errorf("failed to generate UUID - %w", err)
