@@ -4,6 +4,11 @@ type CatalogRequest struct {
 	ProviderEndpoint string `json:"providerEndpoint"`
 }
 
+type DatasetRequest struct {
+	DatasetId        string `json:"datasetId"`
+	ProviderEndpoint string `json:"providerEndpoint"`
+}
+
 type CreatePolicyRequest struct {
 	Permissions  []Rule `json:"permissions"`
 	Prohibitions []Rule `json:"prohibitions"`

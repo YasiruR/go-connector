@@ -32,6 +32,7 @@ func NewServer(port int, roles core.Roles, log pkg.Log) *Server {
 
 	// catalog protocol related endpoints
 	r.HandleFunc(catalog.RequestEndpoint, s.HandleCatalogRequest).Methods(http.MethodPost)
+	r.HandleFunc(catalog.RequestDatasetEndpoint, s.HandleDatasetRequest).Methods(http.MethodPost)
 
 	// negotiation protocol related endpoints
 	r.HandleFunc(negotiation.RequestEndpoint, s.GetNegotiation).Methods(http.MethodGet)
@@ -67,6 +68,27 @@ func (s *Server) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.sendAck(w, catalog.RequestEndpoint, cat, http.StatusOK)
+}
+
+func (s *Server) HandleDatasetRequest(w http.ResponseWriter, r *http.Request) {
+	body, err := s.readBody(catalog.RequestDatasetEndpoint, w, r)
+	if err != nil {
+		return
+	}
+
+	var req catalog.DatasetRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, errors.UnmarshalError(catalog.TypeDatasetRequest, err), http.StatusBadRequest)
+		return
+	}
+
+	ds, err := s.provider.HandleDatasetRequest(req.DatasetId)
+	if err != nil {
+		s.sendError(w, errors.HandlerFailed(catalog.RequestDatasetEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
+		return
+	}
+
+	s.sendAck(w, catalog.RequestDatasetEndpoint, ds, http.StatusOK)
 }
 
 func (s *Server) GetNegotiation(w http.ResponseWriter, r *http.Request) {

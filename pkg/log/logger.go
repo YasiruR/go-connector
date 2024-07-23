@@ -12,7 +12,7 @@ func NewLogger() *Logger {
 			log.WithColors(true),
 			log.WithLevel("DEBUG"),
 			log.WithFilePath(true),
-			log.WithSkipFrameCount(3),
+			log.WithSkipFrameCount(4),
 		),
 	}
 }

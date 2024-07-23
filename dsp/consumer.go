@@ -58,7 +58,30 @@ func (s *Consumer) RequestCatalog(endpoint string) (catalog.Response, error) {
 	return cat, nil
 }
 
-func (s *Consumer) RequestDataset() {}
+func (s *Consumer) RequestDataset(id, endpoint string) (catalog.DatasetResponse, error) {
+	req := catalog.DatasetRequest{
+		Context:   dsp.Context,
+		Type:      catalog.TypeDatasetRequest,
+		DatasetId: id,
+	}
+
+	data, err := json.Marshal(req)
+	if err != nil {
+		return catalog.DatasetResponse{}, errors.MarshalError(endpoint, err)
+	}
+
+	res, err := s.client.Send(data, endpoint+catalog.RequestDatasetEndpoint)
+	if err != nil {
+		return catalog.DatasetResponse{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
+	}
+
+	var dataset catalog.DatasetResponse
+	if err = json.Unmarshal(res, &dataset); err != nil {
+		return catalog.DatasetResponse{}, errors.UnmarshalError(``, err)
+	}
+
+	return dataset, nil
+}
 
 func (s *Consumer) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error) {
 	// generate consumerPid

@@ -56,7 +56,15 @@ func (s *Provider) HandleCatalogRequest(_ any) (catalog.Response, error) {
 }
 
 func (s *Provider) HandleDatasetRequest(id string) (catalog.DatasetResponse, error) {
-	return catalog.DatasetResponse{}, nil
+	ds, err := s.catalog.Dataset(id)
+	if err != nil {
+		return catalog.DatasetResponse{}, errors.StoreFailed(stores.TypeCatalog, `Dataset`, err)
+	}
+
+	return catalog.DatasetResponse{
+		Context: dsp.Context,
+		Dataset: ds,
+	}, nil
 }
 
 // Negotiation Protocol (reference: https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/contract-negotiation/contract.negotiation.protocol)

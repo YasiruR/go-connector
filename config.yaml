@@ -1,7 +1,7 @@
 servers:
   dsp:
     http:
-      port: 8080
+      port: 9080
   gateway:
     http:
-      port: 8081
+      port: 9081

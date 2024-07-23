@@ -7,5 +7,5 @@ type Provider interface {
 
 type Consumer interface {
 	RequestCatalog(endpoint string) (Response, error) // endpoint should be generic
-	RequestDataset()
+	RequestDataset(id, endpoint string) (DatasetResponse, error)
 }

@@ -22,6 +22,7 @@ func Start() {
 	roles := initRoles(cfg, stors, plugins)
 	servers := initServers(cfg, roles, plugins)
 
+	//stors.Init()
 	go servers.DSP.Start()
 	servers.Gateway.Start()
 }

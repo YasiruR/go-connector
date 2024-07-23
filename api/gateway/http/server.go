@@ -36,6 +36,7 @@ func NewServer(port int, roles core.Roles, log pkg.Log) *Server {
 	r.HandleFunc(gateway.CreatePolicyEndpoint, s.CreatePolicy).Methods(http.MethodPost)
 	r.HandleFunc(gateway.CreateDatasetEndpoint, s.CreateDataset).Methods(http.MethodPost)
 	r.HandleFunc(gateway.RequestCatalogEndpoint, s.RequestCatalog).Methods(http.MethodPost)
+	r.HandleFunc(gateway.RequestDatasetEndpoint, s.RequestDataset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
 	r.HandleFunc(gateway.ContractRequestEndpoint, s.RequestContract).Methods(http.MethodPost)
@@ -123,6 +124,25 @@ func (s *Server) RequestCatalog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.sendAck(w, gateway.RequestCatalogEndpoint, cat, http.StatusOK)
+}
+
+func (s *Server) RequestDataset(w http.ResponseWriter, r *http.Request) {
+	body, err := s.readBody(gateway.RequestDatasetEndpoint, w, r)
+	if err != nil {
+		return
+	}
+
+	var req gateway.DatasetRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, errors.UnmarshalError(gateway.RequestDatasetEndpoint, err), http.StatusBadRequest)
+	}
+
+	ds, err := s.consumer.RequestDataset(req.DatasetId, req.ProviderEndpoint)
+	if err != nil {
+		s.sendError(w, errors.DSPFailed(dsp.RoleConsumer, `RequestDataset`, err), http.StatusBadRequest)
+	}
+
+	s.sendAck(w, gateway.RequestDatasetEndpoint, ds, http.StatusOK)
 }
 
 func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
