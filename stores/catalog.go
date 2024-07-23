@@ -1,0 +1,91 @@
+package stores
+
+import (
+	"github.com/YasiruR/connector/core/errors"
+	"github.com/YasiruR/connector/core/pkg"
+	"github.com/YasiruR/connector/core/protocols/dcat"
+)
+
+type Catalog struct {
+	meta  dcat.CatalogMetadata
+	urn   pkg.URNService
+	store pkg.Collection
+}
+
+func NewCatalog(urn pkg.URNService, db pkg.Database) *Catalog {
+	return &Catalog{
+		urn:   urn,
+		store: db.NewDataStore(),
+	}
+}
+
+func (c *Catalog) Init(title string, keywords, connectorEndpoints, descriptions []string) error {
+	catId, err := c.urn.NewURN()
+	if err != nil {
+		return errors.PkgFailed(pkg.TypeURN, `New`, err)
+	}
+
+	var kws []dcat.Keyword
+	for _, key := range keywords {
+		kws = append(kws, dcat.Keyword(key))
+	}
+
+	var descs []dcat.Description
+	for _, desc := range descriptions {
+		descs = append(descs, dcat.Description{Value: desc, Language: dcat.LanguageEnglish})
+	}
+
+	var svcs []dcat.AccessService
+	for _, e := range connectorEndpoints {
+		svcId, err := c.urn.NewURN()
+		if err != nil {
+			return errors.PkgFailed(pkg.TypeURN, `New`, err)
+		}
+
+		svcs = append(svcs, dcat.AccessService{
+			ID:                  svcId,
+			Type:                dcat.TypeDataService,
+			EndpointURL:         e,
+			EndpointDescription: "", // should be considered in later versions
+		})
+	}
+
+	c.meta = dcat.CatalogMetadata{
+		ID:             catId,
+		Type:           dcat.TypeCatalog,
+		DctTitle:       title,
+		DctDescription: descs,
+		DcatKeyword:    kws,
+		DcatService:    svcs,
+	}
+
+	return nil
+}
+
+func (c *Catalog) Get() (dcat.Catalog, error) {
+	vals, err := c.store.GetAll()
+	if err != nil {
+		return dcat.Catalog{}, errors.QueryFailed(`dataset`, `GetAll`, err)
+	}
+
+	var cat dcat.Catalog
+	cat.CatalogMetadata = c.meta
+
+	for _, val := range vals {
+		cat.DcatDataset = append(cat.DcatDataset, val.(dcat.Dataset))
+	}
+
+	return cat, nil
+}
+
+func (c *Catalog) AddDataset(id string, val dcat.Dataset) {
+	_ = c.store.Set(id, val)
+}
+
+func (c *Catalog) Dataset(id string) (dcat.Dataset, error) {
+	val, err := c.store.Get(id)
+	if err != nil {
+		return dcat.Dataset{}, errors.QueryFailed(`dataset`, `Get`, err)
+	}
+	return val.(dcat.Dataset), nil
+}

@@ -16,6 +16,8 @@ import (
 // gateway.http.Server contains the endpoints which will be used by a client to initiate
 // message flows or manage both control and data planes
 
+// todo check return error codes
+
 type Server struct {
 	port     int
 	router   *mux.Router
@@ -32,6 +34,7 @@ func NewServer(port int, p dsp.Provider, c dsp.Consumer, o dsp.Owner, log pkg.Lo
 	// endpoints related to data assets
 	r.HandleFunc(gateway.CreatePolicyEndpoint, s.CreatePolicy).Methods(http.MethodPost)
 	r.HandleFunc(gateway.CreateDatasetEndpoint, s.CreateDataset).Methods(http.MethodPost)
+	r.HandleFunc(gateway.RequestCatalogEndpoint, s.RequestCatalog).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
 	r.HandleFunc(gateway.ContractRequestEndpoint, s.RequestContract).Methods(http.MethodPost)
@@ -47,15 +50,12 @@ func (s *Server) Start() {
 }
 
 func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	body, err := s.readBody(gateway.CreatePolicyEndpoint, w, r)
 	if err != nil {
-		s.sendError(w, errors.InvalidRequestBody(gateway.CreatePolicyEndpoint, err), http.StatusBadRequest)
-		r.Body.Close()
 		return
 	}
-	defer r.Body.Close()
 
-	var req gateway.PolicyRequest
+	var req gateway.CreatePolicyRequest
 	if err = json.Unmarshal(body, &req); err != nil {
 		s.sendError(w, errors.UnmarshalError(gateway.CreatePolicyEndpoint, err), http.StatusBadRequest)
 		return
@@ -86,20 +86,17 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) CreateDataset(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	body, err := s.readBody(gateway.CreateDatasetEndpoint, w, r)
 	if err != nil {
-		s.sendError(w, errors.InvalidRequestBody(gateway.CreateDatasetEndpoint, err), http.StatusBadRequest)
-		r.Body.Close()
 		return
 	}
-	defer r.Body.Close()
 
-	var req gateway.DatasetRequest
+	var req gateway.CreateDatasetRequest
 	if err = json.Unmarshal(body, &req); err != nil {
 		s.sendError(w, errors.UnmarshalError(gateway.CreateDatasetEndpoint, err), http.StatusBadRequest)
 	}
 
-	id, err := s.owner.CreateDataset(req.Title, req.Descriptions, req.Keywords, req.Endpoints, req.PolicyIds)
+	id, err := s.owner.CreateDataset(req.Title, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
 	if err != nil {
 		s.sendError(w, errors.DSPFailed(dsp.RoleOwner, `CreateDataset`, err), http.StatusBadRequest)
 	}
@@ -107,14 +104,30 @@ func (s *Server) CreateDataset(w http.ResponseWriter, r *http.Request) {
 	s.sendAck(w, gateway.CreateDatasetEndpoint, gateway.DatasetResponse{Id: id}, http.StatusOK)
 }
 
-func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+func (s *Server) RequestCatalog(w http.ResponseWriter, r *http.Request) {
+	body, err := s.readBody(gateway.RequestCatalogEndpoint, w, r)
 	if err != nil {
-		s.sendError(w, errors.InvalidRequestBody(gateway.ContractRequestEndpoint, err), http.StatusBadRequest)
-		r.Body.Close()
 		return
 	}
-	defer r.Body.Close()
+
+	var req gateway.CatalogRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, errors.UnmarshalError(gateway.RequestCatalogEndpoint, err), http.StatusBadRequest)
+	}
+
+	cat, err := s.consumer.RequestCatalog(req.ProviderEndpoint)
+	if err != nil {
+		s.sendError(w, errors.DSPFailed(dsp.RoleConsumer, `RequestCatalog`, err), http.StatusBadRequest)
+	}
+
+	s.sendAck(w, gateway.RequestCatalogEndpoint, cat, http.StatusOK)
+}
+
+func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
+	body, err := s.readBody(gateway.ContractRequestEndpoint, w, r)
+	if err != nil {
+		return
+	}
 
 	var req gateway.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
@@ -133,15 +146,12 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	body, err := s.readBody(gateway.ContractAgreementEndpoint, w, r)
 	if err != nil {
-		s.sendError(w, errors.InvalidRequestBody(gateway.ContractAgreementEndpoint, err), http.StatusBadRequest)
-		r.Body.Close()
 		return
 	}
-	defer r.Body.Close()
 
-	var req gateway.ContractAgreementRequest
+	var req gateway.ContractAgreement
 	if err = json.Unmarshal(body, &req); err != nil {
 		s.sendError(w, errors.UnmarshalError(gateway.ContractAgreementEndpoint, err), http.StatusBadRequest)
 		return
@@ -156,16 +166,30 @@ func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
 	s.sendAck(w, gateway.ContractAgreementEndpoint, gateway.ContractAgreementResponse{Id: agrId}, http.StatusOK)
 }
 
-func (s *Server) sendAck(w http.ResponseWriter, endpoint string, data any, code int) {
+func (s *Server) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		err = errors.InvalidRequestBody(endpoint, err)
+		w.WriteHeader(http.StatusBadRequest)
+		s.log.Error(err)
+		r.Body.Close()
+		return nil, err
+	}
+	defer r.Body.Close()
+
+	return body, nil
+}
+
+func (s *Server) sendAck(w http.ResponseWriter, receivedEndpoint string, data any, code int) {
 	body, err := json.Marshal(data)
 	if err != nil {
-		s.sendError(w, errors.MarshalError(endpoint, err), http.StatusInternalServerError)
+		s.sendError(w, errors.MarshalError(receivedEndpoint, err), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(code)
 	if _, err = w.Write(body); err != nil {
-		s.sendError(w, errors.WriteBodyError(endpoint, err), http.StatusInternalServerError)
+		s.sendError(w, errors.WriteBodyError(receivedEndpoint, err), http.StatusInternalServerError)
 	}
 }
 

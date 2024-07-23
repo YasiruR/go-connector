@@ -1,6 +1,10 @@
 package gateway
 
-type PolicyRequest struct {
+type CatalogRequest struct {
+	ProviderEndpoint string `json:"providerEndpoint"`
+}
+
+type CreatePolicyRequest struct {
 	Permissions  []Rule `json:"permissions"`
 	Prohibitions []Rule `json:"prohibitions"`
 	Obligations  []Rule `json:"obligations"`
@@ -17,11 +21,11 @@ type Constraint struct {
 	RightOperand string `json:"rightOperand"`
 }
 
-type DatasetRequest struct {
+type CreateDatasetRequest struct {
 	Title        string   `json:"title"`
 	Descriptions []string `json:"descriptions"`
 	Endpoints    []string `json:"endpoints"`
-	PolicyIds    []string `json:"policyIds"`
+	OfferIds     []string `json:"offerIds"`
 	Keywords     []string `json:"keywords"`
 }
 
@@ -35,7 +39,7 @@ type ContractRequest struct {
 	Action           string `json:"action"`
 }
 
-type ContractAgreementRequest struct {
+type ContractAgreement struct {
 	OfferId       string `json:"offerId"`
 	NegotiationId string `json:"negotiationId"`
 }

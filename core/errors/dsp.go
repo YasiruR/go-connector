@@ -2,6 +2,8 @@ package errors
 
 import "fmt"
 
+// Errors related to Data Space Protocols are defined here
+
 const (
 	incompatibleValues = "received invalid value for %s (received: %s, expected: %s)"
 )

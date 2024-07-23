@@ -1,11 +1,7 @@
 package negotiation
 
-const (
-	TypeProviderHandler = `ProviderHandler`
-	TypeConsumerHandler = `ConsumerHandler`
-)
-
-type Consumer interface {
+type ConsumerController interface {
+	// change endpoint to generic
 	RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error)
 	AcceptContract()
 	VerifyAgreement()
@@ -16,7 +12,7 @@ type ConsumerHandler interface {
 	HandleContractAgreement(consumerPid string, ca ContractAgreement) (Ack, error)
 }
 
-type Provider interface {
+type ProviderController interface {
 	OfferContract()
 	AgreeContract(offerId, negotiationId string) (agreementId string, err error)
 	FinalizeContract()

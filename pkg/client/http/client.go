@@ -16,14 +16,19 @@ func NewClient() *Client {
 	return &Client{hc: http.DefaultClient}
 }
 
-func (c *Client) Send(data []byte, destination string) (response []byte, err error) {
+func (c *Client) Send(data []byte, destination any) (response []byte, err error) {
+	addr, ok := destination.(string)
+	if !ok {
+		return nil, errors.InvalidURL(destination)
+	}
+
 	if data == nil {
 		return nil, fmt.Errorf("GET method is not implemented yet")
 	}
 
-	response, status, err := c.post(destination, data)
+	response, status, err := c.post(addr, data)
 	if err != nil {
-		return nil, errors.SendFailed(destination, http.MethodPost, err)
+		return nil, errors.SendFailed(addr, http.MethodPost, err)
 	}
 
 	if status != http.StatusOK && status != http.StatusCreated {

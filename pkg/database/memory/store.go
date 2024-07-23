@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"fmt"
+	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"sync"
 )
@@ -32,8 +32,17 @@ func (m *Map) Set(key string, value any) error {
 func (m *Map) Get(key string) (any, error) {
 	val, ok := m.data.Load(key)
 	if val == nil || !ok {
-		return nil, fmt.Errorf("key (%s) not found in memory database", key)
+		return nil, errors.InvalidKey(key)
 	}
 
 	return val, nil
+}
+
+func (m *Map) GetAll() ([]any, error) {
+	data := make([]any, 0)
+	m.data.Range(func(key, val any) bool {
+		data = append(data, val)
+		return true
+	})
+	return data, nil
 }

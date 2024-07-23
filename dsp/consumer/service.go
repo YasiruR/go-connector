@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/core/dsp"
+	"github.com/YasiruR/connector/core/dsp/catalog"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
@@ -15,7 +16,7 @@ import (
 type Service struct {
 	callbackAddr string
 	cnStore      stores.ContractNegotiation
-	urn          pkg.URNService
+	urnSvc       pkg.URNService
 	client       pkg.Client
 	log          pkg.Log
 }
@@ -24,15 +25,42 @@ func New(port int, cnStore stores.ContractNegotiation, urn pkg.URNService, c pkg
 	return &Service{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		cnStore:      cnStore,
-		urn:          urn,
+		urnSvc:       urn,
 		client:       c,
 		log:          log,
 	}
 }
 
+func (s *Service) RequestCatalog(endpoint string) (catalog.Response, error) {
+	req := catalog.Request{
+		Context:      dsp.Context,
+		Type:         catalog.TypeCatalogRequest,
+		DspaceFilter: nil,
+	}
+
+	data, err := json.Marshal(req)
+	if err != nil {
+		return catalog.Response{}, errors.MarshalError(endpoint, err)
+	}
+
+	res, err := s.client.Send(data, endpoint+catalog.RequestEndpoint)
+	if err != nil {
+		return catalog.Response{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
+	}
+
+	var cat catalog.Response
+	if err = json.Unmarshal(res, &cat); err != nil {
+		return catalog.Response{}, errors.UnmarshalError(``, err)
+	}
+
+	return cat, nil
+}
+
+func (s *Service) RequestDataset() {}
+
 func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error) {
 	// generate consumerPid
-	consPId, err := s.urn.NewURN()
+	consPId, err := s.urnSvc.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`consumerPid`, `NewURN`, err)
 	}
@@ -56,7 +84,7 @@ func (s *Service) RequestContract(offerId, providerEndpoint, providerPid, target
 		return ``, errors.MarshalError(``, err)
 	}
 
-	res, err := s.client.Send(data, providerEndpoint+negotiation.RequestContractEndpoint)
+	res, err := s.client.Send(data, providerEndpoint+negotiation.ContractRequestEndpoint)
 	if err != nil {
 		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}

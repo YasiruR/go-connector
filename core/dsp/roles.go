@@ -1,6 +1,7 @@
 package dsp
 
 import (
+	"github.com/YasiruR/connector/core/dsp/catalog"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/protocols/odrl"
 )
@@ -8,18 +9,21 @@ import (
 // maybe implement submodules in Provider and Consumer to separate control and data plane
 
 const (
+	Context      = `https://w3id.org/dspace/2024/1/context.json`
 	RoleProvider = `Provider`
 	RoleConsumer = `Consumer`
 	RoleOwner    = `Owner`
 )
 
 type Provider interface {
-	negotiation.Provider
+	catalog.Provider
+	negotiation.ProviderController
 	negotiation.ProviderHandler
 }
 
 type Consumer interface {
-	negotiation.Consumer
+	catalog.Consumer
+	negotiation.ConsumerController
 	negotiation.ConsumerHandler
 }
 

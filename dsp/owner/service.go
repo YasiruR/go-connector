@@ -9,20 +9,20 @@ import (
 )
 
 type Owner struct {
-	host         string
-	policyStore  stores.Policy
-	datasetStore stores.Dataset
-	us           pkg.URNService
-	log          pkg.Log
+	host        string
+	policyStore stores.Policy
+	catalog     stores.Catalog
+	us          pkg.URNService
+	log         pkg.Log
 }
 
-func New(ps stores.Policy, ds stores.Dataset, urn pkg.URNService, log pkg.Log) *Owner {
+func New(ps stores.Policy, c stores.Catalog, urn pkg.URNService, log pkg.Log) *Owner {
 	return &Owner{
-		host:         `http://localhost:`,
-		policyStore:  ps,
-		datasetStore: ds,
-		us:           urn,
-		log:          log,
+		host:        `http://localhost:`,
+		policyStore: ps,
+		catalog:     c,
+		us:          urn,
+		log:         log,
 	}
 }
 
@@ -110,7 +110,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 		DcatDistribution: []dcat.Distribution{dist}, // support more distributions
 	}
 
-	o.datasetStore.Set(datasetId, ds)
+	o.catalog.AddDataset(datasetId, ds)
 	o.log.Info("new dataset was created and stored", ds)
 	return datasetId, nil
 }

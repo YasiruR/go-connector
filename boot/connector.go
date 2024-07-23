@@ -12,7 +12,7 @@ type connector struct {
 	provider         dsp.Provider
 	consumer         dsp.Consumer
 	owner            dsp.Owner
-	catalog          catalog.Service
+	catalog          catalog.Provider
 	negotiationStore stores.ContractNegotiation
 	dspServer        coreApi.HTTPServer
 	gatewayServer    gateway.HTTPServer
@@ -20,7 +20,7 @@ type connector struct {
 
 type Stores struct {
 	Policy      stores.Policy
-	Dataset     stores.Dataset
+	Dataset     stores.Catalog
 	Negotiation stores.ContractNegotiation
 }
 

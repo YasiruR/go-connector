@@ -21,11 +21,11 @@ func Start() {
 
 	cnStore := stores.NewContractNegotiationStore(memDb)
 	polStore := stores.NewPolicyStore(memDb)
-	dsStore := stores.NewDatasetStore(memDb)
+	catalog := stores.NewCatalog(urnGen, memDb)
 
 	cons := consumer.New(dspPort, cnStore, urnGen, client, logger)
-	prov := provider.New(dspPort, cnStore, polStore, urnGen, client, logger)
-	ownr := owner.New(polStore, dsStore, urnGen, logger)
+	prov := provider.New(dspPort, cnStore, polStore, catalog, urnGen, client, logger)
+	ownr := owner.New(polStore, catalog, urnGen, logger)
 
 	dspSvr := dspSHttp.NewServer(dspPort, prov, cons, logger)
 	gatewaySvr := gatewayHttp.NewServer(managementPort, prov, cons, ownr, logger)

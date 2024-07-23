@@ -2,20 +2,14 @@ package errors
 
 import "fmt"
 
+// Errors related to parsers
+
 const (
-	pathParamNotFound  = "path parameter not found in request (endpoint: %s, param: %s)"
 	invalidRequestBody = "invalid request body (endpoint: %s) - %s"
 	unmarshalError     = "unmarshal error (endpoint: %s) - %s"
 	marshalError       = "marshal error (endpoint: %s) - %s"
 	writeBodyError     = "writing response body failed (endpoint: %s) - %s"
-	handlerFailed      = "handler failed (endpoint: %s, handler: %s) - %s"
-	invalidStatusCode  = "received an invalid status code (received: %d)"
-	sendError          = "sending message failed (endpoint: %s, method: %s) - %s"
 )
-
-func PathParamNotFound(endpoint, param string) error {
-	return fmt.Errorf(pathParamNotFound, param, endpoint)
-}
 
 func InvalidRequestBody(endpoint string, err error) error {
 	return fmt.Errorf(invalidRequestBody, endpoint, err)
@@ -33,8 +27,17 @@ func WriteBodyError(endpoint string, err error) error {
 	return fmt.Errorf(writeBodyError, endpoint, err)
 }
 
-func HandlerFailed(endpoint, handler string, err error) error {
-	return fmt.Errorf(handlerFailed, endpoint, handler, err)
+// Errors related to HTTP transport
+
+const (
+	pathParamNotFound = "path parameter not found in request (endpoint: %s, param: %s)"
+	invalidStatusCode = "received an invalid status code (received: %d)"
+	sendError         = "sending message failed (endpoint: %s, method: %s) - %s"
+	invalidUrl        = "invalid url (received: %v, requires a string)"
+)
+
+func PathParamNotFound(endpoint, param string) error {
+	return fmt.Errorf(pathParamNotFound, param, endpoint)
 }
 
 func InvalidStatusCode(received int) error {
@@ -43,4 +46,8 @@ func InvalidStatusCode(received int) error {
 
 func SendFailed(endpoint, method string, err error) error {
 	return fmt.Errorf(sendError, endpoint, method, err)
+}
+
+func InvalidURL(received any) error {
+	return fmt.Errorf(invalidUrl, received)
 }

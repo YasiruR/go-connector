@@ -1,7 +1,11 @@
 package negotiation
 
 const (
-	Context               = `https://w3id.org/dspace/2024/1/context.json`
+	ParamProviderId  = `providerPid`
+	ParamConsumerPid = `consumerPid`
+)
+
+const (
 	TypeNegotiation       = `dspace:ContractNegotiation`
 	TypeOffer             = `dspace:ContractOfferMessage`
 	TypeNegotiationAck    = `dspace:ContractNegotiationAckMessage`
@@ -16,9 +20,9 @@ const (
 )
 
 const (
-	NegotiationsEndpoint      = `/negotiations/{providerPid}`
-	RequestContractEndpoint   = `/negotiations/request`
-	ContractAgreementEndpoint = `/negotiations/{consumerPid}/agreement`
+	RequestEndpoint           = `/negotiations/{` + ParamProviderId + `}`
+	ContractRequestEndpoint   = `/negotiations/request`
+	ContractAgreementEndpoint = `/negotiations/{` + ParamConsumerPid + `}/agreement`
 )
 
 type State string

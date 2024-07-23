@@ -20,12 +20,13 @@ type Database interface {
 // Collection provides an isolated storage for a single context. For example,
 // Collection can be an SQL table, a NoSQL collection or an in-memory map.
 type Collection interface {
-	Set(key string, value interface{}) error
 	Get(key string) (interface{}, error)
+	GetAll() ([]any, error)
+	Set(key string, value interface{}) error
 }
 
 type Client interface {
-	Send(data []byte, destination string) (response []byte, err error)
+	Send(data []byte, destination any) (response []byte, err error)
 }
 
 type URNService interface {

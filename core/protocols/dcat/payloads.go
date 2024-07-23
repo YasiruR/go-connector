@@ -5,6 +5,7 @@ import "github.com/YasiruR/connector/core/protocols/odrl"
 // namespace prefix reference: https://www.w3.org/TR/vocab-dcat-2/#normative-namespaces
 
 const (
+	TypeCatalog      = `dcat:Catalog`
 	TypeDataset      = `dcat:Dataset`
 	TypeDistribution = `dcat:Distribution`
 	TypeDataService  = `dcat:DataService`
@@ -12,6 +13,20 @@ const (
 )
 
 type Keyword string
+
+type Catalog struct {
+	CatalogMetadata
+	DcatDataset []Dataset `json:"dcat:dataset"`
+}
+
+type CatalogMetadata struct {
+	ID             string          `json:"@id"`
+	Type           string          `json:"@type" default:"dcat:Catalog"`
+	DctTitle       string          `json:"dct:title"`
+	DctDescription []Description   `json:"dct:description"`
+	DcatKeyword    []Keyword       `json:"dcat:keyword"`
+	DcatService    []AccessService `json:"dcat:service"`
+}
 
 type Dataset struct {
 	ID               string         `json:"@id"`

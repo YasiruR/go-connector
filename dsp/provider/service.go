@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/core/dsp"
+	"github.com/YasiruR/connector/core/dsp/catalog"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
@@ -14,30 +15,49 @@ import (
 )
 
 type Service struct {
-	callbackAddr string
-	cnStore      stores.ContractNegotiation
-	polStore     stores.Policy
-	urn          pkg.URNService
-	client       pkg.Client
-	log          pkg.Log
+	participantId string // data space specific identifier for Provider
+	callbackAddr  string
+	cnStore       stores.ContractNegotiation
+	polStore      stores.Policy
+	catalog       stores.Catalog
+	urn           pkg.URNService
+	client        pkg.Client
+	log           pkg.Log
 }
 
-func New(port int, cnStore stores.ContractNegotiation, polStore stores.Policy, urn pkg.URNService, c pkg.Client, log pkg.Log) dsp.Provider {
+func New(port int, cnStore stores.ContractNegotiation, polStore stores.Policy, catalog stores.Catalog, urn pkg.URNService, c pkg.Client, log pkg.Log) dsp.Provider {
 	return &Service{
-		callbackAddr: `http://localhost:` + strconv.Itoa(port),
-		cnStore:      cnStore,
-		polStore:     polStore,
-		urn:          urn,
-		client:       c,
-		log:          log,
+		participantId: `participant-id-provider`,
+		callbackAddr:  `http://localhost:` + strconv.Itoa(port),
+		cnStore:       cnStore,
+		polStore:      polStore,
+		catalog:       catalog,
+		urn:           urn,
+		client:        c,
+		log:           log,
 	}
 }
 
-func (s *Service) CreateAsset() {}
+// Catalog Protocol (reference: https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/catalog/catalog.protocol)
 
-func (s *Service) CreatePolicy() {}
+func (s *Service) HandleCatalogRequest(_ any) (catalog.Response, error) {
+	cat, err := s.catalog.Get()
+	if err != nil {
+		return catalog.Response{}, errors.StoreFailed(stores.TypeCatalog, `Get`, err)
+	}
 
-func (s *Service) CreateContractDef() {}
+	return catalog.Response{
+		Context:             dsp.Context,
+		DspaceParticipantID: s.participantId,
+		Catalog:             cat,
+	}, nil
+}
+
+func (s *Service) HandleDatasetRequest(id string) (catalog.DatasetResponse, error) {
+	return catalog.DatasetResponse{}, nil
+}
+
+// Negotiation Protocol (reference: https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/contract-negotiation/contract.negotiation.protocol)
 
 func (s *Service) OfferContract() {}
 
@@ -63,7 +83,7 @@ func (s *Service) AgreeContract(offerId, negotiationId string) (agreementId stri
 	}
 
 	ca := negotiation.ContractAgreement{
-		Ctx:     negotiation.Context,
+		Ctx:     dsp.Context,
 		Type:    negotiation.TypeContractAgreement,
 		ProvPId: cn.ProvPId,
 		ConsPId: cn.ConsPId,
@@ -149,7 +169,7 @@ func (s *Service) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 		}
 
 		cn = negotiation.Negotiation{
-			Ctx:     negotiation.Context,
+			Ctx:     dsp.Context,
 			Type:    negotiation.TypeNegotiationAck,
 			ConsPId: cr.ConsPId,
 			ProvPId: provPId,

@@ -5,10 +5,11 @@ import "github.com/YasiruR/connector/core/protocols/odrl"
 // Data models required for the negotiation process as specified by
 // https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/contract-negotiation/contract.negotiation.protocol
 
+// Payloads defined here are the message types that trigger or notify events involved in
+// the Negotiation Protocol
+
 type ProviderPid string
 type ConsumerPid string
-
-// request payloads used in Negotiation Protocol
 
 type ContractOffer struct {
 	Ctx          string     `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
@@ -59,31 +60,6 @@ type ContractTermination struct {
 	ConsPId string   `json:"dspace:consumerPid"`
 	Code    string   `json:"dspace:code"`
 	Reason  []Reason `json:"dspace:reason"`
-}
-
-// response types used in Negotiation Protocol
-
-type Ack Negotiation
-
-type Error struct {
-	Ctx     string        `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
-	Type    string        `json:"@type" default:"dspace:ContractNegotiationError"`
-	ProvPId string        `json:"dspace:providerPid"`
-	ConsPId string        `json:"dspace:consumerPid"`
-	Code    string        `json:"dspace:code"`
-	Reason  []interface{} `json:"dspace:reason"` // minItems: 1
-	Desc    []struct {
-		Lang string `json:"@language"`
-		Val  string `json:"@value"`
-	} `json:"dct:description"`
-}
-
-type Negotiation struct {
-	Ctx     string `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
-	Type    string `json:"@type" default:"dspace:ContractNegotiation"`
-	ProvPId string `json:"dspace:providerPid"`
-	ConsPId string `json:"dspace:consumerPid"`
-	State   State  `json:"dspace:state"`
 }
 
 type Reason struct {

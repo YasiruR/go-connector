@@ -2,9 +2,12 @@ package errors
 
 import "fmt"
 
+// High-level errors related to modules are defined here
+
 const (
 	initFailedMsg = "initializing failed (module: %s) - %s"
 	dspFailed     = "data space protocol failed (module: %s, function: %s) - %s"
+	handlerFailed = "handler failed (endpoint: %s, role: %s) - %s"
 )
 
 func InitFailed(module string, err error) error {
@@ -13,4 +16,8 @@ func InitFailed(module string, err error) error {
 
 func DSPFailed(role, function string, err error) error {
 	return fmt.Errorf(dspFailed, role, function, err)
+}
+
+func HandlerFailed(endpoint, role string, err error) error {
+	return fmt.Errorf(handlerFailed, endpoint, role, err)
 }
