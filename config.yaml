@@ -1,0 +1,7 @@
+servers:
+  dsp:
+    http:
+      port: 8080
+  gateway:
+    http:
+      port: 8081

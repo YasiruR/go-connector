@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/odrl"
@@ -10,8 +11,9 @@ type Policy struct {
 	store pkg.Collection
 }
 
-func NewPolicyStore(db pkg.Database) *Policy {
-	return &Policy{store: db.NewDataStore()}
+func NewPolicyStore(plugins core.Plugins) *Policy {
+	plugins.Log.Info("initialized policy store")
+	return &Policy{store: plugins.Database.NewDataStore()}
 }
 
 func (p *Policy) SetOffer(id string, val odrl.Offer) {

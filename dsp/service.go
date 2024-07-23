@@ -1,6 +1,7 @@
-package owner
+package dsp
 
 import (
+	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/dcat"
@@ -10,24 +11,25 @@ import (
 
 type Owner struct {
 	host        string
-	policyStore stores.Policy
 	catalog     stores.Catalog
-	us          pkg.URNService
+	policyStore stores.Policy
+	urn         pkg.URNService
 	log         pkg.Log
 }
 
-func New(ps stores.Policy, c stores.Catalog, urn pkg.URNService, log pkg.Log) *Owner {
+func NewOwner(stores core.Stores, plugins core.Plugins) *Owner {
+	plugins.Log.Info("enabled data owner functions")
 	return &Owner{
 		host:        `http://localhost:`,
-		policyStore: ps,
-		catalog:     c,
-		us:          urn,
-		log:         log,
+		policyStore: stores.Policy,
+		catalog:     stores.Catalog,
+		urn:         plugins.URNService,
+		log:         plugins.Log,
 	}
 }
 
 func (o *Owner) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
-	policyId, err = o.us.NewURN()
+	policyId, err = o.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`policyId`, `NewURN`, err)
 	}
@@ -63,7 +65,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	// construct data distribution
 	var svcList []dcat.AccessService
 	for _, e := range endpoints {
-		accessServiceId, err := o.us.NewURN()
+		accessServiceId, err := o.urn.NewURN()
 		if err != nil {
 			return ``, errors.URNFailed(`accessServiceId`, `NewURN`, err)
 		}
@@ -82,7 +84,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	}
 
 	// construct and store final dataset
-	datasetId, err = o.us.NewURN()
+	datasetId, err = o.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`datasetId`, `NewURN`, err)
 	}

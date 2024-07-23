@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/api/gateway"
 	"github.com/YasiruR/connector/core/dsp"
 	"github.com/YasiruR/connector/core/errors"
@@ -27,9 +28,9 @@ type Server struct {
 	log      pkg.Log
 }
 
-func NewServer(port int, p dsp.Provider, c dsp.Consumer, o dsp.Owner, log pkg.Log) *Server {
+func NewServer(port int, roles core.Roles, log pkg.Log) *Server {
 	r := mux.NewRouter()
-	s := Server{port: port, router: r, provider: p, consumer: c, owner: o, log: log}
+	s := Server{port: port, router: r, provider: roles.Provider, consumer: roles.Consumer, owner: roles.Owner, log: log}
 
 	// endpoints related to data assets
 	r.HandleFunc(gateway.CreatePolicyEndpoint, s.CreatePolicy).Methods(http.MethodPost)
@@ -44,6 +45,7 @@ func NewServer(port int, p dsp.Provider, c dsp.Consumer, o dsp.Owner, log pkg.Lo
 }
 
 func (s *Server) Start() {
+	s.log.Info("gateway HTTP server is listening on " + strconv.Itoa(s.port))
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
 		s.log.Fatal(errors.InitFailed(`gateway API`, err))
 	}

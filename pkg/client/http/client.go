@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/YasiruR/connector/core/errors"
+	"github.com/YasiruR/connector/core/pkg"
 	"io"
 	"net/http"
 )
@@ -12,7 +13,8 @@ type Client struct {
 	hc *http.Client
 }
 
-func NewClient() *Client {
+func NewClient(log pkg.Log) *Client {
+	log.Info("initialized an HTTP client")
 	return &Client{hc: http.DefaultClient}
 }
 

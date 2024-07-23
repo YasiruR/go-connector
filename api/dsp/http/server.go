@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/dsp"
 	"github.com/YasiruR/connector/core/dsp/catalog"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
@@ -18,16 +19,16 @@ import (
 
 type Server struct {
 	port     int
-	ownr     dsp.Owner
-	router   *mux.Router
+	owner    dsp.Owner
 	provider dsp.Provider
 	consumer dsp.Consumer
+	router   *mux.Router
 	log      pkg.Log
 }
 
-func NewServer(port int, p dsp.Provider, c dsp.Consumer, log pkg.Log) *Server {
+func NewServer(port int, roles core.Roles, log pkg.Log) *Server {
 	r := mux.NewRouter()
-	s := Server{port: port, router: r, provider: p, consumer: c, log: log}
+	s := Server{port: port, router: r, provider: roles.Provider, consumer: roles.Consumer, log: log}
 
 	// catalog protocol related endpoints
 	r.HandleFunc(catalog.RequestEndpoint, s.HandleCatalogRequest).Methods(http.MethodPost)
@@ -41,6 +42,7 @@ func NewServer(port int, p dsp.Provider, c dsp.Consumer, log pkg.Log) *Server {
 }
 
 func (s *Server) Start() {
+	s.log.Info("DSP HTTP server is listening on " + strconv.Itoa(s.port))
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
 		s.log.Fatal(errors.InitFailed(`DSP API`, err))
 	}

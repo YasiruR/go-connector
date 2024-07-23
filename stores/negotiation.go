@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
@@ -20,11 +21,12 @@ type ContractNegotiation struct {
 	callbackAddr pkg.Collection
 }
 
-func NewContractNegotiationStore(db pkg.Database) *ContractNegotiation {
+func NewContractNegotiationStore(plugins core.Plugins) *ContractNegotiation {
+	plugins.Log.Info("initialized contract negotiation store")
 	return &ContractNegotiation{
-		store:        db.NewDataStore(),
-		assignees:    db.NewDataStore(),
-		callbackAddr: db.NewDataStore(),
+		store:        plugins.Database.NewDataStore(),
+		assignees:    plugins.Database.NewDataStore(),
+		callbackAddr: plugins.Database.NewDataStore(),
 	}
 }
 

@@ -10,7 +10,8 @@ type Store struct {
 	maps []pkg.Collection
 }
 
-func NewStore() *Store {
+func NewStore(log pkg.Log) *Store {
+	log.Info("initialized in-memory database with sync.Map as collections")
 	return &Store{maps: make([]pkg.Collection, 0)}
 }
 

@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/dcat"
@@ -12,10 +13,11 @@ type Catalog struct {
 	store pkg.Collection
 }
 
-func NewCatalog(urn pkg.URNService, db pkg.Database) *Catalog {
+func NewCatalog(plugins core.Plugins) *Catalog {
+	plugins.Log.Info("initialized catalog store")
 	return &Catalog{
-		urn:   urn,
-		store: db.NewDataStore(),
+		urn:   plugins.URNService,
+		store: plugins.Database.NewDataStore(),
 	}
 }
 

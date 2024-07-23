@@ -8,4 +8,5 @@ type HTTPServer interface {
 	RequestCatalog(w http.ResponseWriter, r *http.Request)
 	RequestContract(w http.ResponseWriter, r *http.Request)
 	AgreeContract(w http.ResponseWriter, r *http.Request)
+	Start()
 }
