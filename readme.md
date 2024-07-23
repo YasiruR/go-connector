@@ -7,5 +7,5 @@
 3. Get Catalog: ``curl -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/catalog``
 4. Get Dataset: ``curl -X POST -d '{"datasetId": "<dataset-id>", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/request-dataset | jq``
 5. Contract request: ``curl -X POST -d '{"offerId": "<policy-id>", "providerEndpoint": "http://localhost:9080", "odrlTarget": "test-target", "assigner": "provider1", "assignee": "consumer1", "action": "odrl:use"}' http://localhost:8081/gateway/contract-request``
-6Get negotiation: ``curl -X GET http://localhost:9080/negotiations/{providerPid}``
-6Agree contract: ``curl -X POST -d '{"offerId": "<policy-id>", "negotiationId": "<providerPid>"}' http://localhost:9081/gateway/contract-agreement``
+6. Get negotiation: ``curl -X GET http://localhost:9080/negotiations/{providerPid}``
+7. Agree contract: ``curl -X POST -d '{"offerId": "<policy-id>", "negotiationId": "<providerPid>"}' http://localhost:9081/gateway/contract-agreement``

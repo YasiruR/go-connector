@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"github.com/YasiruR/connector/boot/config"
 	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/protocols/dcat"
 	"github.com/YasiruR/connector/core/protocols/odrl"
@@ -14,7 +15,7 @@ const (
 
 // Catalog stores Datasets as per the DCAT profile recommended by IDSA
 type Catalog interface {
-	Init(title string, keywords, accessServices, descriptions []string) error
+	Init(cfg config.Config) error
 	Get() (dcat.Catalog, error)
 	AddDataset(id string, val dcat.Dataset)
 	Dataset(id string) (dcat.Dataset, error)

@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"github.com/YasiruR/connector/boot/config"
 	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
@@ -21,24 +22,24 @@ func NewCatalog(plugins core.Plugins) *Catalog {
 	}
 }
 
-func (c *Catalog) Init(title string, keywords, connectorEndpoints, descriptions []string) error {
+func (c *Catalog) Init(cfg config.Config) error {
 	catId, err := c.urn.NewURN()
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeURN, `New`, err)
 	}
 
 	var kws []dcat.Keyword
-	for _, key := range keywords {
+	for _, key := range cfg.Catalog.Keywords {
 		kws = append(kws, dcat.Keyword(key))
 	}
 
 	var descs []dcat.Description
-	for _, desc := range descriptions {
+	for _, desc := range cfg.Catalog.Descriptions {
 		descs = append(descs, dcat.Description{Value: desc, Language: dcat.LanguageEnglish})
 	}
 
 	var svcs []dcat.AccessService
-	for _, e := range connectorEndpoints {
+	for _, e := range cfg.Catalog.AccessServices {
 		svcId, err := c.urn.NewURN()
 		if err != nil {
 			return errors.PkgFailed(pkg.TypeURN, `New`, err)
@@ -55,7 +56,7 @@ func (c *Catalog) Init(title string, keywords, connectorEndpoints, descriptions 
 	c.meta = dcat.CatalogMetadata{
 		ID:             catId,
 		Type:           dcat.TypeCatalog,
-		DctTitle:       title,
+		DctTitle:       cfg.Catalog.Title,
 		DctDescription: descs,
 		DcatKeyword:    kws,
 		DcatService:    svcs,
