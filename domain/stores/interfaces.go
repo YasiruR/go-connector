@@ -2,16 +2,16 @@ package stores
 
 import (
 	"github.com/YasiruR/connector/boot/config"
-	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/protocols/dcat"
+	negotiation2 "github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
 const (
-	TypeCatalog             = `catalog-store`
-	TypeContractNegotiation = `contract-negotiation-store`
-	TypePolicy              = `policy-store`
-	TypeAgreement           = `agreement-store`
+	TypeCatalog             = `catalog`
+	TypeContractNegotiation = `contract-negotiation`
+	TypePolicy              = `policy`
+	TypeAgreement           = `agreement`
 )
 
 // Catalog stores Datasets as per the DCAT profile recommended by IDSA
@@ -25,10 +25,10 @@ type Catalog interface {
 // ContractNegotiation includes get and set methods for attributes required
 // in Negotiation Protocol ('cnId' refers to Contract Negotiation ID)
 type ContractNegotiation interface {
-	Set(cnId string, val negotiation.Negotiation)
-	Negotiation(cnId string) (negotiation.Negotiation, error)
-	UpdateState(cnId string, s negotiation.State) error
-	State(cnId string) (negotiation.State, error)
+	Set(cnId string, val negotiation2.Negotiation)
+	Negotiation(cnId string) (negotiation2.Negotiation, error)
+	UpdateState(cnId string, s negotiation2.State) error
+	State(cnId string) (negotiation2.State, error)
 	SetAssignee(cnId string, a odrl.Assignee)
 	Assignee(cnId string) (odrl.Assignee, error)
 	SetCallbackAddr(cnId, addr string)

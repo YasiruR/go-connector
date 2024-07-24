@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/gateway"
-	"github.com/YasiruR/connector/domain/dsp"
-	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/dsp"
+	"github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/protocols/odrl"
 	"github.com/YasiruR/connector/domain/stores"
 	"github.com/gorilla/mux"
@@ -54,6 +54,7 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	r.HandleFunc(gateway.AgreeContractEndpoint, s.AgreeContract).Methods(http.MethodPost)
 	r.HandleFunc(gateway.GetAgreementEndpoint, s.GetAgreement).Methods(http.MethodGet)
 	r.HandleFunc(gateway.VerifyAgreementEndpoint, s.VerifyAgreement).Methods(http.MethodPost)
+	r.HandleFunc(gateway.FinalizeContractEndpoint, s.FinalizeContract).Methods(http.MethodPost)
 
 	return &s
 }
@@ -204,7 +205,7 @@ func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) GetAgreement(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	agreementId, ok := params[gateway.ParamId]
+	agreementId, ok := params[gateway.ParamAgreementId]
 	if !ok {
 		s.sendError(w, errors.PathParamNotFound(gateway.GetAgreementEndpoint, negotiation.ParamConsumerPid), http.StatusBadRequest)
 		return
@@ -233,6 +234,22 @@ func (s *Server) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.sendAck(w, gateway.VerifyAgreementEndpoint, nil, http.StatusOK)
+}
+
+func (s *Server) FinalizeContract(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	providerPid, ok := params[gateway.ParamProviderPid]
+	if !ok {
+		s.sendError(w, errors.PathParamNotFound(gateway.FinalizeContractEndpoint, negotiation.ParamProviderId), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.provider.FinalizeContract(providerPid); err != nil {
+		s.sendError(w, errors.DSPFailed(dsp.RoleProvider, `FinalizeContract`, err), http.StatusBadRequest)
+		return
+	}
+
+	s.sendAck(w, gateway.FinalizeContractEndpoint, nil, http.StatusOK)
 }
 
 func (s *Server) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {

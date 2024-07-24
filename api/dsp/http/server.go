@@ -3,11 +3,11 @@ package http
 import (
 	"encoding/json"
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/dsp"
-	"github.com/YasiruR/connector/domain/dsp/catalog"
-	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/dsp"
+	"github.com/YasiruR/connector/domain/protocols/dsp/catalog"
+	"github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -39,6 +39,7 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	r.HandleFunc(negotiation.ContractRequestEndpoint, s.HandleContractRequest).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.HandleContractAgreement).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.AgreementVerificationEndpoint, s.HandleAgreementVerification).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.EventConsumerEndpoint, s.HandleEventConsumer).Methods(http.MethodPost)
 
 	return &s
 }
@@ -131,13 +132,6 @@ func (s *Server) HandleContractRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	consumerPid, ok := params[negotiation.ParamConsumerPid]
-	if !ok {
-		s.sendError(w, errors.PathParamNotFound(negotiation.ContractAgreementEndpoint, negotiation.ParamConsumerPid), http.StatusBadRequest)
-		return
-	}
-
 	body, err := s.readBody(negotiation.ContractAgreementEndpoint, w, r)
 	if err != nil {
 		return
@@ -149,7 +143,7 @@ func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ack, err := s.consumer.HandleContractAgreement(consumerPid, req)
+	ack, err := s.consumer.HandleContractAgreement(req)
 	if err != nil {
 		s.sendError(w, errors.HandlerFailed(negotiation.ContractAgreementEndpoint, dsp.RoleConsumer, err), http.StatusBadRequest)
 		return
@@ -159,13 +153,6 @@ func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) HandleAgreementVerification(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	providerPid, ok := params[negotiation.ParamProviderId]
-	if !ok {
-		s.sendError(w, errors.PathParamNotFound(negotiation.AgreementVerificationEndpoint, negotiation.ParamProviderId), http.StatusBadRequest)
-		return
-	}
-
 	body, err := s.readBody(negotiation.AgreementVerificationEndpoint, w, r)
 	if err != nil {
 		return
@@ -177,13 +164,38 @@ func (s *Server) HandleAgreementVerification(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ack, err := s.provider.HandleAgreementVerification(providerPid)
+	ack, err := s.provider.HandleAgreementVerification(req.ProvPId)
 	if err != nil {
 		s.sendError(w, errors.HandlerFailed(negotiation.AgreementVerificationEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
 	s.sendAck(w, negotiation.AgreementVerificationEndpoint, ack, http.StatusOK)
+}
+
+func (s *Server) HandleEventConsumer(w http.ResponseWriter, r *http.Request) {
+	body, err := s.readBody(negotiation.EventConsumerEndpoint, w, r)
+	if err != nil {
+		return
+	}
+
+	var req negotiation.ContractNegotiationEvent
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, errors.UnmarshalError(negotiation.EventConsumerEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	switch req.EventType {
+	case negotiation.EventFinalized:
+		ack, err := s.consumer.HandleFinalizedEvent(req.ConsPId)
+		if err != nil {
+			s.sendError(w, errors.HandlerFailed(req.ConsPId, dsp.RoleConsumer, err), http.StatusBadRequest)
+			return
+		}
+		s.sendAck(w, negotiation.EventConsumerEndpoint, ack, http.StatusOK)
+	default:
+		s.sendError(w, errors.InvalidRequestBody(negotiation.EventConsumerEndpoint, err), http.StatusBadRequest)
+	}
 }
 
 func (s *Server) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {

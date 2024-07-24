@@ -1,10 +1,10 @@
 package catalog
 
 import (
-	"github.com/YasiruR/connector/domain/dsp"
-	"github.com/YasiruR/connector/domain/dsp/catalog"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/dsp"
+	"github.com/YasiruR/connector/domain/protocols/dsp/catalog"
 	"github.com/YasiruR/connector/domain/stores"
 )
 

@@ -17,7 +17,7 @@ type Service struct {
 	log         pkg.Log
 }
 
-func NewService(stores domain.Stores, plugins domain.Plugins) *Service {
+func New(stores domain.Stores, plugins domain.Plugins) *Service {
 	return &Service{
 		host:        `test-owner`, // can we assign participant ID from config to assigner?
 		policyStore: stores.Policy,

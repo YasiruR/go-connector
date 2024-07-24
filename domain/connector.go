@@ -3,8 +3,8 @@ package domain
 import (
 	dsp2 "github.com/YasiruR/connector/domain/api/dsp"
 	"github.com/YasiruR/connector/domain/api/gateway"
-	"github.com/YasiruR/connector/domain/dsp"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/dsp"
 	"github.com/YasiruR/connector/domain/stores"
 )
 

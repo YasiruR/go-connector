@@ -1,8 +1,8 @@
 package dsp
 
 import (
-	"github.com/YasiruR/connector/domain/dsp/catalog"
-	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/protocols/dsp/catalog"
+	"github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
@@ -16,13 +16,15 @@ const (
 )
 
 type Provider interface {
-	catalog.Provider
-	negotiation.Provider
+	catalog.Handler
+	negotiation.ControllerProvider
+	negotiation.HandlerProvider
 }
 
 type Consumer interface {
-	catalog.Consumer
-	negotiation.Consumer
+	catalog.Controller
+	negotiation.ControllerConsumer
+	negotiation.HandlerConsumer
 }
 
 type Owner interface {
