@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/YasiruR/connector/core/pkg"
+	"github.com/YasiruR/connector/domain/pkg"
 	"gopkg.in/yaml.v3"
 	"os"
 )

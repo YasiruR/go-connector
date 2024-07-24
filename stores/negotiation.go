@@ -1,11 +1,11 @@
 package stores
 
 import (
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/protocols/odrl"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
 const (
@@ -21,7 +21,7 @@ type ContractNegotiation struct {
 	callbackAddr pkg.Collection
 }
 
-func NewContractNegotiationStore(plugins core.Plugins) *ContractNegotiation {
+func NewContractNegotiationStore(plugins domain.Plugins) *ContractNegotiation {
 	plugins.Log.Info("initialized contract negotiation store")
 	return &ContractNegotiation{
 		store:        plugins.Database.NewCollection(),

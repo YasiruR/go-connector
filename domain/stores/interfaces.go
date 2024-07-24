@@ -2,9 +2,9 @@ package stores
 
 import (
 	"github.com/YasiruR/connector/boot/config"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/protocols/dcat"
-	"github.com/YasiruR/connector/core/protocols/odrl"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/protocols/dcat"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
 const (

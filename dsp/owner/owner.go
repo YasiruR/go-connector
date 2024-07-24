@@ -1,15 +1,15 @@
 package owner
 
 import (
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/protocols/dcat"
-	"github.com/YasiruR/connector/core/protocols/odrl"
-	"github.com/YasiruR/connector/core/stores"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/dcat"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
+	"github.com/YasiruR/connector/domain/stores"
 )
 
-type Owner struct {
+type Service struct {
 	host        string
 	catalog     stores.Catalog
 	policyStore stores.Policy
@@ -17,8 +17,8 @@ type Owner struct {
 	log         pkg.Log
 }
 
-func NewOwner(stores core.Stores, plugins core.Plugins) *Owner {
-	return &Owner{
+func NewService(stores domain.Stores, plugins domain.Plugins) *Service {
+	return &Service{
 		host:        `test-owner`, // can we assign participant ID from config to assigner?
 		policyStore: stores.Policy,
 		catalog:     stores.Catalog,
@@ -27,8 +27,8 @@ func NewOwner(stores core.Stores, plugins core.Plugins) *Owner {
 	}
 }
 
-func (o *Owner) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
-	policyId, err = o.urn.NewURN()
+func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
+	policyId, err = s.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`policyId`, `NewURN`, err)
 	}
@@ -38,22 +38,22 @@ func (o *Owner) CreatePolicy(target string, permissions, prohibitions []odrl.Rul
 		Id:           policyId,
 		Type:         odrl.TypeOffer,
 		Target:       odrl.Target(target),
-		Assigner:     odrl.Assigner(o.host),
+		Assigner:     odrl.Assigner(s.host),
 		Permissions:  permissions,
 		Prohibitions: prohibitions,
 	}
 
-	o.policyStore.SetOffer(policyId, ofr)
-	o.log.Trace("created and stored a new policy", ofr)
+	s.policyStore.SetOffer(policyId, ofr)
+	s.log.Trace("created and stored a new policy", ofr)
 	return policyId, nil
 }
 
 // CreateDataset currently supports only one data distribution per a dataset
-func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error) {
+func (s *Service) CreateDataset(title string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error) {
 	// construct policies (handle policies than offers later)
 	var policies []odrl.Offer
 	for _, pId := range policyIds {
-		ofr, err := o.policyStore.Offer(pId)
+		ofr, err := s.policyStore.Offer(pId)
 		if err != nil {
 			return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
 		}
@@ -64,7 +64,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	// construct data distribution
 	var svcList []dcat.AccessService
 	for _, e := range endpoints {
-		accessServiceId, err := o.urn.NewURN()
+		accessServiceId, err := s.urn.NewURN()
 		if err != nil {
 			return ``, errors.URNFailed(`accessServiceId`, `NewURN`, err)
 		}
@@ -83,7 +83,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	}
 
 	// construct and store final dataset
-	datasetId, err = o.urn.NewURN()
+	datasetId, err = s.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`datasetId`, `NewURN`, err)
 	}
@@ -111,7 +111,7 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 		DcatDistribution: []dcat.Distribution{dist}, // support more distributions
 	}
 
-	o.catalog.AddDataset(datasetId, ds)
-	o.log.Trace("created and stored a new dataset", ds)
+	s.catalog.AddDataset(datasetId, ds)
+	s.log.Trace("created and stored a new dataset", ds)
 	return datasetId, nil
 }

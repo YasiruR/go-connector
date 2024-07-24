@@ -2,10 +2,10 @@ package stores
 
 import (
 	"github.com/YasiruR/connector/boot/config"
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/protocols/dcat"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/dcat"
 )
 
 // Catalog stores Datasets and Data Services which can be shared through a connector
@@ -15,7 +15,7 @@ type Catalog struct {
 	store pkg.Collection
 }
 
-func NewCatalog(plugins core.Plugins) *Catalog {
+func NewCatalog(plugins domain.Plugins) *Catalog {
 	plugins.Log.Info("initialized catalog store")
 	return &Catalog{
 		urn:   plugins.URNService,

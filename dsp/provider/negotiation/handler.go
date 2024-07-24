@@ -2,12 +2,12 @@ package negotiation
 
 import (
 	"fmt"
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/dsp"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/stores"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/stores"
 )
 
 type Handler struct {
@@ -16,7 +16,7 @@ type Handler struct {
 	log     pkg.Log
 }
 
-func NewHandler(cnStore stores.ContractNegotiation, plugins core.Plugins) *Handler {
+func NewHandler(cnStore stores.ContractNegotiation, plugins domain.Plugins) *Handler {
 	return &Handler{
 		cnStore: cnStore,
 		urn:     plugins.URNService,

@@ -1,7 +1,7 @@
 package catalog
 
 import (
-	"github.com/YasiruR/connector/core/protocols/dcat"
+	"github.com/YasiruR/connector/domain/protocols/dcat"
 )
 
 type Response struct {

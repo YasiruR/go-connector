@@ -1,11 +1,11 @@
-package core
+package domain
 
 import (
-	dsp2 "github.com/YasiruR/connector/core/api/dsp"
-	"github.com/YasiruR/connector/core/api/gateway"
-	"github.com/YasiruR/connector/core/dsp"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/stores"
+	dsp2 "github.com/YasiruR/connector/domain/api/dsp"
+	"github.com/YasiruR/connector/domain/api/gateway"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/stores"
 )
 
 type Roles struct {

@@ -1,10 +1,10 @@
 package stores
 
 import (
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/protocols/odrl"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
 // Policy is a store that exists within a Provider to persist any created policy
@@ -12,7 +12,7 @@ type Policy struct {
 	store pkg.Collection
 }
 
-func NewPolicyStore(plugins core.Plugins) *Policy {
+func NewPolicyStore(plugins domain.Plugins) *Policy {
 	plugins.Log.Info("initialized policy store")
 	return &Policy{store: plugins.Database.NewCollection()}
 }

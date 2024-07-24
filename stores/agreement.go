@@ -1,10 +1,10 @@
 package stores
 
 import (
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/protocols/odrl"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
 const (
@@ -17,7 +17,7 @@ type Agreement struct {
 	cnMap pkg.Collection
 }
 
-func NewAgreementStore(plugins core.Plugins) *Agreement {
+func NewAgreementStore(plugins domain.Plugins) *Agreement {
 	plugins.Log.Info("initialized agreement store")
 	return &Agreement{store: plugins.Database.NewCollection(), cnMap: plugins.Database.NewCollection()}
 }

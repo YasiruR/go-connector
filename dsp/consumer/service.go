@@ -1,9 +1,9 @@
 package consumer
 
 import (
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/dsp/catalog"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/dsp/catalog"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	internalCatalog "github.com/YasiruR/connector/dsp/consumer/catalog"
 	internalNegotiation "github.com/YasiruR/connector/dsp/consumer/negotiation"
 )
@@ -16,7 +16,7 @@ type Service struct {
 	negHandler negotiation.ConsumerHandler
 }
 
-func NewService(port int, stores core.Stores, plugins core.Plugins) *Service {
+func NewService(port int, stores domain.Stores, plugins domain.Plugins) *Service {
 	return &Service{
 		catCtrl:    internalCatalog.NewController(plugins.Client),
 		negCtrl:    internalNegotiation.NewController(port, stores, plugins),

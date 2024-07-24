@@ -3,13 +3,13 @@ package negotiation
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/dsp"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/protocols/odrl"
-	"github.com/YasiruR/connector/core/stores"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
+	"github.com/YasiruR/connector/domain/stores"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +24,7 @@ type Controller struct {
 	log          pkg.Log
 }
 
-func NewController(port int, stores core.Stores, plugins core.Plugins) *Controller {
+func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		negStore:     stores.ContractNegotiation,

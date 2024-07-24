@@ -2,12 +2,12 @@ package http
 
 import (
 	"encoding/json"
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/dsp"
-	"github.com/YasiruR/connector/core/dsp/catalog"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/dsp/catalog"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -26,7 +26,7 @@ type Server struct {
 	log      pkg.Log
 }
 
-func NewServer(port int, roles core.Roles, log pkg.Log) *Server {
+func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	r := mux.NewRouter()
 	s := Server{port: port, router: r, provider: roles.Provider, consumer: roles.Consumer, log: log}
 

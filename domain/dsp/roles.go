@@ -1,9 +1,9 @@
 package dsp
 
 import (
-	"github.com/YasiruR/connector/core/dsp/catalog"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/protocols/odrl"
+	"github.com/YasiruR/connector/domain/dsp/catalog"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
 // maybe implement submodules in Provider and Consumer to separate control and data plane

@@ -2,14 +2,14 @@ package http
 
 import (
 	"encoding/json"
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/api/gateway"
-	"github.com/YasiruR/connector/core/dsp"
-	"github.com/YasiruR/connector/core/dsp/negotiation"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/core/protocols/odrl"
-	"github.com/YasiruR/connector/core/stores"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/api/gateway"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/protocols/odrl"
+	"github.com/YasiruR/connector/domain/stores"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -31,7 +31,7 @@ type Server struct {
 	log      pkg.Log
 }
 
-func NewServer(port int, roles core.Roles, stores core.Stores, log pkg.Log) *Server {
+func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) *Server {
 	r := mux.NewRouter()
 	s := Server{
 		port:     port,

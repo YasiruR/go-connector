@@ -3,8 +3,8 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"github.com/YasiruR/connector/core/errors"
-	"github.com/YasiruR/connector/core/pkg"
+	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/pkg"
 	"io"
 	"net/http"
 )

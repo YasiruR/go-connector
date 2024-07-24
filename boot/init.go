@@ -5,8 +5,8 @@ import (
 	dspSHttp "github.com/YasiruR/connector/api/dsp/http"
 	gatewayHttp "github.com/YasiruR/connector/api/gateway/http"
 	"github.com/YasiruR/connector/boot/config"
-	"github.com/YasiruR/connector/core"
-	"github.com/YasiruR/connector/core/pkg"
+	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/dsp/consumer"
 	"github.com/YasiruR/connector/dsp/owner"
 	"github.com/YasiruR/connector/dsp/provider"
@@ -35,8 +35,8 @@ func Start() {
 	servers.Gateway.Start()
 }
 
-func initPlugins(log pkg.Log) core.Plugins {
-	return core.Plugins{
+func initPlugins(log pkg.Log) domain.Plugins {
+	return domain.Plugins{
 		Client:     http.NewClient(log),
 		Database:   memory.NewStore(log),
 		URNService: urn.NewGenerator(),
@@ -44,8 +44,8 @@ func initPlugins(log pkg.Log) core.Plugins {
 	}
 }
 
-func initStores(plugins core.Plugins) core.Stores {
-	return core.Stores{
+func initStores(plugins domain.Plugins) domain.Stores {
+	return domain.Stores{
 		Catalog:             stores.NewCatalog(plugins),
 		Policy:              stores.NewPolicyStore(plugins),
 		ContractNegotiation: stores.NewContractNegotiationStore(plugins),
@@ -53,16 +53,16 @@ func initStores(plugins core.Plugins) core.Stores {
 	}
 }
 
-func initRoles(cfg config.Config, stores core.Stores, plugins core.Plugins) core.Roles {
-	return core.Roles{
+func initRoles(cfg config.Config, stores domain.Stores, plugins domain.Plugins) domain.Roles {
+	return domain.Roles{
 		Provider: provider.NewService(cfg.Servers.DSP.HTTP.Port, stores, plugins),
 		Consumer: consumer.NewService(cfg.Servers.DSP.HTTP.Port, stores, plugins),
-		Owner:    owner.NewOwner(stores, plugins),
+		Owner:    owner.NewService(stores, plugins),
 	}
 }
 
-func initServers(cfg config.Config, roles core.Roles, stores core.Stores, plugins core.Plugins) core.Servers {
-	return core.Servers{
+func initServers(cfg config.Config, roles domain.Roles, stores domain.Stores, plugins domain.Plugins) domain.Servers {
+	return domain.Servers{
 		DSP:     dspSHttp.NewServer(cfg.Servers.DSP.HTTP.Port, roles, plugins.Log),
 		Gateway: gatewayHttp.NewServer(cfg.Servers.Gateway.HTTP.Port, roles, stores, plugins.Log),
 	}
