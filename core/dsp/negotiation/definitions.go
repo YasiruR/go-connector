@@ -12,13 +12,14 @@ const (
 	TypeNegotiationAck        = `dspace:ContractNegotiationAckMessage`
 	TypeContractAgreement     = `dspace:ContractAgreementMessage`
 	TypeAgreementVerification = `dspace:ContractAgreementVerificationMessage`
+	TypeNegotiationEvent      = `dspace:ContractNegotiationEventMessage`
 )
 
 type EventType string
 
 const (
-	Accepted  EventType = `ACCEPTED`
-	Finalized EventType = `FINALIZED`
+	EventAccepted  EventType = `dspace:ACCEPTED`
+	EventFinalized EventType = `dspace:FINALIZED`
 )
 
 const (
@@ -26,6 +27,8 @@ const (
 	ContractRequestEndpoint       = `/negotiations/request`
 	ContractAgreementEndpoint     = `/negotiations/{` + ParamConsumerPid + `}/agreement`
 	AgreementVerificationEndpoint = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
+	EventConsumerEndpoint         = `/negotiations/{` + ParamConsumerPid + `}/events`
+	EventProviderEndpoint         = `/negotiations/{` + ParamProviderId + `}/events`
 )
 
 type State string

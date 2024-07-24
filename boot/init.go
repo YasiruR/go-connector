@@ -7,7 +7,9 @@ import (
 	"github.com/YasiruR/connector/boot/config"
 	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/pkg"
-	"github.com/YasiruR/connector/dsp"
+	"github.com/YasiruR/connector/dsp/consumer"
+	"github.com/YasiruR/connector/dsp/owner"
+	"github.com/YasiruR/connector/dsp/provider"
 	"github.com/YasiruR/connector/pkg/client/http"
 	"github.com/YasiruR/connector/pkg/database/memory"
 	pkgLog "github.com/YasiruR/connector/pkg/log"
@@ -53,9 +55,9 @@ func initStores(plugins core.Plugins) core.Stores {
 
 func initRoles(cfg config.Config, stores core.Stores, plugins core.Plugins) core.Roles {
 	return core.Roles{
-		Provider: dsp.NewProvider(cfg.Servers.DSP.HTTP.Port, stores, plugins),
-		Consumer: dsp.NewConsumer(cfg.Servers.DSP.HTTP.Port, stores, plugins),
-		Owner:    dsp.NewOwner(stores, plugins),
+		Provider: provider.NewService(cfg.Servers.DSP.HTTP.Port, stores, plugins),
+		Consumer: consumer.NewService(cfg.Servers.DSP.HTTP.Port, stores, plugins),
+		Owner:    owner.NewOwner(stores, plugins),
 	}
 }
 

@@ -1,4 +1,4 @@
-package dsp
+package owner
 
 import (
 	"github.com/YasiruR/connector/core"

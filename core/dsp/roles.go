@@ -17,14 +17,12 @@ const (
 
 type Provider interface {
 	catalog.Provider
-	negotiation.ProviderController
-	negotiation.ProviderHandler
+	negotiation.Provider
 }
 
 type Consumer interface {
 	catalog.Consumer
-	negotiation.ConsumerController
-	negotiation.ConsumerHandler
+	negotiation.Consumer
 }
 
 type Owner interface {
