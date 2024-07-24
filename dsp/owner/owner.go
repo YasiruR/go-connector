@@ -3,9 +3,9 @@ package owner
 import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/models/dcat"
+	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/protocols/dcat"
-	"github.com/YasiruR/connector/domain/protocols/odrl"
 	"github.com/YasiruR/connector/domain/stores"
 )
 

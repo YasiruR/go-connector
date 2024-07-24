@@ -3,8 +3,8 @@ package stores
 import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/protocols/odrl"
 )
 
 const (

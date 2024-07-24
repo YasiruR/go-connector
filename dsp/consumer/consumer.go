@@ -2,8 +2,9 @@ package consumer
 
 import (
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/protocols/dsp/catalog"
-	"github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/dsp/catalog"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/models/odrl"
 	internalCatalog "github.com/YasiruR/connector/dsp/consumer/catalog"
 	internalNegotiation "github.com/YasiruR/connector/dsp/consumer/negotiation"
 )
@@ -32,8 +33,8 @@ func (c *Consumer) RequestDataset(id, endpoint string) (catalog.DatasetResponse,
 	return c.catCtrl.RequestDataset(id, endpoint)
 }
 
-func (c *Consumer) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error) {
-	return c.negCtrl.RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action)
+func (c *Consumer) RequestContract(providerEndpoint string, ofr odrl.Offer) (negotiationId string, err error) {
+	return c.negCtrl.RequestContract(providerEndpoint, ofr)
 }
 
 func (c *Consumer) AcceptContract() {

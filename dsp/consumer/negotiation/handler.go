@@ -3,9 +3,9 @@ package negotiation
 import (
 	"fmt"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/stores"
 )
 

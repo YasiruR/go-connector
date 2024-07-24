@@ -4,8 +4,8 @@ import (
 	"github.com/YasiruR/connector/boot/config"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/protocols/dcat"
 )
 
 // Catalog stores Datasets and Data Services which can be shared through a connector

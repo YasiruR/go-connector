@@ -1,5 +1,7 @@
 package negotiation
 
+import "github.com/YasiruR/connector/domain/models/odrl"
+
 type ControllerProvider interface {
 	OfferContract()
 	AgreeContract(offerId, negotiationId string) (agreementId string, err error)
@@ -14,7 +16,7 @@ type HandlerProvider interface {
 
 type ControllerConsumer interface {
 	// change endpoint to generic
-	RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (cnId string, err error)
+	RequestContract(providerEndpoint string, ofr odrl.Offer) (cnId string, err error)
 	AcceptContract()
 	VerifyAgreement(consumerPid string) error
 	TerminateContract()

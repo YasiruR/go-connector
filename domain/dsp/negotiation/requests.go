@@ -1,6 +1,6 @@
 package negotiation
 
-import "github.com/YasiruR/connector/domain/protocols/odrl"
+import "github.com/YasiruR/connector/domain/models/odrl"
 
 // Data models required for the negotiation process as specified by
 // https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/contract-negotiation/contract.negotiation.protocol

@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/gateway"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/protocols/dsp"
-	"github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
-	"github.com/YasiruR/connector/domain/protocols/odrl"
 	"github.com/YasiruR/connector/domain/stores"
 	"github.com/gorilla/mux"
 	"io"
@@ -78,7 +78,6 @@ func (s *Server) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// todo remove odrl bindings from this func
 	var perms []odrl.Rule // handle other policy types
 	for _, p := range req.Permissions {
 		var cons []odrl.Constraint
@@ -171,9 +170,16 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// todo check if providerPid should really be requested
-	negId, err := s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget,
-		req.Assigner, req.Assignee, req.Action)
+	ofr := odrl.Offer{
+		Id:          req.OfferId,
+		Type:        odrl.TypeOffer,
+		Target:      odrl.Target(req.OdrlTarget),
+		Assigner:    odrl.Assigner(req.Assigner),
+		Assignee:    odrl.Assignee(req.Assignee),
+		Permissions: []odrl.Rule{{Action: odrl.Action(req.Action)}}, // should handle constraints
+	}
+
+	negId, err := s.consumer.RequestContract(req.ProviderEndpoint, ofr)
 	if err != nil {
 		s.sendError(w, errors.DSPFailed(dsp.RoleConsumer, `RequestContract`, err), http.StatusBadRequest)
 		return

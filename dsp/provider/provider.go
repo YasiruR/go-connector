@@ -2,8 +2,8 @@ package provider
 
 import (
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/protocols/dsp/catalog"
-	"github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/dsp/catalog"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	internalCatalog "github.com/YasiruR/connector/dsp/provider/catalog"
 	internalNegotiation "github.com/YasiruR/connector/dsp/provider/negotiation"
 )

@@ -2,10 +2,10 @@ package catalog
 
 import (
 	"encoding/json"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/dsp/catalog"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/protocols/dsp"
-	catalog2 "github.com/YasiruR/connector/domain/protocols/dsp/catalog"
 )
 
 type Controller struct {
@@ -16,51 +16,51 @@ func NewController(client pkg.Client) *Controller {
 	return &Controller{client: client}
 }
 
-func (c *Controller) RequestCatalog(endpoint string) (catalog2.Response, error) {
-	req := catalog2.Request{
+func (c *Controller) RequestCatalog(endpoint string) (catalog.Response, error) {
+	req := catalog.Request{
 		Context:      dsp.Context,
-		Type:         catalog2.TypeCatalogRequest,
+		Type:         catalog.TypeCatalogRequest,
 		DspaceFilter: nil,
 	}
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return catalog2.Response{}, errors.MarshalError(endpoint, err)
+		return catalog.Response{}, errors.MarshalError(endpoint, err)
 	}
 
-	res, err := c.client.Send(data, endpoint+catalog2.RequestEndpoint)
+	res, err := c.client.Send(data, endpoint+catalog.RequestEndpoint)
 	if err != nil {
-		return catalog2.Response{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
+		return catalog.Response{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
-	var cat catalog2.Response
+	var cat catalog.Response
 	if err = json.Unmarshal(res, &cat); err != nil {
-		return catalog2.Response{}, errors.UnmarshalError(``, err)
+		return catalog.Response{}, errors.UnmarshalError(``, err)
 	}
 
 	return cat, nil
 }
 
-func (c *Controller) RequestDataset(id, endpoint string) (catalog2.DatasetResponse, error) {
-	req := catalog2.DatasetRequest{
+func (c *Controller) RequestDataset(id, endpoint string) (catalog.DatasetResponse, error) {
+	req := catalog.DatasetRequest{
 		Context:   dsp.Context,
-		Type:      catalog2.TypeDatasetRequest,
+		Type:      catalog.TypeDatasetRequest,
 		DatasetId: id,
 	}
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return catalog2.DatasetResponse{}, errors.MarshalError(endpoint, err)
+		return catalog.DatasetResponse{}, errors.MarshalError(endpoint, err)
 	}
 
-	res, err := c.client.Send(data, endpoint+catalog2.RequestDatasetEndpoint)
+	res, err := c.client.Send(data, endpoint+catalog.RequestDatasetEndpoint)
 	if err != nil {
-		return catalog2.DatasetResponse{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
+		return catalog.DatasetResponse{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
-	var dataset catalog2.DatasetResponse
+	var dataset catalog.DatasetResponse
 	if err = json.Unmarshal(res, &dataset); err != nil {
-		return catalog2.DatasetResponse{}, errors.UnmarshalError(``, err)
+		return catalog.DatasetResponse{}, errors.UnmarshalError(``, err)
 	}
 
 	return dataset, nil

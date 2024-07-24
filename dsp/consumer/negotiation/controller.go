@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/protocols/dsp"
-	negotiation2 "github.com/YasiruR/connector/domain/protocols/dsp/negotiation"
-	"github.com/YasiruR/connector/domain/protocols/odrl"
 	"github.com/YasiruR/connector/domain/stores"
 	"strconv"
 	"strings"
@@ -32,7 +32,7 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 	}
 }
 
-func (c *Controller) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (cnId string, err error) {
+func (c *Controller) RequestContract(providerEndpoint string, ofr odrl.Offer) (cnId string, err error) {
 	// generate consumerPid
 	consPId, err := c.urn.NewURN()
 	if err != nil {
@@ -40,18 +40,11 @@ func (c *Controller) RequestContract(offerId, providerEndpoint, providerPid, tar
 	}
 
 	// construct payload
-	req := negotiation2.ContractRequest{
-		Ctx:     dsp.Context,
-		Type:    negotiation2.TypeContractRequest,
-		ProvPId: providerPid,
-		ConsPId: consPId,
-		Offer: odrl.Offer{
-			Id:          offerId,
-			Target:      odrl.Target(target),
-			Assigner:    odrl.Assigner(assigner),
-			Assignee:    odrl.Assignee(assignee),
-			Permissions: []odrl.Rule{{Action: odrl.Action(action)}}, // should handle constraints
-		},
+	req := negotiation.ContractRequest{
+		Ctx:          dsp.Context,
+		Type:         negotiation.TypeContractRequest,
+		ConsPId:      consPId,
+		Offer:        ofr,
 		CallbackAddr: c.callbackAddr,
 	}
 
@@ -60,20 +53,20 @@ func (c *Controller) RequestContract(offerId, providerEndpoint, providerPid, tar
 		return ``, errors.MarshalError(``, err)
 	}
 
-	res, err := c.client.Send(data, providerEndpoint+negotiation2.ContractRequestEndpoint)
+	res, err := c.client.Send(data, providerEndpoint+negotiation.ContractRequestEndpoint)
 	if err != nil {
 		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
-	var ack negotiation2.Ack
+	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return ``, errors.UnmarshalError(providerEndpoint+negotiation2.ContractRequestEndpoint, err)
+		return ``, errors.UnmarshalError(providerEndpoint+negotiation.ContractRequestEndpoint, err)
 	}
 
-	c.negStore.Set(consPId, negotiation2.Negotiation(ack))
-	c.negStore.SetAssignee(consPId, odrl.Assignee(assignee))
-	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, assigner, assignee))
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consPId, negotiation2.StateRequested))
+	c.negStore.Set(consPId, negotiation.Negotiation(ack))
+	c.negStore.SetAssignee(consPId, ofr.Assignee)
+	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, ofr.Assigner, ofr.Assignee))
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consPId, negotiation.StateRequested))
 	return consPId, nil
 }
 
@@ -85,9 +78,9 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
-	req := negotiation2.ContractVerification{
+	req := negotiation.ContractVerification{
 		Ctx:     dsp.Context,
-		Type:    negotiation2.TypeAgreementVerification,
+		Type:    negotiation.TypeAgreementVerification,
 		ProvPId: neg.ProvPId,
 		ConsPId: consumerPid,
 	}
@@ -102,22 +95,22 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
 	}
 
-	endpoint := strings.Replace(providerAddr+negotiation2.AgreementVerificationEndpoint, `{`+negotiation2.ParamProviderId+`}`, neg.ProvPId, 1)
+	endpoint := strings.Replace(providerAddr+negotiation.AgreementVerificationEndpoint, `{`+negotiation.ParamProviderId+`}`, neg.ProvPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
-	var ack negotiation2.Ack
+	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(providerAddr+negotiation2.AgreementVerificationEndpoint, err)
+		return errors.UnmarshalError(providerAddr+negotiation.AgreementVerificationEndpoint, err)
 	}
 
-	if err = c.negStore.UpdateState(consumerPid, negotiation2.StateVerified); err != nil {
+	if err = c.negStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation2.StateVerified))
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateVerified))
 	return nil
 }
 
