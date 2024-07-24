@@ -7,13 +7,14 @@ import (
 	"github.com/YasiruR/connector/core/protocols/odrl"
 )
 
+// Policy is a store that exists within a Provider to persist any created policy
 type Policy struct {
 	store pkg.Collection
 }
 
 func NewPolicyStore(plugins core.Plugins) *Policy {
 	plugins.Log.Info("initialized policy store")
-	return &Policy{store: plugins.Database.NewDataStore()}
+	return &Policy{store: plugins.Database.NewCollection()}
 }
 
 func (p *Policy) SetOffer(id string, val odrl.Offer) {

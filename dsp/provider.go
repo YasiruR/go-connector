@@ -27,7 +27,6 @@ type Provider struct {
 }
 
 func NewProvider(port int, stores core.Stores, plugins core.Plugins) dsp.Provider {
-	plugins.Log.Info("enabled data provider functions")
 	return &Provider{
 		participantId: `participant-id-provider`,
 		callbackAddr:  `http://localhost:` + strconv.Itoa(port),
@@ -42,21 +41,21 @@ func NewProvider(port int, stores core.Stores, plugins core.Plugins) dsp.Provide
 
 // Catalog Protocol (reference: https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/catalog/catalog.protocol)
 
-func (s *Provider) HandleCatalogRequest(_ any) (catalog.Response, error) {
-	cat, err := s.catalog.Get()
+func (p *Provider) HandleCatalogRequest(_ any) (catalog.Response, error) {
+	cat, err := p.catalog.Get()
 	if err != nil {
 		return catalog.Response{}, errors.StoreFailed(stores.TypeCatalog, `Get`, err)
 	}
 
 	return catalog.Response{
 		Context:             dsp.Context,
-		DspaceParticipantID: s.participantId,
+		DspaceParticipantID: p.participantId,
 		Catalog:             cat,
 	}, nil
 }
 
-func (s *Provider) HandleDatasetRequest(id string) (catalog.DatasetResponse, error) {
-	ds, err := s.catalog.Dataset(id)
+func (p *Provider) HandleDatasetRequest(id string) (catalog.DatasetResponse, error) {
+	ds, err := p.catalog.Dataset(id)
 	if err != nil {
 		return catalog.DatasetResponse{}, errors.StoreFailed(stores.TypeCatalog, `Dataset`, err)
 	}
@@ -69,27 +68,27 @@ func (s *Provider) HandleDatasetRequest(id string) (catalog.DatasetResponse, err
 
 // Negotiation Protocol (reference: https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol/contract-negotiation/contract.negotiation.protocol)
 
-func (s *Provider) OfferContract() {}
+func (p *Provider) OfferContract() {}
 
-func (s *Provider) AgreeContract(offerId, negotiationId string) (agreementId string, err error) {
-	agreementId, err = s.urn.NewURN()
+func (p *Provider) AgreeContract(offerId, negotiationId string) (agreementId string, err error) {
+	agreementId, err = p.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`providerPid`, `NewURN`, err)
 	}
 
-	offer, err := s.policyStore.Offer(offerId)
+	offer, err := p.policyStore.Offer(offerId)
 	if err != nil {
 		return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
 	}
 
-	assignee, err := s.negStore.Assignee(negotiationId)
+	assignee, err := p.negStore.Assignee(negotiationId)
 	if err != nil {
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
 	}
 
-	cn, err := s.negStore.Get(negotiationId)
+	cn, err := p.negStore.Negotiation(negotiationId)
 	if err != nil {
-		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Get`, err)
+		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	ca := negotiation.ContractAgreement{
@@ -105,10 +104,10 @@ func (s *Provider) AgreeContract(offerId, negotiationId string) (agreementId str
 			Assignee:  assignee,
 			Timestamp: time.Now().UTC().String(), // change format into XSD
 		},
-		CallbackAddr: s.callbackAddr,
+		CallbackAddr: p.callbackAddr,
 	}
 
-	url, err := s.negStore.CallbackAddr(negotiationId)
+	url, err := p.negStore.CallbackAddr(negotiationId)
 	if err != nil {
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
 	}
@@ -118,7 +117,7 @@ func (s *Provider) AgreeContract(offerId, negotiationId string) (agreementId str
 		return ``, errors.MarshalError(``, err)
 	}
 
-	res, err := s.client.Send(data, url+`/negotiations/`+cn.ConsPId+`/agreement`)
+	res, err := p.client.Send(data, url+`/negotiations/`+cn.ConsPId+`/agreement`)
 	if err != nil {
 		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
@@ -128,26 +127,26 @@ func (s *Provider) AgreeContract(offerId, negotiationId string) (agreementId str
 		return ``, errors.UnmarshalError(``, err)
 	}
 
-	if err = s.negStore.UpdateState(negotiationId, negotiation.StateAgreed); err != nil {
+	if err = p.negStore.UpdateState(negotiationId, negotiation.StateAgreed); err != nil {
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	s.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", negotiationId, negotiation.StateAgreed))
+	p.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", negotiationId, negotiation.StateAgreed))
 	return agreementId, nil
 }
 
-func (s *Provider) FinalizeContract() {}
+func (p *Provider) FinalizeContract() {}
 
-func (s *Provider) HandleNegotiationsRequest(providerPid string) (negotiation.Ack, error) {
-	ack, err := s.negStore.Get(providerPid)
+func (p *Provider) HandleNegotiationsRequest(providerPid string) (negotiation.Ack, error) {
+	ack, err := p.negStore.Negotiation(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Get`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	return negotiation.Ack(ack), nil
 }
 
-func (s *Provider) HandleContractRequest(cr negotiation.ContractRequest) (ack negotiation.Ack, err error) {
+func (p *Provider) HandleContractRequest(cr negotiation.ContractRequest) (ack negotiation.Ack, err error) {
 	// return error message if offerId is invalid
 
 	// return error message if callbackAddress is invalid
@@ -157,9 +156,9 @@ func (s *Provider) HandleContractRequest(cr negotiation.ContractRequest) (ack ne
 	var cn negotiation.Negotiation
 	provPId := cr.ProvPId
 	if provPId != `` {
-		cn, err = s.negStore.Get(provPId)
+		cn, err = p.negStore.Negotiation(provPId)
 		if err != nil {
-			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Get`, err)
+			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 		}
 
 		if cn.State != negotiation.StateOffered {
@@ -171,9 +170,10 @@ func (s *Provider) HandleContractRequest(cr negotiation.ContractRequest) (ack ne
 		}
 
 		cn.State = negotiation.StateRequested
-		s.log.Trace("a valid contract negotiation already exists", cn)
+		cn.Type = negotiation.TypeNegotiationAck
+		p.log.Trace("a valid contract negotiation exists", cn.ProvPId)
 	} else {
-		provPId, err = s.urn.NewURN()
+		provPId, err = p.urn.NewURN()
 		if err != nil {
 			return negotiation.Ack{}, errors.URNFailed(`providerPid`, `NewURN`, err)
 		}
@@ -185,13 +185,28 @@ func (s *Provider) HandleContractRequest(cr negotiation.ContractRequest) (ack ne
 			ProvPId: provPId,
 			State:   negotiation.StateRequested,
 		}
-		s.log.Trace("a new contract negotiation was created", cn)
 	}
 
-	s.negStore.Set(provPId, cn)
-	s.negStore.SetAssignee(provPId, cr.Offer.Assignee)
-	s.negStore.SetCallbackAddr(provPId, cr.CallbackAddr)
-	s.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", provPId, cr.Offer.Assigner, cr.Offer.Assignee))
-	s.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", provPId, negotiation.StateRequested))
+	p.negStore.Set(provPId, cn)
+	p.negStore.SetAssignee(provPId, cr.Offer.Assignee)
+	p.negStore.SetCallbackAddr(provPId, cr.CallbackAddr)
+	p.log.Trace(fmt.Sprintf("stored contract negotiation (assigner: %s, assignee: %s)", cr.Offer.Assigner, cr.Offer.Assignee), cn)
+	p.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", provPId, negotiation.StateRequested))
+	return negotiation.Ack(cn), nil
+}
+
+func (p *Provider) HandleAgreementVerification(providerPid string) (negotiation.Ack, error) {
+	cn, err := p.negStore.Negotiation(providerPid)
+	if err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+	}
+
+	if err = p.negStore.UpdateState(providerPid, negotiation.StateVerified); err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+	}
+
+	cn.State = negotiation.StateVerified
+	cn.Type = negotiation.TypeNegotiationAck
+	p.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateVerified))
 	return negotiation.Ack(cn), nil
 }

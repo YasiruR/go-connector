@@ -18,9 +18,8 @@ type Owner struct {
 }
 
 func NewOwner(stores core.Stores, plugins core.Plugins) *Owner {
-	plugins.Log.Info("enabled data owner functions")
 	return &Owner{
-		host:        `http://localhost:`,
+		host:        `test-owner`, // can we assign participant ID from config to assigner?
 		policyStore: stores.Policy,
 		catalog:     stores.Catalog,
 		urn:         plugins.URNService,
@@ -45,7 +44,7 @@ func (o *Owner) CreatePolicy(target string, permissions, prohibitions []odrl.Rul
 	}
 
 	o.policyStore.SetOffer(policyId, ofr)
-	o.log.Info("created and stored the new policy", ofr)
+	o.log.Trace("created and stored a new policy", ofr)
 	return policyId, nil
 }
 
@@ -113,6 +112,6 @@ func (o *Owner) CreateDataset(title string, descriptions, keywords, endpoints, p
 	}
 
 	o.catalog.AddDataset(datasetId, ds)
-	o.log.Info("new dataset was created and stored", ds)
+	o.log.Trace("created and stored a new dataset", ds)
 	return datasetId, nil
 }

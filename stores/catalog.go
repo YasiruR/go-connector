@@ -8,6 +8,7 @@ import (
 	"github.com/YasiruR/connector/core/protocols/dcat"
 )
 
+// Catalog stores Datasets and Data Services which can be shared through a connector
 type Catalog struct {
 	meta  dcat.CatalogMetadata
 	urn   pkg.URNService
@@ -18,7 +19,7 @@ func NewCatalog(plugins core.Plugins) *Catalog {
 	plugins.Log.Info("initialized catalog store")
 	return &Catalog{
 		urn:   plugins.URNService,
-		store: plugins.Database.NewDataStore(),
+		store: plugins.Database.NewCollection(),
 	}
 }
 

@@ -18,6 +18,7 @@ type Stores struct {
 	stores.Catalog
 	stores.Policy
 	stores.ContractNegotiation
+	stores.Agreement
 }
 
 type Servers struct {

@@ -15,17 +15,6 @@ type CreatePolicyRequest struct {
 	Obligations  []Rule `json:"obligations"`
 }
 
-type Rule struct {
-	Action      string       `json:"action"`
-	Constraints []Constraint `json:"constraints"`
-}
-
-type Constraint struct {
-	LeftOperand  string `json:"leftOperand"`
-	Operator     string `json:"operator"`
-	RightOperand string `json:"rightOperand"`
-}
-
 type CreateDatasetRequest struct {
 	Title        string   `json:"title"`
 	Descriptions []string `json:"descriptions"`
@@ -44,7 +33,22 @@ type ContractRequest struct {
 	Action           string `json:"action"`
 }
 
-type ContractAgreement struct {
+type AgreeContractRequest struct {
 	OfferId       string `json:"offerId"`
 	NegotiationId string `json:"negotiationId"`
+}
+
+type VerifyAgreementRequest struct {
+	ConsumerPid string `json:"consumerPid"`
+}
+
+type Rule struct {
+	Action      string       `json:"action"`
+	Constraints []Constraint `json:"constraints"`
+}
+
+type Constraint struct {
+	LeftOperand  string `json:"leftOperand"`
+	Operator     string `json:"operator"`
+	RightOperand string `json:"rightOperand"`
 }

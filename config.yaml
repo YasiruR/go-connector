@@ -1,3 +1,5 @@
+data_space:
+  participantId: test-participant
 catalog:
   title: Ceit catalog
   keywords:

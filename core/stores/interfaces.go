@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	TypeCatalog             = `Catalog`
-	TypeContractNegotiation = `ContractNegotiation`
-	TypePolicy              = `Policy`
+	TypeCatalog             = `catalog-store`
+	TypeContractNegotiation = `contract-negotiation-store`
+	TypePolicy              = `policy-store`
+	TypeAgreement           = `agreement-store`
 )
 
 // Catalog stores Datasets as per the DCAT profile recommended by IDSA
@@ -25,7 +26,7 @@ type Catalog interface {
 // in Negotiation Protocol ('cnId' refers to Contract Negotiation ID)
 type ContractNegotiation interface {
 	Set(cnId string, val negotiation.Negotiation)
-	Get(cnId string) (negotiation.Negotiation, error)
+	Negotiation(cnId string) (negotiation.Negotiation, error)
 	UpdateState(cnId string, s negotiation.State) error
 	State(cnId string) (negotiation.State, error)
 	SetAssignee(cnId string, a odrl.Assignee)
@@ -37,4 +38,12 @@ type ContractNegotiation interface {
 type Policy interface {
 	SetOffer(id string, val odrl.Offer)
 	Offer(id string) (odrl.Offer, error)
+}
+
+type Agreement interface {
+	// Set stores contract agreement with agreement ID as the key
+	Set(id string, val odrl.Agreement)
+	// Get retrieves contract agreement by agreement ID
+	Get(id string) (odrl.Agreement, error)
+	GetByNegotiationID(cnId string) (odrl.Agreement, error)
 }

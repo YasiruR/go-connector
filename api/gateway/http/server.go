@@ -5,9 +5,11 @@ import (
 	"github.com/YasiruR/connector/core"
 	"github.com/YasiruR/connector/core/api/gateway"
 	"github.com/YasiruR/connector/core/dsp"
+	"github.com/YasiruR/connector/core/dsp/negotiation"
 	"github.com/YasiruR/connector/core/errors"
 	"github.com/YasiruR/connector/core/pkg"
 	"github.com/YasiruR/connector/core/protocols/odrl"
+	"github.com/YasiruR/connector/core/stores"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -25,22 +27,33 @@ type Server struct {
 	provider dsp.Provider
 	consumer dsp.Consumer
 	owner    dsp.Owner
+	agrStore stores.Agreement // should this be invoked through a role?
 	log      pkg.Log
 }
 
-func NewServer(port int, roles core.Roles, log pkg.Log) *Server {
+func NewServer(port int, roles core.Roles, stores core.Stores, log pkg.Log) *Server {
 	r := mux.NewRouter()
-	s := Server{port: port, router: r, provider: roles.Provider, consumer: roles.Consumer, owner: roles.Owner, log: log}
+	s := Server{
+		port:     port,
+		router:   r,
+		provider: roles.Provider,
+		consumer: roles.Consumer,
+		owner:    roles.Owner,
+		agrStore: stores.Agreement,
+		log:      log,
+	}
 
-	// endpoints related to data assets
+	// endpoints related to catalog
 	r.HandleFunc(gateway.CreatePolicyEndpoint, s.CreatePolicy).Methods(http.MethodPost)
 	r.HandleFunc(gateway.CreateDatasetEndpoint, s.CreateDataset).Methods(http.MethodPost)
 	r.HandleFunc(gateway.RequestCatalogEndpoint, s.RequestCatalog).Methods(http.MethodPost)
 	r.HandleFunc(gateway.RequestDatasetEndpoint, s.RequestDataset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
-	r.HandleFunc(gateway.ContractRequestEndpoint, s.RequestContract).Methods(http.MethodPost)
-	r.HandleFunc(gateway.ContractAgreementEndpoint, s.AgreeContract).Methods(http.MethodPost)
+	r.HandleFunc(gateway.RequestContractEndpoint, s.RequestContract).Methods(http.MethodPost)
+	r.HandleFunc(gateway.AgreeContractEndpoint, s.AgreeContract).Methods(http.MethodPost)
+	r.HandleFunc(gateway.GetAgreementEndpoint, s.GetAgreement).Methods(http.MethodGet)
+	r.HandleFunc(gateway.VerifyAgreementEndpoint, s.VerifyAgreement).Methods(http.MethodPost)
 
 	return &s
 }
@@ -146,17 +159,18 @@ func (s *Server) RequestDataset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(gateway.ContractRequestEndpoint, w, r)
+	body, err := s.readBody(gateway.RequestContractEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
 	var req gateway.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(gateway.ContractRequestEndpoint, err), http.StatusBadRequest)
+		s.sendError(w, errors.UnmarshalError(gateway.RequestContractEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
+	// todo check if providerPid should really be requested
 	negId, err := s.consumer.RequestContract(req.OfferId, req.ProviderEndpoint, req.ProviderPId, req.OdrlTarget,
 		req.Assigner, req.Assignee, req.Action)
 	if err != nil {
@@ -164,18 +178,18 @@ func (s *Server) RequestContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.sendAck(w, gateway.ContractRequestEndpoint, gateway.ContractRequestResponse{Id: negId}, http.StatusOK)
+	s.sendAck(w, gateway.RequestContractEndpoint, gateway.ContractRequestResponse{Id: negId}, http.StatusOK)
 }
 
 func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(gateway.ContractAgreementEndpoint, w, r)
+	body, err := s.readBody(gateway.AgreeContractEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
-	var req gateway.ContractAgreement
+	var req gateway.AgreeContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(gateway.ContractAgreementEndpoint, err), http.StatusBadRequest)
+		s.sendError(w, errors.UnmarshalError(gateway.AgreeContractEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -185,7 +199,40 @@ func (s *Server) AgreeContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.sendAck(w, gateway.ContractAgreementEndpoint, gateway.ContractAgreementResponse{Id: agrId}, http.StatusOK)
+	s.sendAck(w, gateway.AgreeContractEndpoint, gateway.ContractAgreementResponse{Id: agrId}, http.StatusOK)
+}
+
+func (s *Server) GetAgreement(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	agreementId, ok := params[gateway.ParamId]
+	if !ok {
+		s.sendError(w, errors.PathParamNotFound(gateway.GetAgreementEndpoint, negotiation.ParamConsumerPid), http.StatusBadRequest)
+		return
+	}
+
+	agr, err := s.agrStore.Get(agreementId)
+	if err != nil {
+		s.sendError(w, errors.StoreFailed(stores.TypeAgreement, `Get`, err), http.StatusBadRequest)
+		return
+	}
+
+	s.sendAck(w, gateway.GetAgreementEndpoint, agr, http.StatusOK)
+}
+
+func (s *Server) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	consumerPid, ok := params[gateway.ParamConsumerPid]
+	if !ok {
+		s.sendError(w, errors.PathParamNotFound(gateway.VerifyAgreementEndpoint, negotiation.ParamConsumerPid), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.consumer.VerifyAgreement(consumerPid); err != nil {
+		s.sendError(w, errors.DSPFailed(dsp.RoleConsumer, `VerifyAgreement`, err), http.StatusBadRequest)
+		return
+	}
+
+	s.sendAck(w, gateway.VerifyAgreementEndpoint, nil, http.StatusOK)
 }
 
 func (s *Server) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
@@ -218,5 +265,5 @@ func (s *Server) sendAck(w http.ResponseWriter, receivedEndpoint string, data an
 // todo remove
 func (s *Server) sendError(w http.ResponseWriter, err error, code int) {
 	w.WriteHeader(code)
-	s.log.Error(err)
+	s.log.Error(errors.APIFailed(`gateway`, err))
 }

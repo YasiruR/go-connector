@@ -6,10 +6,12 @@ const (
 )
 
 const (
-	TypeNegotiation       = `dspace:ContractNegotiation`
-	TypeOffer             = `dspace:ContractOfferMessage`
-	TypeNegotiationAck    = `dspace:ContractNegotiationAckMessage`
-	TypeContractAgreement = `dspace:ContractAgreementMessage`
+	TypeNegotiation           = `dspace:ContractNegotiation`
+	TypeContractOffer         = `dspace:ContractOfferMessage`
+	TypeContractRequest       = `dspace:ContractRequestMessage`
+	TypeNegotiationAck        = `dspace:ContractNegotiationAckMessage`
+	TypeContractAgreement     = `dspace:ContractAgreementMessage`
+	TypeAgreementVerification = `dspace:ContractAgreementVerificationMessage`
 )
 
 type EventType string
@@ -20,9 +22,10 @@ const (
 )
 
 const (
-	RequestEndpoint           = `/negotiations/{` + ParamProviderId + `}`
-	ContractRequestEndpoint   = `/negotiations/request`
-	ContractAgreementEndpoint = `/negotiations/{` + ParamConsumerPid + `}/agreement`
+	RequestEndpoint               = `/negotiations/{` + ParamProviderId + `}`
+	ContractRequestEndpoint       = `/negotiations/request`
+	ContractAgreementEndpoint     = `/negotiations/{` + ParamConsumerPid + `}/agreement`
+	AgreementVerificationEndpoint = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
 )
 
 type State string

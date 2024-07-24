@@ -38,6 +38,7 @@ func NewServer(port int, roles core.Roles, log pkg.Log) *Server {
 	r.HandleFunc(negotiation.RequestEndpoint, s.GetNegotiation).Methods(http.MethodGet)
 	r.HandleFunc(negotiation.ContractRequestEndpoint, s.HandleContractRequest).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.HandleContractAgreement).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.AgreementVerificationEndpoint, s.HandleAgreementVerification).Methods(http.MethodPost)
 
 	return &s
 }
@@ -137,7 +138,7 @@ func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	body, err := s.readBody(catalog.RequestEndpoint, w, r)
+	body, err := s.readBody(negotiation.ContractAgreementEndpoint, w, r)
 	if err != nil {
 		return
 	}
@@ -155,6 +156,34 @@ func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request)
 	}
 
 	s.sendAck(w, negotiation.ContractAgreementEndpoint, ack, http.StatusOK)
+}
+
+func (s *Server) HandleAgreementVerification(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	providerPid, ok := params[negotiation.ParamProviderId]
+	if !ok {
+		s.sendError(w, errors.PathParamNotFound(negotiation.AgreementVerificationEndpoint, negotiation.ParamProviderId), http.StatusBadRequest)
+		return
+	}
+
+	body, err := s.readBody(negotiation.AgreementVerificationEndpoint, w, r)
+	if err != nil {
+		return
+	}
+
+	var req negotiation.ContractVerification
+	if err = json.Unmarshal(body, &req); err != nil {
+		s.sendError(w, errors.UnmarshalError(negotiation.AgreementVerificationEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	ack, err := s.provider.HandleAgreementVerification(providerPid)
+	if err != nil {
+		s.sendError(w, errors.HandlerFailed(negotiation.AgreementVerificationEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
+		return
+	}
+
+	s.sendAck(w, negotiation.AgreementVerificationEndpoint, ack, http.StatusOK)
 }
 
 func (s *Server) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
@@ -186,5 +215,5 @@ func (s *Server) sendAck(w http.ResponseWriter, receivedEndpoint string, data an
 
 func (s *Server) sendError(w http.ResponseWriter, err error, code int) {
 	w.WriteHeader(code)
-	s.log.Error(err)
+	s.log.Error(errors.APIFailed(`dsp`, err))
 }

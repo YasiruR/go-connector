@@ -22,7 +22,8 @@ func Start() {
 	plugins := initPlugins(log)
 	stors := initStores(plugins)
 	roles := initRoles(cfg, stors, plugins)
-	servers := initServers(cfg, roles, plugins)
+	log.Info("enabled consumer, provider and owner roles")
+	servers := initServers(cfg, roles, stors, plugins)
 
 	if err := stors.Init(cfg); err != nil {
 		log.Fatal(fmt.Sprintf("configuring catalog service failed - %s", err))
@@ -46,6 +47,7 @@ func initStores(plugins core.Plugins) core.Stores {
 		Catalog:             stores.NewCatalog(plugins),
 		Policy:              stores.NewPolicyStore(plugins),
 		ContractNegotiation: stores.NewContractNegotiationStore(plugins),
+		Agreement:           stores.NewAgreementStore(plugins),
 	}
 }
 
@@ -57,9 +59,9 @@ func initRoles(cfg config.Config, stores core.Stores, plugins core.Plugins) core
 	}
 }
 
-func initServers(cfg config.Config, roles core.Roles, plugins core.Plugins) core.Servers {
+func initServers(cfg config.Config, roles core.Roles, stores core.Stores, plugins core.Plugins) core.Servers {
 	return core.Servers{
 		DSP:     dspSHttp.NewServer(cfg.Servers.DSP.HTTP.Port, roles, plugins.Log),
-		Gateway: gatewayHttp.NewServer(cfg.Servers.Gateway.HTTP.Port, roles, plugins.Log),
+		Gateway: gatewayHttp.NewServer(cfg.Servers.Gateway.HTTP.Port, roles, stores, plugins.Log),
 	}
 }

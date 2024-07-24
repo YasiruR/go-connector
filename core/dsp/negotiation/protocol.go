@@ -4,7 +4,7 @@ type ConsumerController interface {
 	// change endpoint to generic
 	RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error)
 	AcceptContract()
-	VerifyAgreement()
+	VerifyAgreement(consumerPid string) error
 	TerminateContract()
 }
 
@@ -21,4 +21,5 @@ type ProviderController interface {
 type ProviderHandler interface {
 	HandleNegotiationsRequest(providerPid string) (Ack, error)
 	HandleContractRequest(cr ContractRequest) (Ack, error)
+	HandleAgreementVerification(providerPid string) (Ack, error)
 }

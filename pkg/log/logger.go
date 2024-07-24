@@ -10,7 +10,7 @@ func NewLogger() *Logger {
 	return &Logger{
 		log: log.Constructor.Log(
 			log.WithColors(true),
-			log.WithLevel("DEBUG"),
+			log.WithLevel(log.TRACE),
 			log.WithFilePath(true),
 			log.WithSkipFrameCount(3),
 		),

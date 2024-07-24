@@ -14,7 +14,7 @@ type IAM interface {
 // Database contains one or more Collection to support data storage required
 // by the connector
 type Database interface {
-	NewDataStore() Collection
+	NewCollection() Collection
 }
 
 // Collection provides an isolated storage for a single context. For example,

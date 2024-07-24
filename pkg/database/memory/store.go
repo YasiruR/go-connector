@@ -15,7 +15,7 @@ func NewStore(log pkg.Log) *Store {
 	return &Store{maps: make([]pkg.Collection, 0)}
 }
 
-func (s *Store) NewDataStore() pkg.Collection {
+func (s *Store) NewCollection() pkg.Collection {
 	m := &Map{data: new(sync.Map)}
 	s.maps = append(s.maps, m)
 	return m

@@ -12,28 +12,32 @@ import (
 	"github.com/YasiruR/connector/core/protocols/odrl"
 	"github.com/YasiruR/connector/core/stores"
 	"strconv"
+	"strings"
 )
+
+// validator should verify states before transitioning into next, signatures, authorization
 
 type Consumer struct {
 	callbackAddr string
 	negStore     stores.ContractNegotiation
+	agrStore     stores.Agreement
 	urn          pkg.URNService
 	client       pkg.Client
 	log          pkg.Log
 }
 
 func NewConsumer(port int, stores core.Stores, plugins core.Plugins) dsp.Consumer {
-	plugins.Log.Info("enabled data consumer functions")
 	return &Consumer{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		negStore:     stores.ContractNegotiation,
+		agrStore:     stores.Agreement,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
 		log:          plugins.Log,
 	}
 }
 
-func (s *Consumer) RequestCatalog(endpoint string) (catalog.Response, error) {
+func (c *Consumer) RequestCatalog(endpoint string) (catalog.Response, error) {
 	req := catalog.Request{
 		Context:      dsp.Context,
 		Type:         catalog.TypeCatalogRequest,
@@ -45,7 +49,7 @@ func (s *Consumer) RequestCatalog(endpoint string) (catalog.Response, error) {
 		return catalog.Response{}, errors.MarshalError(endpoint, err)
 	}
 
-	res, err := s.client.Send(data, endpoint+catalog.RequestEndpoint)
+	res, err := c.client.Send(data, endpoint+catalog.RequestEndpoint)
 	if err != nil {
 		return catalog.Response{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
@@ -58,7 +62,7 @@ func (s *Consumer) RequestCatalog(endpoint string) (catalog.Response, error) {
 	return cat, nil
 }
 
-func (s *Consumer) RequestDataset(id, endpoint string) (catalog.DatasetResponse, error) {
+func (c *Consumer) RequestDataset(id, endpoint string) (catalog.DatasetResponse, error) {
 	req := catalog.DatasetRequest{
 		Context:   dsp.Context,
 		Type:      catalog.TypeDatasetRequest,
@@ -70,7 +74,7 @@ func (s *Consumer) RequestDataset(id, endpoint string) (catalog.DatasetResponse,
 		return catalog.DatasetResponse{}, errors.MarshalError(endpoint, err)
 	}
 
-	res, err := s.client.Send(data, endpoint+catalog.RequestDatasetEndpoint)
+	res, err := c.client.Send(data, endpoint+catalog.RequestDatasetEndpoint)
 	if err != nil {
 		return catalog.DatasetResponse{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
@@ -83,15 +87,17 @@ func (s *Consumer) RequestDataset(id, endpoint string) (catalog.DatasetResponse,
 	return dataset, nil
 }
 
-func (s *Consumer) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error) {
+func (c *Consumer) RequestContract(offerId, providerEndpoint, providerPid, target, assigner, assignee, action string) (negotiationId string, err error) {
 	// generate consumerPid
-	consPId, err := s.urn.NewURN()
+	consPId, err := c.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`consumerPid`, `NewURN`, err)
 	}
 
 	// construct payload
 	req := negotiation.ContractRequest{
+		Ctx:     dsp.Context,
+		Type:    negotiation.TypeContractRequest,
 		ProvPId: providerPid,
 		ConsPId: consPId,
 		Offer: odrl.Offer{
@@ -101,7 +107,7 @@ func (s *Consumer) RequestContract(offerId, providerEndpoint, providerPid, targe
 			Assignee:    odrl.Assignee(assignee),
 			Permissions: []odrl.Rule{{Action: odrl.Action(action)}}, // should handle constraints
 		},
-		CallbackAddr: s.callbackAddr,
+		CallbackAddr: c.callbackAddr,
 	}
 
 	data, err := json.Marshal(req)
@@ -109,42 +115,85 @@ func (s *Consumer) RequestContract(offerId, providerEndpoint, providerPid, targe
 		return ``, errors.MarshalError(``, err)
 	}
 
-	res, err := s.client.Send(data, providerEndpoint+negotiation.ContractRequestEndpoint)
+	res, err := c.client.Send(data, providerEndpoint+negotiation.ContractRequestEndpoint)
 	if err != nil {
 		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
 	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return ``, errors.UnmarshalError(``, err)
+		return ``, errors.UnmarshalError(providerEndpoint+negotiation.ContractRequestEndpoint, err)
 	}
 
-	s.negStore.Set(consPId, negotiation.Negotiation(ack))
-	s.negStore.SetAssignee(consPId, odrl.Assignee(assignee))
-	s.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, assigner, assignee))
-	s.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consPId, negotiation.StateRequested))
+	c.negStore.Set(consPId, negotiation.Negotiation(ack))
+	c.negStore.SetAssignee(consPId, odrl.Assignee(assignee))
+	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, assigner, assignee))
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consPId, negotiation.StateRequested))
 	return consPId, nil
 }
 
-func (s *Consumer) AcceptContract() {}
+func (c *Consumer) AcceptContract() {}
 
-func (s *Consumer) VerifyAgreement() {}
+func (c *Consumer) VerifyAgreement(consumerPid string) error {
+	neg, err := c.negStore.Negotiation(consumerPid)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+	}
 
-func (s *Consumer) TerminateContract() {}
+	req := negotiation.ContractVerification{
+		Ctx:     dsp.Context,
+		Type:    negotiation.TypeAgreementVerification,
+		ProvPId: neg.ProvPId,
+		ConsPId: consumerPid,
+	}
 
-func (s *Consumer) HandleContractAgreement(consumerPid string, ca negotiation.ContractAgreement) (negotiation.Ack, error) {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.MarshalError(``, err)
+	}
+
+	providerAddr, err := c.negStore.CallbackAddr(consumerPid)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
+	}
+
+	endpoint := strings.Replace(providerAddr+negotiation.AgreementVerificationEndpoint, `{`+negotiation.ParamProviderId+`}`, neg.ProvPId, 1)
+	res, err := c.client.Send(data, endpoint)
+	if err != nil {
+		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
+	}
+
+	var ack negotiation.Ack
+	if err = json.Unmarshal(res, &ack); err != nil {
+		return errors.UnmarshalError(providerAddr+negotiation.AgreementVerificationEndpoint, err)
+	}
+
+	if err = c.negStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+	}
+
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateVerified))
+	return nil
+}
+
+func (c *Consumer) TerminateContract() {}
+
+func (c *Consumer) HandleContractAgreement(consumerPid string, ca negotiation.ContractAgreement) (negotiation.Ack, error) {
 	// validate agreement (e.g. consumerPid, target)
 
-	if err := s.negStore.UpdateState(ca.ConsPId, negotiation.StateAgreed); err != nil {
+	c.agrStore.Set(ca.ConsPId, ca.Agreement)
+	c.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)", ca.Agreement.Id, ca.ConsPId))
+
+	if err := c.negStore.UpdateState(ca.ConsPId, negotiation.StateAgreed); err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	s.negStore.SetCallbackAddr(ca.ConsPId, s.callbackAddr)
-	neg, err := s.negStore.Get(ca.ConsPId)
+	c.negStore.SetCallbackAddr(ca.ConsPId, ca.CallbackAddr)
+	neg, err := c.negStore.Negotiation(ca.ConsPId)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Get`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
-	s.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
 	return negotiation.Ack(neg), nil
 }
