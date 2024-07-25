@@ -63,7 +63,7 @@ func (c *Controller) RequestContract(providerEndpoint string, ofr odrl.Offer) (c
 		return ``, errors.UnmarshalError(providerEndpoint+negotiation.ContractRequestEndpoint, err)
 	}
 
-	c.negStore.Set(consPId, negotiation.Negotiation(ack))
+	c.negStore.Set(consPId, negotiation.Negotiation(ack)) // check if received state is REQUESTED (and correctness of other attributes)
 	c.negStore.SetAssignee(consPId, ofr.Assignee)
 	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, ofr.Assigner, ofr.Assignee))
 	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consPId, negotiation.StateRequested))

@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	negotiationCollection  = `negotiation-collection`
-	assigneeCollection     = `assignee-collection`
-	callbackAddrCollection = `callbackAddr-collection`
+	negotiationCollection  = `negotiation`
+	assigneeCollection     = `assignee`
+	callbackAddrCollection = `callbackAddr`
 )
 
 // ContractNegotiation stores any ongoing activities related to Contract Negotiation Protocol
@@ -84,11 +84,3 @@ func (cn *ContractNegotiation) CallbackAddr(cnId string) (string, error) {
 	}
 	return addr.(string), nil
 }
-
-//func (cn *ContractNegotiation) SetAssigner(cnId string, a odrl.Assigner) {
-//	_ = cn.assigners.Set(cnId, a)
-//}
-//
-//func (cn *ContractNegotiation) Assigner(cnId string) (odrl.Assigner, error) {
-//
-//}

@@ -1,15 +1,15 @@
 package http
 
 import (
-	"encoding/json"
+	httpCatalog "github.com/YasiruR/connector/api/dsp/http/catalog"
+	httpNegotiation "github.com/YasiruR/connector/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/api/dsp"
 	"github.com/YasiruR/connector/domain/dsp/catalog"
 	"github.com/YasiruR/connector/domain/dsp/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
-	"io"
 	"net/http"
 	"strconv"
 )
@@ -18,28 +18,33 @@ import (
 // for the communication between connectors
 
 type Server struct {
-	port     int
-	owner    dsp.Owner
-	provider dsp.Provider
-	consumer dsp.Consumer
-	router   *mux.Router
-	log      pkg.Log
+	port   int
+	ch     dsp.CatalogHandler
+	nh     dsp.NegotiationHandler
+	router *mux.Router
+	log    pkg.Log
 }
 
 func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	r := mux.NewRouter()
-	s := Server{port: port, router: r, provider: roles.Provider, consumer: roles.Consumer, log: log}
+	s := Server{
+		port:   port,
+		ch:     httpCatalog.NewHandler(roles, log),
+		nh:     httpNegotiation.NewHandler(roles, log),
+		router: r,
+		log:    log,
+	}
 
 	// catalog protocol related endpoints
-	r.HandleFunc(catalog.RequestEndpoint, s.HandleCatalogRequest).Methods(http.MethodPost)
-	r.HandleFunc(catalog.RequestDatasetEndpoint, s.HandleDatasetRequest).Methods(http.MethodPost)
+	r.HandleFunc(catalog.RequestEndpoint, s.ch.HandleCatalogRequest).Methods(http.MethodPost)
+	r.HandleFunc(catalog.RequestDatasetEndpoint, s.ch.HandleDatasetRequest).Methods(http.MethodPost)
 
 	// negotiation protocol related endpoints
-	r.HandleFunc(negotiation.RequestEndpoint, s.GetNegotiation).Methods(http.MethodGet)
-	r.HandleFunc(negotiation.ContractRequestEndpoint, s.HandleContractRequest).Methods(http.MethodPost)
-	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.HandleContractAgreement).Methods(http.MethodPost)
-	r.HandleFunc(negotiation.AgreementVerificationEndpoint, s.HandleAgreementVerification).Methods(http.MethodPost)
-	r.HandleFunc(negotiation.EventConsumerEndpoint, s.HandleEventConsumer).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.RequestEndpoint, s.nh.GetNegotiation).Methods(http.MethodGet)
+	r.HandleFunc(negotiation.ContractRequestEndpoint, s.nh.HandleContractRequest).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.nh.HandleContractAgreement).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.AgreementVerificationEndpoint, s.nh.HandleAgreementVerification).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.EventConsumerEndpoint, s.nh.HandleEventConsumer).Methods(http.MethodPost)
 
 	return &s
 }
@@ -49,183 +54,4 @@ func (s *Server) Start() {
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
 		s.log.Fatal(errors.InitFailed(`DSP API`, err))
 	}
-}
-
-func (s *Server) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(catalog.RequestEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
-	var req catalog.Request
-	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(catalog.RequestEndpoint, err), http.StatusBadRequest)
-		return
-	}
-
-	cat, err := s.provider.HandleCatalogRequest(nil)
-	if err != nil {
-		s.sendError(w, errors.HandlerFailed(catalog.RequestEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
-		return
-	}
-
-	s.sendAck(w, catalog.RequestEndpoint, cat, http.StatusOK)
-}
-
-func (s *Server) HandleDatasetRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(catalog.RequestDatasetEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
-	var req catalog.DatasetRequest
-	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(catalog.TypeDatasetRequest, err), http.StatusBadRequest)
-		return
-	}
-
-	ds, err := s.provider.HandleDatasetRequest(req.DatasetId)
-	if err != nil {
-		s.sendError(w, errors.HandlerFailed(catalog.RequestDatasetEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
-		return
-	}
-
-	s.sendAck(w, catalog.RequestDatasetEndpoint, ds, http.StatusOK)
-}
-
-func (s *Server) GetNegotiation(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	providerPid, ok := params[negotiation.ParamProviderId]
-	if !ok {
-		s.sendError(w, errors.PathParamNotFound(negotiation.RequestEndpoint, negotiation.ParamProviderId), http.StatusBadRequest)
-		return
-	}
-
-	neg, err := s.provider.HandleNegotiationsRequest(providerPid)
-	if err != nil {
-		s.sendError(w, errors.HandlerFailed(negotiation.RequestEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
-		return
-	}
-
-	s.sendAck(w, negotiation.RequestEndpoint, neg, http.StatusOK)
-}
-
-func (s *Server) HandleContractRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(catalog.RequestEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
-	var req negotiation.ContractRequest
-	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(negotiation.ContractRequestEndpoint, err), http.StatusBadRequest)
-		return
-	}
-
-	ack, err := s.provider.HandleContractRequest(req)
-	if err != nil {
-		s.sendError(w, errors.HandlerFailed(negotiation.ContractRequestEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
-		return
-	}
-
-	s.sendAck(w, negotiation.ContractRequestEndpoint, ack, http.StatusCreated)
-}
-
-func (s *Server) HandleContractAgreement(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(negotiation.ContractAgreementEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
-	var req negotiation.ContractAgreement
-	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(negotiation.ContractAgreementEndpoint, err), http.StatusBadRequest)
-		return
-	}
-
-	ack, err := s.consumer.HandleContractAgreement(req)
-	if err != nil {
-		s.sendError(w, errors.HandlerFailed(negotiation.ContractAgreementEndpoint, dsp.RoleConsumer, err), http.StatusBadRequest)
-		return
-	}
-
-	s.sendAck(w, negotiation.ContractAgreementEndpoint, ack, http.StatusOK)
-}
-
-func (s *Server) HandleAgreementVerification(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(negotiation.AgreementVerificationEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
-	var req negotiation.ContractVerification
-	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(negotiation.AgreementVerificationEndpoint, err), http.StatusBadRequest)
-		return
-	}
-
-	ack, err := s.provider.HandleAgreementVerification(req.ProvPId)
-	if err != nil {
-		s.sendError(w, errors.HandlerFailed(negotiation.AgreementVerificationEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
-		return
-	}
-
-	s.sendAck(w, negotiation.AgreementVerificationEndpoint, ack, http.StatusOK)
-}
-
-func (s *Server) HandleEventConsumer(w http.ResponseWriter, r *http.Request) {
-	body, err := s.readBody(negotiation.EventConsumerEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
-	var req negotiation.ContractNegotiationEvent
-	if err = json.Unmarshal(body, &req); err != nil {
-		s.sendError(w, errors.UnmarshalError(negotiation.EventConsumerEndpoint, err), http.StatusBadRequest)
-		return
-	}
-
-	switch req.EventType {
-	case negotiation.EventFinalized:
-		ack, err := s.consumer.HandleFinalizedEvent(req.ConsPId)
-		if err != nil {
-			s.sendError(w, errors.HandlerFailed(req.ConsPId, dsp.RoleConsumer, err), http.StatusBadRequest)
-			return
-		}
-		s.sendAck(w, negotiation.EventConsumerEndpoint, ack, http.StatusOK)
-	default:
-		s.sendError(w, errors.InvalidRequestBody(negotiation.EventConsumerEndpoint, err), http.StatusBadRequest)
-	}
-}
-
-func (s *Server) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		err = errors.InvalidRequestBody(endpoint, err)
-		w.WriteHeader(http.StatusBadRequest)
-		s.log.Error(err)
-		r.Body.Close()
-		return nil, err
-	}
-	defer r.Body.Close()
-
-	return body, nil
-}
-
-func (s *Server) sendAck(w http.ResponseWriter, receivedEndpoint string, data any, code int) {
-	body, err := json.Marshal(data)
-	if err != nil {
-		s.sendError(w, errors.MarshalError(receivedEndpoint, err), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(code)
-	if _, err = w.Write(body); err != nil {
-		s.sendError(w, errors.WriteBodyError(receivedEndpoint, err), http.StatusInternalServerError)
-	}
-}
-
-func (s *Server) sendError(w http.ResponseWriter, err error, code int) {
-	w.WriteHeader(code)
-	s.log.Error(errors.APIFailed(`dsp`, err))
 }

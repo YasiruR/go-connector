@@ -3,6 +3,7 @@ package stores
 import (
 	"github.com/YasiruR/connector/boot/config"
 	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/dsp/transfer"
 	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/models/odrl"
 )
@@ -46,4 +47,9 @@ type Agreement interface {
 	// Get retrieves contract agreement by agreement ID
 	Get(id string) (odrl.Agreement, error)
 	GetByNegotiationID(cnId string) (odrl.Agreement, error)
+}
+
+type Transfer interface {
+	Set(tpId string, val transfer.Process)
+	GetProcess(id string) (transfer.Process, error)
 }
