@@ -1,17 +1,16 @@
 package domain
 
 import (
-	dspApi "github.com/YasiruR/connector/domain/api/dsp"
-	"github.com/YasiruR/connector/domain/api/gateway"
-	"github.com/YasiruR/connector/domain/dsp"
+	"github.com/YasiruR/connector/domain/api"
+	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
 )
 
 type Roles struct {
-	dsp.Provider
-	dsp.Consumer
-	dsp.Owner
+	core.Provider
+	core.Consumer
+	core.Owner
 }
 
 type Stores struct {
@@ -22,8 +21,8 @@ type Stores struct {
 }
 
 type Servers struct {
-	DSP     dspApi.HTTPServer
-	Gateway gateway.HTTPServer
+	DSP     api.Server
+	Gateway api.Server
 }
 
 type Plugins struct {

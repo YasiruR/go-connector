@@ -1,6 +1,8 @@
 package stores
 
-import "github.com/YasiruR/connector/domain/dsp/transfer"
+import (
+	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
+)
 
 type Transfer struct{}
 

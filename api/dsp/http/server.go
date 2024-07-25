@@ -4,9 +4,8 @@ import (
 	httpCatalog "github.com/YasiruR/connector/api/dsp/http/catalog"
 	httpNegotiation "github.com/YasiruR/connector/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/api/dsp"
-	"github.com/YasiruR/connector/domain/dsp/catalog"
-	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
+	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
@@ -19,8 +18,8 @@ import (
 
 type Server struct {
 	port   int
-	ch     dsp.CatalogHandler
-	nh     dsp.NegotiationHandler
+	ch     catalog.Handler
+	nh     negotiation.Handler
 	router *mux.Router
 	log    pkg.Log
 }

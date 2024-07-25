@@ -3,9 +3,9 @@ package negotiation
 import (
 	"encoding/json"
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/api/gateway"
-	"github.com/YasiruR/connector/domain/dsp"
-	"github.com/YasiruR/connector/domain/dsp/negotiation"
+	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	negotiation3 "github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
+	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
@@ -16,8 +16,8 @@ import (
 )
 
 type Handler struct {
-	provider dsp.Provider
-	consumer dsp.Consumer
+	provider core.Provider
+	consumer core.Consumer
 	agrStore stores.Agreement
 	log      pkg.Log
 }
@@ -31,16 +31,16 @@ func NewHandler(roles domain.Roles, stores domain.Stores, log pkg.Log) *Handler 
 	}
 }
 
-func (n *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
-	body, err := n.readBody(gateway.RequestContractEndpoint, w, r)
+func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
+	body, err := h.readBody(negotiation3.RequestContractEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
-	var req gateway.ContractRequest
+	var req negotiation3.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.UnmarshalError(gateway.RequestContractEndpoint, err))
+		h.log.Error(errors.UnmarshalError(negotiation3.RequestContractEndpoint, err))
 		return
 	}
 
@@ -53,95 +53,95 @@ func (n *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 		Permissions: []odrl.Rule{{Action: odrl.Action(req.Action)}}, // should handle constraints
 	}
 
-	negId, err := n.consumer.RequestContract(req.ProviderEndpoint, ofr)
+	negId, err := h.consumer.RequestContract(req.ProviderEndpoint, ofr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.DSPFailed(dsp.RoleConsumer, `RequestContract`, err))
+		h.log.Error(errors.DSPFailed(core.RoleConsumer, `RequestContract`, err))
 		return
 	}
 
-	n.sendAck(w, gateway.RequestContractEndpoint, gateway.ContractRequestResponse{Id: negId}, http.StatusOK)
+	h.sendAck(w, negotiation3.RequestContractEndpoint, negotiation3.ContractRequestResponse{Id: negId}, http.StatusOK)
 }
 
-func (n *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {
-	body, err := n.readBody(gateway.AgreeContractEndpoint, w, r)
+func (h *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {
+	body, err := h.readBody(negotiation3.AgreeContractEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
-	var req gateway.AgreeContractRequest
+	var req negotiation3.AgreeContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.UnmarshalError(gateway.AgreeContractEndpoint, err))
+		h.log.Error(errors.UnmarshalError(negotiation3.AgreeContractEndpoint, err))
 		return
 	}
 
-	agrId, err := n.provider.AgreeContract(req.OfferId, req.NegotiationId)
+	agrId, err := h.provider.AgreeContract(req.OfferId, req.NegotiationId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.DSPFailed(dsp.RoleProvider, `AgreeContract`, err))
+		h.log.Error(errors.DSPFailed(core.RoleProvider, `AgreeContract`, err))
 		return
 	}
 
-	n.sendAck(w, gateway.AgreeContractEndpoint, gateway.ContractAgreementResponse{Id: agrId}, http.StatusOK)
+	h.sendAck(w, negotiation3.AgreeContractEndpoint, negotiation3.ContractAgreementResponse{Id: agrId}, http.StatusOK)
 }
 
-func (n *Handler) GetAgreement(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetAgreement(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	agreementId, ok := params[gateway.ParamAgreementId]
+	agreementId, ok := params[negotiation3.ParamAgreementId]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.PathParamNotFound(gateway.GetAgreementEndpoint, negotiation.ParamConsumerPid))
+		h.log.Error(errors.PathParamNotFound(negotiation3.GetAgreementEndpoint, negotiation.ParamConsumerPid))
 		return
 	}
 
-	agr, err := n.agrStore.Get(agreementId)
+	agr, err := h.agrStore.Get(agreementId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.StoreFailed(stores.TypeAgreement, `Get`, err))
+		h.log.Error(errors.StoreFailed(stores.TypeAgreement, `Get`, err))
 		return
 	}
 
-	n.sendAck(w, gateway.GetAgreementEndpoint, agr, http.StatusOK)
+	h.sendAck(w, negotiation3.GetAgreementEndpoint, agr, http.StatusOK)
 }
 
-func (n *Handler) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	consumerPid, ok := params[gateway.ParamConsumerPid]
+	consumerPid, ok := params[negotiation3.ParamConsumerPid]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.PathParamNotFound(gateway.VerifyAgreementEndpoint, negotiation.ParamConsumerPid))
+		h.log.Error(errors.PathParamNotFound(negotiation3.VerifyAgreementEndpoint, negotiation.ParamConsumerPid))
 		return
 	}
 
-	if err := n.consumer.VerifyAgreement(consumerPid); err != nil {
+	if err := h.consumer.VerifyAgreement(consumerPid); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.DSPFailed(dsp.RoleConsumer, `VerifyAgreement`, err))
+		h.log.Error(errors.DSPFailed(core.RoleConsumer, `VerifyAgreement`, err))
 		return
 	}
 
-	n.sendAck(w, gateway.VerifyAgreementEndpoint, nil, http.StatusOK)
+	h.sendAck(w, negotiation3.VerifyAgreementEndpoint, nil, http.StatusOK)
 }
 
-func (n *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	providerPid, ok := params[gateway.ParamProviderPid]
+	providerPid, ok := params[negotiation3.ParamProviderPid]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.PathParamNotFound(gateway.FinalizeContractEndpoint, negotiation.ParamProviderId))
+		h.log.Error(errors.PathParamNotFound(negotiation3.FinalizeContractEndpoint, negotiation.ParamProviderId))
 		return
 	}
 
-	if err := n.provider.FinalizeContract(providerPid); err != nil {
+	if err := h.provider.FinalizeContract(providerPid); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		n.log.Error(errors.DSPFailed(dsp.RoleProvider, `FinalizeContract`, err))
+		h.log.Error(errors.DSPFailed(core.RoleProvider, `FinalizeContract`, err))
 		return
 	}
 
-	n.sendAck(w, gateway.FinalizeContractEndpoint, nil, http.StatusOK)
+	h.sendAck(w, negotiation3.FinalizeContractEndpoint, nil, http.StatusOK)
 }
 
-func (n *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
+func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		err = errors.InvalidRequestBody(endpoint, err)
@@ -154,17 +154,17 @@ func (n *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Reque
 	return body, nil
 }
 
-func (n *Handler) sendAck(w http.ResponseWriter, receivedEndpoint string, data any, code int) {
+func (h *Handler) sendAck(w http.ResponseWriter, receivedEndpoint string, data any, code int) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		n.log.Error(errors.MarshalError(receivedEndpoint, err))
+		h.log.Error(errors.MarshalError(receivedEndpoint, err))
 		return
 	}
 
 	w.WriteHeader(code)
 	if _, err = w.Write(body); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		n.log.Error(errors.WriteBodyError(receivedEndpoint, err))
+		h.log.Error(errors.WriteBodyError(receivedEndpoint, err))
 	}
 }

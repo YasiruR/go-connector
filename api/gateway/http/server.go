@@ -4,7 +4,8 @@ import (
 	"github.com/YasiruR/connector/api/gateway/http/catalog"
 	"github.com/YasiruR/connector/api/gateway/http/negotiation"
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/api/gateway"
+	httpCatalog "github.com/YasiruR/connector/domain/api/gateway/http/catalog"
+	httpNegotiation "github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
@@ -20,8 +21,8 @@ import (
 type Server struct {
 	port   int
 	router *mux.Router
-	ch     gateway.CatalogHandler
-	nh     gateway.NegotiationHandler
+	ch     httpCatalog.Handler
+	nh     httpNegotiation.Handler
 	log    pkg.Log
 }
 
@@ -36,17 +37,17 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	}
 
 	// endpoints related to catalog
-	r.HandleFunc(gateway.CreatePolicyEndpoint, s.ch.CreatePolicy).Methods(http.MethodPost)
-	r.HandleFunc(gateway.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
-	r.HandleFunc(gateway.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
-	r.HandleFunc(gateway.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)
+	r.HandleFunc(httpCatalog.CreatePolicyEndpoint, s.ch.CreatePolicy).Methods(http.MethodPost)
+	r.HandleFunc(httpCatalog.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
+	r.HandleFunc(httpCatalog.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
+	r.HandleFunc(httpCatalog.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
-	r.HandleFunc(gateway.RequestContractEndpoint, s.nh.RequestContract).Methods(http.MethodPost)
-	r.HandleFunc(gateway.AgreeContractEndpoint, s.nh.AgreeContract).Methods(http.MethodPost)
-	r.HandleFunc(gateway.GetAgreementEndpoint, s.nh.GetAgreement).Methods(http.MethodGet)
-	r.HandleFunc(gateway.VerifyAgreementEndpoint, s.nh.VerifyAgreement).Methods(http.MethodPost)
-	r.HandleFunc(gateway.FinalizeContractEndpoint, s.nh.FinalizeContract).Methods(http.MethodPost)
+	r.HandleFunc(httpNegotiation.RequestContractEndpoint, s.nh.RequestContract).Methods(http.MethodPost)
+	r.HandleFunc(httpNegotiation.AgreeContractEndpoint, s.nh.AgreeContract).Methods(http.MethodPost)
+	r.HandleFunc(httpNegotiation.GetAgreementEndpoint, s.nh.GetAgreement).Methods(http.MethodGet)
+	r.HandleFunc(httpNegotiation.VerifyAgreementEndpoint, s.nh.VerifyAgreement).Methods(http.MethodPost)
+	r.HandleFunc(httpNegotiation.FinalizeContractEndpoint, s.nh.FinalizeContract).Methods(http.MethodPost)
 
 	return &s
 }

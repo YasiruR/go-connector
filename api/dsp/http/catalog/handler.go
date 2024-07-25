@@ -3,8 +3,8 @@ package catalog
 import (
 	"encoding/json"
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/dsp"
-	"github.com/YasiruR/connector/domain/dsp/catalog"
+	catalog2 "github.com/YasiruR/connector/domain/api/dsp/http/catalog"
+	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"io"
@@ -12,7 +12,7 @@ import (
 )
 
 type Handler struct {
-	provider dsp.Provider
+	provider core.Provider
 	log      pkg.Log
 }
 
@@ -24,45 +24,45 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 }
 
 func (h *Handler) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.RequestEndpoint, w, r)
+	body, err := h.readBody(catalog2.RequestEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
-	var req catalog.Request
+	var req catalog2.Request
 	if err = json.Unmarshal(body, &req); err != nil {
-		h.sendError(w, errors.UnmarshalError(catalog.RequestEndpoint, err), http.StatusBadRequest)
+		h.sendError(w, errors.UnmarshalError(catalog2.RequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
 	cat, err := h.provider.HandleCatalogRequest(nil)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(catalog.RequestEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.HandlerFailed(catalog2.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, catalog.RequestEndpoint, cat, http.StatusOK)
+	h.sendAck(w, catalog2.RequestEndpoint, cat, http.StatusOK)
 }
 
 func (h *Handler) HandleDatasetRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.RequestDatasetEndpoint, w, r)
+	body, err := h.readBody(catalog2.RequestDatasetEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
-	var req catalog.DatasetRequest
+	var req catalog2.DatasetRequest
 	if err = json.Unmarshal(body, &req); err != nil {
-		h.sendError(w, errors.UnmarshalError(catalog.TypeDatasetRequest, err), http.StatusBadRequest)
+		h.sendError(w, errors.UnmarshalError(catalog2.TypeDatasetRequest, err), http.StatusBadRequest)
 		return
 	}
 
 	ds, err := h.provider.HandleDatasetRequest(req.DatasetId)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(catalog.RequestDatasetEndpoint, dsp.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.HandlerFailed(catalog2.RequestDatasetEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, catalog.RequestDatasetEndpoint, ds, http.StatusOK)
+	h.sendAck(w, catalog2.RequestDatasetEndpoint, ds, http.StatusOK)
 }
 
 func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
