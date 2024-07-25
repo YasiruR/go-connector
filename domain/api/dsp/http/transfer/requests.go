@@ -10,6 +10,14 @@ type Request struct {
 	CallbackAddr string           `json:"dspace:callbackAddress"`
 }
 
+type StartRequest struct {
+	Ctx     string  `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
+	Type    string  `json:"@type" default:"dspace:TransferStartMessage"`
+	ConsPId string  `json:"dspace:consumerPid"`
+	ProvPId string  `json:"dspace:providerPid"`
+	Address Address `json:"dspace:address"`
+}
+
 type Address struct {
 	Type               string             `json:"@type" default:"dspace:DataAddress"`
 	EndpointType       string             `json:"dspace:endpointType"`

@@ -13,6 +13,7 @@ const (
 	TypeContractNegotiation = `contract-negotiation`
 	TypePolicy              = `policy`
 	TypeAgreement           = `agreement`
+	TypeTransfer            = `transfer`
 )
 
 // Catalog stores Datasets as per the DCAT profile recommended by IDSA
@@ -52,4 +53,7 @@ type Agreement interface {
 type Transfer interface {
 	Set(tpId string, val transfer.Process)
 	GetProcess(id string) (transfer.Process, error)
+	SetCallbackAddr(tpId, addr string)
+	CallbackAddr(tpId string) (string, error)
+	UpdateState(tpId string, s transfer.State) error
 }

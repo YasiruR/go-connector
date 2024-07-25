@@ -3,16 +3,22 @@ package stores
 import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
+	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 )
 
+const (
+	transferCollection = `transfer`
+)
+
 type Transfer struct {
-	store pkg.Collection
+	store        pkg.Collection
+	callbackAddr pkg.Collection
 }
 
 func NewTransferStore(plugins domain.Plugins) *Transfer {
 	plugins.Log.Info("initialized transfer process store")
-	return &Transfer{store: plugins.Database.NewCollection()}
+	return &Transfer{store: plugins.Database.NewCollection(), callbackAddr: plugins.Database.NewCollection()}
 }
 
 func (t *Transfer) Set(tpId string, val transfer.Process) {
@@ -21,4 +27,27 @@ func (t *Transfer) Set(tpId string, val transfer.Process) {
 
 func (t *Transfer) GetProcess(id string) (transfer.Process, error) {
 	return transfer.Process{}, nil
+}
+
+func (t *Transfer) SetCallbackAddr(tpId, addr string) {
+	_ = t.callbackAddr.Set(tpId, addr)
+}
+
+func (t *Transfer) CallbackAddr(tpId string) (string, error) {
+	val, err := t.callbackAddr.Get(tpId)
+	if err != nil {
+		return ``, errors.QueryFailed(callbackAddrCollection, `Get`, err)
+	}
+	return val.(string), nil
+}
+
+func (t *Transfer) UpdateState(tpId string, s transfer.State) error {
+	process, err := t.GetProcess(tpId)
+	if err != nil {
+		return errors.QueryFailed(transferCollection, `GetProcess`, err)
+	}
+
+	process.State = s
+	t.Set(tpId, process)
+	return nil
 }

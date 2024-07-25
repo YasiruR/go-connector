@@ -4,6 +4,7 @@ type State string
 
 const (
 	StateRequested State = `dspace:REQUESTED`
+	StateStarted   State = `dspace:STARTED`
 )
 
 type DataTransferType string
@@ -17,12 +18,20 @@ const (
 const (
 	TypeTransferProcess  = `dspace:TransferProcess`
 	TypeTransferRequest  = `dspace:TransferRequestMessage`
+	TypeTransferStart    = `dspace:TransferStartMessage`
 	TypeDataAddress      = `dspace:DataAddress`
 	TypeEndpointProperty = `dspace:EndpointProperty`
 )
 
+// Path parameters
 const (
-	RequestEndpoint = `/transfers/request`
+	ParamConsumerPid = `consumerPid`
+)
+
+// Endpoints
+const (
+	RequestEndpoint       = `/transfers/request`
+	StartTransferEndpoint = `/transfers/{` + ParamConsumerPid + `}/start`
 )
 
 const (

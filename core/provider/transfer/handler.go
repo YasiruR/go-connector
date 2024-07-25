@@ -47,6 +47,7 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 	}
 
 	h.trStore.Set(tpId, transfer.Process(ack))
+	h.trStore.SetCallbackAddr(tpId, tr.CallbackAddr)
 	h.log.Trace("stored transfer process", ack)
 	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", tpId, transfer.StateRequested))
 	return ack, nil

@@ -2,7 +2,7 @@ package stores
 
 import (
 	"github.com/YasiruR/connector/domain"
-	negotiation2 "github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
@@ -30,19 +30,19 @@ func NewContractNegotiationStore(plugins domain.Plugins) *ContractNegotiation {
 	}
 }
 
-func (cn *ContractNegotiation) Set(cnId string, val negotiation2.Negotiation) {
+func (cn *ContractNegotiation) Set(cnId string, val negotiation.Negotiation) {
 	_ = cn.store.Set(cnId, val)
 }
 
-func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation2.Negotiation, error) {
+func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation.Negotiation, error) {
 	val, err := cn.store.Get(cnId)
 	if err != nil {
-		return negotiation2.Negotiation{}, errors.QueryFailed(negotiationCollection, `Get`, err)
+		return negotiation.Negotiation{}, errors.QueryFailed(negotiationCollection, `Get`, err)
 	}
-	return val.(negotiation2.Negotiation), nil
+	return val.(negotiation.Negotiation), nil
 }
 
-func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation2.State) error {
+func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) error {
 	neg, err := cn.Negotiation(cnId)
 	if err != nil {
 		return errors.QueryFailed(negotiationCollection, `Get`, err)
@@ -53,7 +53,7 @@ func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation2.State) er
 	return nil
 }
 
-func (cn *ContractNegotiation) State(cnId string) (negotiation2.State, error) {
+func (cn *ContractNegotiation) State(cnId string) (negotiation.State, error) {
 	neg, err := cn.Negotiation(cnId)
 	if err != nil {
 		return ``, errors.QueryFailed(negotiationCollection, `Get`, err)
