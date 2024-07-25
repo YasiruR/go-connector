@@ -1,9 +1,9 @@
-package catalog
+package transfer
 
 import (
 	"encoding/json"
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
+	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
@@ -23,46 +23,26 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 	}
 }
 
-func (h *Handler) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.RequestEndpoint, w, r)
+func (h *Handler) HandleTransferRequest(w http.ResponseWriter, r *http.Request) {
+	body, err := h.readBody(transfer.RequestEndpoint, w, r)
 	if err != nil {
+		h.sendError(w, errors.InvalidRequestBody(transfer.RequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
-	var req catalog.Request
+	var req transfer.Request
 	if err = json.Unmarshal(body, &req); err != nil {
-		h.sendError(w, errors.UnmarshalError(catalog.RequestEndpoint, err), http.StatusBadRequest)
+		h.sendError(w, errors.UnmarshalError(transfer.RequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
-	cat, err := h.provider.HandleCatalogRequest(nil)
+	ack, err := h.provider.HandleTransferRequest(req)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(catalog.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.HandlerFailed(transfer.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, catalog.RequestEndpoint, cat, http.StatusOK)
-}
-
-func (h *Handler) HandleDatasetRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.RequestDatasetEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
-	var req catalog.DatasetRequest
-	if err = json.Unmarshal(body, &req); err != nil {
-		h.sendError(w, errors.UnmarshalError(catalog.TypeDatasetRequest, err), http.StatusBadRequest)
-		return
-	}
-
-	ds, err := h.provider.HandleDatasetRequest(req.DatasetId)
-	if err != nil {
-		h.sendError(w, errors.HandlerFailed(catalog.RequestDatasetEndpoint, core.RoleProvider, err), http.StatusBadRequest)
-		return
-	}
-
-	h.sendAck(w, catalog.RequestDatasetEndpoint, ds, http.StatusOK)
+	h.sendAck(w, transfer.RequestEndpoint, ack, http.StatusCreated)
 }
 
 func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
@@ -70,7 +50,6 @@ func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		err = errors.InvalidRequestBody(endpoint, err)
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(err)
 		r.Body.Close()
 		return nil, err
 	}
@@ -94,5 +73,5 @@ func (h *Handler) sendAck(w http.ResponseWriter, receivedEndpoint string, data a
 
 func (h *Handler) sendError(w http.ResponseWriter, err error, code int) {
 	w.WriteHeader(code)
-	h.log.Error(errors.APIFailed(`dsp`, err))
+	h.log.Error(errors.APIFailed(`gateway`, err))
 }

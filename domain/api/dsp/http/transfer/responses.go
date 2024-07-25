@@ -7,5 +7,5 @@ type Process struct {
 	Type    string `json:"@type" default:"dspace:TransferProcess"`
 	ProvPId string `json:"dspace:providerPid"`
 	ConsPId string `json:"dspace:consumerPid"`
-	State   string `json:"dspace:state"`
+	State   State  `json:"dspace:state"`
 }

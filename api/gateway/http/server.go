@@ -1,11 +1,13 @@
 package http
 
 import (
-	"github.com/YasiruR/connector/api/gateway/http/catalog"
-	"github.com/YasiruR/connector/api/gateway/http/negotiation"
+	httpCatalog "github.com/YasiruR/connector/api/gateway/http/catalog"
+	httpNegotiation "github.com/YasiruR/connector/api/gateway/http/negotiation"
+	httpTransfer "github.com/YasiruR/connector/api/gateway/http/transfer"
 	"github.com/YasiruR/connector/domain"
-	httpCatalog "github.com/YasiruR/connector/domain/api/gateway/http/catalog"
-	httpNegotiation "github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
+	"github.com/YasiruR/connector/domain/api/gateway/http/catalog"
+	"github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
+	"github.com/YasiruR/connector/domain/api/gateway/http/transfer"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
@@ -21,8 +23,9 @@ import (
 type Server struct {
 	port   int
 	router *mux.Router
-	ch     httpCatalog.Handler
-	nh     httpNegotiation.Handler
+	ch     catalog.Handler
+	nh     negotiation.Handler
+	th     transfer.Handler
 	log    pkg.Log
 }
 
@@ -31,23 +34,27 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	s := Server{
 		port:   port,
 		router: r,
-		ch:     catalog.NewHandler(roles, log),
-		nh:     negotiation.NewHandler(roles, stores, log),
+		ch:     httpCatalog.NewHandler(roles, log),
+		nh:     httpNegotiation.NewHandler(roles, stores, log),
+		th:     httpTransfer.NewHandler(roles, log),
 		log:    log,
 	}
 
 	// endpoints related to catalog
-	r.HandleFunc(httpCatalog.CreatePolicyEndpoint, s.ch.CreatePolicy).Methods(http.MethodPost)
-	r.HandleFunc(httpCatalog.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
-	r.HandleFunc(httpCatalog.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
-	r.HandleFunc(httpCatalog.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)
+	r.HandleFunc(catalog.CreatePolicyEndpoint, s.ch.CreatePolicy).Methods(http.MethodPost)
+	r.HandleFunc(catalog.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
+	r.HandleFunc(catalog.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
+	r.HandleFunc(catalog.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
-	r.HandleFunc(httpNegotiation.RequestContractEndpoint, s.nh.RequestContract).Methods(http.MethodPost)
-	r.HandleFunc(httpNegotiation.AgreeContractEndpoint, s.nh.AgreeContract).Methods(http.MethodPost)
-	r.HandleFunc(httpNegotiation.GetAgreementEndpoint, s.nh.GetAgreement).Methods(http.MethodGet)
-	r.HandleFunc(httpNegotiation.VerifyAgreementEndpoint, s.nh.VerifyAgreement).Methods(http.MethodPost)
-	r.HandleFunc(httpNegotiation.FinalizeContractEndpoint, s.nh.FinalizeContract).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.RequestContractEndpoint, s.nh.RequestContract).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.AgreeContractEndpoint, s.nh.AgreeContract).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.GetAgreementEndpoint, s.nh.GetAgreement).Methods(http.MethodGet)
+	r.HandleFunc(negotiation.VerifyAgreementEndpoint, s.nh.VerifyAgreement).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.FinalizeContractEndpoint, s.nh.FinalizeContract).Methods(http.MethodPost)
+
+	// endpoints related to transfer process
+	r.HandleFunc(transfer.RequestEndpoint, s.th.RequestTransfer).Methods(http.MethodPost)
 
 	return &s
 }

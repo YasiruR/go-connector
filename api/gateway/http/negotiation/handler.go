@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
-	negotiation3 "github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
+	domainNegotiation "github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
@@ -32,15 +32,15 @@ func NewHandler(roles domain.Roles, stores domain.Stores, log pkg.Log) *Handler 
 }
 
 func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(negotiation3.RequestContractEndpoint, w, r)
+	body, err := h.readBody(domainNegotiation.RequestContractEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
-	var req negotiation3.ContractRequest
+	var req domainNegotiation.ContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.UnmarshalError(negotiation3.RequestContractEndpoint, err))
+		h.log.Error(errors.UnmarshalError(domainNegotiation.RequestContractEndpoint, err))
 		return
 	}
 
@@ -60,19 +60,19 @@ func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendAck(w, negotiation3.RequestContractEndpoint, negotiation3.ContractRequestResponse{Id: negId}, http.StatusOK)
+	h.sendAck(w, domainNegotiation.RequestContractEndpoint, domainNegotiation.ContractRequestResponse{Id: negId}, http.StatusOK)
 }
 
 func (h *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(negotiation3.AgreeContractEndpoint, w, r)
+	body, err := h.readBody(domainNegotiation.AgreeContractEndpoint, w, r)
 	if err != nil {
 		return
 	}
 
-	var req negotiation3.AgreeContractRequest
+	var req domainNegotiation.AgreeContractRequest
 	if err = json.Unmarshal(body, &req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.UnmarshalError(negotiation3.AgreeContractEndpoint, err))
+		h.log.Error(errors.UnmarshalError(domainNegotiation.AgreeContractEndpoint, err))
 		return
 	}
 
@@ -83,15 +83,15 @@ func (h *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendAck(w, negotiation3.AgreeContractEndpoint, negotiation3.ContractAgreementResponse{Id: agrId}, http.StatusOK)
+	h.sendAck(w, domainNegotiation.AgreeContractEndpoint, domainNegotiation.ContractAgreementResponse{Id: agrId}, http.StatusOK)
 }
 
 func (h *Handler) GetAgreement(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	agreementId, ok := params[negotiation3.ParamAgreementId]
+	agreementId, ok := params[domainNegotiation.ParamAgreementId]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.PathParamNotFound(negotiation3.GetAgreementEndpoint, negotiation.ParamConsumerPid))
+		h.log.Error(errors.PathParamNotFound(domainNegotiation.GetAgreementEndpoint, negotiation.ParamConsumerPid))
 		return
 	}
 
@@ -102,15 +102,15 @@ func (h *Handler) GetAgreement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendAck(w, negotiation3.GetAgreementEndpoint, agr, http.StatusOK)
+	h.sendAck(w, domainNegotiation.GetAgreementEndpoint, agr, http.StatusOK)
 }
 
 func (h *Handler) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	consumerPid, ok := params[negotiation3.ParamConsumerPid]
+	consumerPid, ok := params[domainNegotiation.ParamConsumerPid]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.PathParamNotFound(negotiation3.VerifyAgreementEndpoint, negotiation.ParamConsumerPid))
+		h.log.Error(errors.PathParamNotFound(domainNegotiation.VerifyAgreementEndpoint, negotiation.ParamConsumerPid))
 		return
 	}
 
@@ -120,15 +120,15 @@ func (h *Handler) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendAck(w, negotiation3.VerifyAgreementEndpoint, nil, http.StatusOK)
+	h.sendAck(w, domainNegotiation.VerifyAgreementEndpoint, nil, http.StatusOK)
 }
 
 func (h *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	providerPid, ok := params[negotiation3.ParamProviderPid]
+	providerPid, ok := params[domainNegotiation.ParamProviderPid]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.PathParamNotFound(negotiation3.FinalizeContractEndpoint, negotiation.ParamProviderId))
+		h.log.Error(errors.PathParamNotFound(domainNegotiation.FinalizeContractEndpoint, negotiation.ParamProviderId))
 		return
 	}
 
@@ -138,7 +138,7 @@ func (h *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendAck(w, negotiation3.FinalizeContractEndpoint, nil, http.StatusOK)
+	h.sendAck(w, domainNegotiation.FinalizeContractEndpoint, nil, http.StatusOK)
 }
 
 func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {

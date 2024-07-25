@@ -50,6 +50,7 @@ func initStores(plugins domain.Plugins) domain.Stores {
 		Policy:              stores.NewPolicyStore(plugins),
 		ContractNegotiation: stores.NewContractNegotiationStore(plugins),
 		Agreement:           stores.NewAgreementStore(plugins),
+		Transfer:            stores.NewTransferStore(plugins),
 	}
 }
 

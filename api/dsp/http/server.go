@@ -3,9 +3,11 @@ package http
 import (
 	httpCatalog "github.com/YasiruR/connector/api/dsp/http/catalog"
 	httpNegotiation "github.com/YasiruR/connector/api/dsp/http/negotiation"
+	httpTransfer "github.com/YasiruR/connector/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
@@ -20,6 +22,7 @@ type Server struct {
 	port   int
 	ch     catalog.Handler
 	nh     negotiation.Handler
+	th     transfer.Handler
 	router *mux.Router
 	log    pkg.Log
 }
@@ -30,6 +33,7 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 		port:   port,
 		ch:     httpCatalog.NewHandler(roles, log),
 		nh:     httpNegotiation.NewHandler(roles, log),
+		th:     httpTransfer.NewHandler(roles, log),
 		router: r,
 		log:    log,
 	}
@@ -44,6 +48,9 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.nh.HandleContractAgreement).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.AgreementVerificationEndpoint, s.nh.HandleAgreementVerification).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.EventConsumerEndpoint, s.nh.HandleEventConsumer).Methods(http.MethodPost)
+
+	// transfer process related endpoints
+	r.HandleFunc(transfer.RequestEndpoint, s.th.HandleTransferRequest).Methods(http.MethodPost)
 
 	return &s
 }

@@ -6,8 +6,6 @@ import (
 	"github.com/YasiruR/connector/domain/models/odrl"
 )
 
-// maybe implement submodules in Provider and Consumer to separate control and data plane
-
 const (
 	RoleProvider = `Provider`
 	RoleConsumer = `Consumer`
@@ -15,15 +13,17 @@ const (
 )
 
 type Provider interface {
-	provider.CatalogService
+	provider.CatalogHandler
 	provider.NegotiationController
 	provider.NegotiationHandler
+	provider.TransferHandler
 }
 
 type Consumer interface {
 	consumer.CatalogController
 	consumer.NegotiationController
 	consumer.NegotiationHandler
+	consumer.TransferController
 }
 
 type Owner interface {

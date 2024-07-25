@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
-	negotiation2 "github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
@@ -19,6 +19,7 @@ type Controller struct {
 	callbackAddr string
 	negStore     stores.ContractNegotiation
 	policyStore  stores.Policy
+	agrStore     stores.Agreement
 	urn          pkg.URNService
 	client       pkg.Client
 	log          pkg.Log
@@ -29,6 +30,7 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		negStore:     stores.ContractNegotiation,
 		policyStore:  stores.Policy,
+		agrStore:     stores.Agreement,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
 		log:          plugins.Log,
@@ -58,9 +60,9 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
-	ca := negotiation2.ContractAgreement{
+	ca := negotiation.ContractAgreement{
 		Ctx:     core.Context,
-		Type:    negotiation2.TypeContractAgreement,
+		Type:    negotiation.TypeContractAgreement,
 		ProvPId: cn.ProvPId,
 		ConsPId: cn.ConsPId,
 		Agreement: odrl.Agreement{
@@ -84,22 +86,24 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.MarshalError(``, err)
 	}
 
-	endpoint := strings.Replace(consumerAddr+negotiation2.ContractAgreementEndpoint, `{`+negotiation2.ParamConsumerPid+`}`, cn.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+negotiation.ContractAgreementEndpoint, `{`+negotiation.ParamConsumerPid+`}`, cn.ConsPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
-	var ack negotiation2.Ack
+	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return ``, errors.UnmarshalError(negotiation2.ContractAgreementEndpoint, err)
+		return ``, errors.UnmarshalError(negotiation.ContractAgreementEndpoint, err)
 	}
 
-	if err = c.negStore.UpdateState(providerPid, negotiation2.StateAgreed); err != nil {
+	c.agrStore.Set(ca.ConsPId, ca.Agreement)
+	c.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)", ca.Agreement.Id, providerPid))
+	if err = c.negStore.UpdateState(providerPid, negotiation.StateAgreed); err != nil {
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation2.StateAgreed))
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateAgreed))
 	return agreementId, nil
 }
 
@@ -109,12 +113,12 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
-	event := negotiation2.ContractNegotiationEvent{
+	event := negotiation.ContractNegotiationEvent{
 		Ctx:       core.Context,
-		Type:      negotiation2.TypeNegotiationEvent,
+		Type:      negotiation.TypeNegotiationEvent,
 		ProvPId:   providerPid,
 		ConsPId:   neg.ConsPId,
-		EventType: negotiation2.EventFinalized,
+		EventType: negotiation.EventFinalized,
 	}
 
 	consumerAddr, err := c.negStore.CallbackAddr(providerPid)
@@ -127,21 +131,21 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 		return errors.MarshalError(``, err)
 	}
 
-	endpoint := strings.Replace(consumerAddr+negotiation2.EventConsumerEndpoint, `{`+negotiation2.ParamConsumerPid+`}`, neg.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+negotiation.EventConsumerEndpoint, `{`+negotiation.ParamConsumerPid+`}`, neg.ConsPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
-	var ack negotiation2.Ack
+	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(negotiation2.EventConsumerEndpoint, err)
+		return errors.UnmarshalError(negotiation.EventConsumerEndpoint, err)
 	}
 
-	if err = c.negStore.UpdateState(providerPid, negotiation2.StateFinalized); err != nil {
+	if err = c.negStore.UpdateState(providerPid, negotiation.StateFinalized); err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation2.StateFinalized))
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateFinalized))
 	return nil
 }

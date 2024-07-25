@@ -23,3 +23,7 @@ type NegotiationHandler interface {
 	HandleContractAgreement(ca negotiation.ContractAgreement) (negotiation.Ack, error)
 	HandleFinalizedEvent(consumerPid string) (negotiation.Ack, error)
 }
+
+type TransferController interface {
+	RequestTransfer(transferType, agreementId, sinkEndpoint, providerEndpoint string) (tpId string, err error)
+}
