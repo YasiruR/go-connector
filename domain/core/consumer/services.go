@@ -3,6 +3,7 @@ package consumer
 import (
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/models/odrl"
 )
 
@@ -26,4 +27,8 @@ type NegotiationHandler interface {
 
 type TransferController interface {
 	RequestTransfer(transferType, agreementId, sinkEndpoint, providerEndpoint string) (tpId string, err error)
+}
+
+type TransferHandler interface {
+	HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error)
 }

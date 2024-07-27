@@ -37,7 +37,7 @@ func (h *Handler) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
 
 	cat, err := h.provider.HandleCatalogRequest(nil)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(catalog.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.DSPHandlerFailed(catalog.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *Handler) HandleDatasetRequest(w http.ResponseWriter, r *http.Request) {
 
 	ds, err := h.provider.HandleDatasetRequest(req.DatasetId)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(catalog.RequestDatasetEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.DSPHandlerFailed(catalog.RequestDatasetEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 

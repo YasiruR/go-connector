@@ -1,7 +1,10 @@
 package transfer
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type Handler interface {
 	HandleTransferRequest(w http.ResponseWriter, r *http.Request)
+	HandleStartTransferRequest(w http.ResponseWriter, r *http.Request)
 }

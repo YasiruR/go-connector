@@ -55,6 +55,7 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 
 	// endpoints related to transfer process
 	r.HandleFunc(transfer.RequestEndpoint, s.th.RequestTransfer).Methods(http.MethodPost)
+	r.HandleFunc(transfer.StartTransferEndpoint, s.th.StartTransfer).Methods(http.MethodPost)
 
 	return &s
 }

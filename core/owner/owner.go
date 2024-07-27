@@ -49,7 +49,7 @@ func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.R
 }
 
 // CreateDataset currently supports only one data distribution per a dataset
-func (s *Service) CreateDataset(title string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error) {
+func (s *Service) CreateDataset(title, format string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error) {
 	// construct policies (handle policies than offers later)
 	var policies []odrl.Offer
 	for _, pId := range policyIds {
@@ -78,7 +78,7 @@ func (s *Service) CreateDataset(title string, descriptions, keywords, endpoints,
 
 	dist := dcat.Distribution{
 		Type:              dcat.TypeDistribution,
-		DctFormat:         "", // add format (e.g. dspace:s3+push)
+		DctFormat:         format,
 		DcatAccessService: svcList,
 	}
 

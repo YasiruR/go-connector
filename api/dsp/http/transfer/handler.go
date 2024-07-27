@@ -13,12 +13,14 @@ import (
 
 type Handler struct {
 	provider core.Provider
+	consumer core.Consumer
 	log      pkg.Log
 }
 
 func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 	return &Handler{
 		provider: roles.Provider,
+		consumer: roles.Consumer,
 		log:      log,
 	}
 }
@@ -38,11 +40,33 @@ func (h *Handler) HandleTransferRequest(w http.ResponseWriter, r *http.Request) 
 
 	ack, err := h.provider.HandleTransferRequest(req)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(transfer.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.DSPHandlerFailed(transfer.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
 	h.sendAck(w, transfer.RequestEndpoint, ack, http.StatusCreated)
+}
+
+func (h *Handler) HandleStartTransferRequest(w http.ResponseWriter, r *http.Request) {
+	body, err := h.readBody(transfer.StartTransferEndpoint, w, r)
+	if err != nil {
+		h.sendError(w, errors.InvalidRequestBody(transfer.StartTransferEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	var req transfer.StartRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		h.sendError(w, errors.UnmarshalError(transfer.StartTransferEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	ack, err := h.consumer.HandleTransferStart(req)
+	if err != nil {
+		h.sendError(w, errors.DSPHandlerFailed(transfer.StartTransferEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		return
+	}
+
+	h.sendAck(w, transfer.StartTransferEndpoint, ack, http.StatusOK)
 }
 
 func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {

@@ -13,14 +13,14 @@ import (
 type Handler struct {
 	urn      pkg.URNService
 	agrStore stores.Agreement
-	trStore  stores.Transfer
+	tpStore  stores.Transfer
 	log      pkg.Log
 }
 
 func NewHandler(stores domain.Stores, plugins domain.Plugins) *Handler {
 	return &Handler{
 		agrStore: stores.Agreement,
-		trStore:  stores.Transfer,
+		tpStore:  stores.Transfer,
 		urn:      plugins.URNService,
 		log:      plugins.Log,
 	}
@@ -46,8 +46,8 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 		State:   transfer.StateRequested,
 	}
 
-	h.trStore.Set(tpId, transfer.Process(ack))
-	h.trStore.SetCallbackAddr(tpId, tr.CallbackAddr)
+	h.tpStore.Set(tpId, transfer.Process(ack))
+	h.tpStore.SetCallbackAddr(tpId, tr.CallbackAddr)
 	h.log.Trace("stored transfer process", ack)
 	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", tpId, transfer.StateRequested))
 	return ack, nil

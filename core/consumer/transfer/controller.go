@@ -30,9 +30,9 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 	}
 }
 
-func (c *Controller) RequestTransfer(transferType, agreementId, sinkEndpoint, providerEndpoint string) (tpId string, err error) {
-	// include validations
-	typ := transfer.DataTransferType(transferType)
+func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint, providerEndpoint string) (tpId string, err error) {
+	// include validations for format
+	typ := transfer.DataTransferType(dataFormat)
 
 	tpId, err = c.urn.NewURN()
 	if err != nil {
@@ -41,11 +41,15 @@ func (c *Controller) RequestTransfer(transferType, agreementId, sinkEndpoint, pr
 
 	var addr transfer.Address
 	if typ == transfer.HTTPPush {
+		if sinkEndpoint == `` {
+			return ``, errors.MissingRequiredAttr(`sinkEndpoint`, `mandatory for push transfers`)
+		}
+
 		addr = transfer.Address{
 			Type:               transfer.TypeDataAddress,
 			EndpointType:       transfer.EndpointTypeHTTP,
-			Endpoint:           sinkEndpoint, // validate - cannot be null if push
-			EndpointProperties: nil,          // e.g. auth tokens
+			Endpoint:           sinkEndpoint,
+			EndpointProperties: nil, // e.g. auth tokens
 		}
 	}
 

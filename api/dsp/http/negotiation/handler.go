@@ -37,7 +37,7 @@ func (h *Handler) GetNegotiation(w http.ResponseWriter, r *http.Request) {
 
 	neg, err := h.provider.HandleNegotiationsRequest(providerPid)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(negotiation.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.DSPHandlerFailed(negotiation.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *Handler) HandleContractRequest(w http.ResponseWriter, r *http.Request) 
 
 	ack, err := h.provider.HandleContractRequest(req)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(negotiation.ContractRequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.DSPHandlerFailed(negotiation.ContractRequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *Handler) HandleContractAgreement(w http.ResponseWriter, r *http.Request
 
 	ack, err := h.consumer.HandleContractAgreement(req)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(negotiation.ContractAgreementEndpoint, core.RoleConsumer, err), http.StatusBadRequest)
+		h.sendError(w, errors.DSPHandlerFailed(negotiation.ContractAgreementEndpoint, core.RoleConsumer, err), http.StatusBadRequest)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *Handler) HandleAgreementVerification(w http.ResponseWriter, r *http.Req
 
 	ack, err := h.provider.HandleAgreementVerification(req.ProvPId)
 	if err != nil {
-		h.sendError(w, errors.HandlerFailed(negotiation.AgreementVerificationEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		h.sendError(w, errors.DSPHandlerFailed(negotiation.AgreementVerificationEndpoint, core.RoleProvider, err), http.StatusBadRequest)
 		return
 	}
 
@@ -123,7 +123,7 @@ func (h *Handler) HandleEventConsumer(w http.ResponseWriter, r *http.Request) {
 	case negotiation.EventFinalized:
 		ack, err := h.consumer.HandleFinalizedEvent(req.ConsPId)
 		if err != nil {
-			h.sendError(w, errors.HandlerFailed(req.ConsPId, core.RoleConsumer, err), http.StatusBadRequest)
+			h.sendError(w, errors.DSPHandlerFailed(req.ConsPId, core.RoleConsumer, err), http.StatusBadRequest)
 			return
 		}
 		h.sendAck(w, negotiation.EventConsumerEndpoint, ack, http.StatusOK)

@@ -23,6 +23,10 @@ type NegotiationHandler interface {
 	HandleAgreementVerification(providerPid string) (negotiation.Ack, error)
 }
 
+type TransferController interface {
+	StartTransfer(tpId, sourceEndpoint string) error
+}
+
 type TransferHandler interface {
 	HandleTransferRequest(tr transfer.Request) (transfer.Ack, error)
 }

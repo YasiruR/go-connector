@@ -16,6 +16,7 @@ type Provider interface {
 	provider.CatalogHandler
 	provider.NegotiationController
 	provider.NegotiationHandler
+	provider.TransferController
 	provider.TransferHandler
 }
 
@@ -24,9 +25,10 @@ type Consumer interface {
 	consumer.NegotiationController
 	consumer.NegotiationHandler
 	consumer.TransferController
+	consumer.TransferHandler
 }
 
 type Owner interface {
 	CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error)
-	CreateDataset(title string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error)
+	CreateDataset(title, format string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error)
 }

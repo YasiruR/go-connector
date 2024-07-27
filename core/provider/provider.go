@@ -12,6 +12,7 @@ type Provider struct {
 	provider.CatalogHandler
 	provider.NegotiationController
 	provider.NegotiationHandler
+	provider.TransferController
 	provider.TransferHandler
 }
 
@@ -20,6 +21,7 @@ func New(port int, stores domain.Stores, plugins domain.Plugins) *Provider {
 		CatalogHandler:        catalog.NewHandler(stores.Catalog, plugins.Log),
 		NegotiationController: negotiation.NewController(port, stores, plugins),
 		NegotiationHandler:    negotiation.NewHandler(stores.ContractNegotiation, plugins),
+		TransferController:    transfer.NewController(stores.Transfer, plugins),
 		TransferHandler:       transfer.NewHandler(stores, plugins),
 	}
 }

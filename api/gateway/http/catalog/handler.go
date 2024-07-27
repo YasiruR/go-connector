@@ -56,7 +56,7 @@ func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	id, err := h.owner.CreatePolicy(`test`, perms, []odrl.Rule{})
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleOwner, `CreatePolicy`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err))
 		return
 	}
 
@@ -76,10 +76,10 @@ func (h *Handler) CreateDataset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.owner.CreateDataset(req.Title, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
+	id, err := h.owner.CreateDataset(req.Title, req.Format, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleOwner, `CreateDataset`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err))
 		return
 	}
 
@@ -102,7 +102,7 @@ func (h *Handler) RequestCatalog(w http.ResponseWriter, r *http.Request) {
 	cat, err := h.consumer.RequestCatalog(req.ProviderEndpoint)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleConsumer, `RequestCatalog`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err))
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h *Handler) RequestDataset(w http.ResponseWriter, r *http.Request) {
 	ds, err := h.consumer.RequestDataset(req.DatasetId, req.ProviderEndpoint)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleConsumer, `RequestDataset`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err))
 		return
 	}
 

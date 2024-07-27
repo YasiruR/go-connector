@@ -21,6 +21,7 @@ type CreateDatasetRequest struct {
 	Endpoints    []string `json:"endpoints"`
 	OfferIds     []string `json:"offerIds"`
 	Keywords     []string `json:"keywords"`
+	Format       string   `json:"format"`
 }
 
 type Rule struct {

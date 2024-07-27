@@ -26,7 +26,11 @@ func (t *Transfer) Set(tpId string, val transfer.Process) {
 }
 
 func (t *Transfer) GetProcess(id string) (transfer.Process, error) {
-	return transfer.Process{}, nil
+	val, err := t.store.Get(id)
+	if err != nil {
+		return transfer.Process{}, errors.QueryFailed(transferCollection, `Get`, err)
+	}
+	return val.(transfer.Process), nil
 }
 
 func (t *Transfer) SetCallbackAddr(tpId, addr string) {

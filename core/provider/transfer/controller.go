@@ -3,6 +3,7 @@ package transfer
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
@@ -12,17 +13,21 @@ import (
 )
 
 type Controller struct {
-	trStore stores.Transfer
+	tpStore stores.Transfer
 	client  pkg.Client
 	log     pkg.Log
 }
 
-func NewController() *Controller {
-	return &Controller{}
+func NewController(tpStore stores.Transfer, plugins domain.Plugins) *Controller {
+	return &Controller{
+		tpStore: tpStore,
+		client:  plugins.Client,
+		log:     plugins.Log,
+	}
 }
 
 func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
-	tp, err := c.trStore.GetProcess(tpId)
+	tp, err := c.tpStore.GetProcess(tpId)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
 	}
@@ -35,6 +40,10 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 	}
 
 	if tp.Type == transfer.HTTPPull {
+		if sourceEndpoint == `` {
+			return errors.MissingRequiredAttr(`sourceEndpoint`, `mandatory for pull transfers`)
+		}
+
 		req.Address = transfer.Address{
 			Type:               transfer.TypeDataAddress,
 			EndpointType:       transfer.EndpointTypeHTTP,
@@ -48,13 +57,13 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		return errors.MarshalError(transfer.StartTransferEndpoint, err)
 	}
 
-	consumerAddr, err := c.trStore.CallbackAddr(tpId)
+	consumerAddr, err := c.tpStore.CallbackAddr(tpId)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
 	}
 
-	endpoint := strings.Replace(transfer.StartTransferEndpoint, `{`+transfer.ParamConsumerPid+`}`, tp.ConsPId, 1)
-	res, err := c.client.Send(data, consumerAddr+endpoint)
+	endpoint := strings.Replace(consumerAddr+transfer.StartTransferEndpoint, `{`+transfer.ParamConsumerPid+`}`, tp.ConsPId, 1)
+	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
@@ -64,7 +73,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		return errors.UnmarshalError(transfer.StartTransferEndpoint, err)
 	}
 
-	if err = c.trStore.UpdateState(tpId, transfer.StateStarted); err != nil {
+	if err = c.tpStore.UpdateState(tpId, transfer.StateStarted); err != nil {
 		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 

@@ -56,7 +56,7 @@ func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 	negId, err := h.consumer.RequestContract(req.ProviderEndpoint, ofr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleConsumer, `RequestContract`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleConsumer, `RequestContract`, err))
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {
 	agrId, err := h.provider.AgreeContract(req.OfferId, req.NegotiationId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleProvider, `AgreeContract`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleProvider, `AgreeContract`, err))
 		return
 	}
 
@@ -116,7 +116,7 @@ func (h *Handler) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.consumer.VerifyAgreement(consumerPid); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleConsumer, `VerifyAgreement`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleConsumer, `VerifyAgreement`, err))
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.provider.FinalizeContract(providerPid); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPFailed(core.RoleProvider, `FinalizeContract`, err))
+		h.log.Error(errors.DSPControllerFailed(core.RoleProvider, `FinalizeContract`, err))
 		return
 	}
 
