@@ -33,3 +33,18 @@ func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, e
 	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateStarted))
 	return transfer.Ack(tp), nil
 }
+
+func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error) {
+	tp, err := h.tpStore.GetProcess(sr.ConsPId)
+	if err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+	}
+
+	if err := h.tpStore.UpdateState(sr.ConsPId, transfer.StateSuspended); err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	tp.State = transfer.StateSuspended
+	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateSuspended))
+	return transfer.Ack(tp), nil
+}

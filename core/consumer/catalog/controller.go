@@ -19,7 +19,7 @@ func NewController(client pkg.Client) *Controller {
 func (c *Controller) RequestCatalog(endpoint string) (catalog2.Response, error) {
 	req := catalog2.Request{
 		Context:      core.Context,
-		Type:         catalog2.TypeCatalogRequest,
+		Type:         catalog2.MsgTypRequest,
 		DspaceFilter: nil,
 	}
 
@@ -44,7 +44,7 @@ func (c *Controller) RequestCatalog(endpoint string) (catalog2.Response, error) 
 func (c *Controller) RequestDataset(id, endpoint string) (catalog2.DatasetResponse, error) {
 	req := catalog2.DatasetRequest{
 		Context:   core.Context,
-		Type:      catalog2.TypeDatasetRequest,
+		Type:      catalog2.MsgTypDatasetRequest,
 		DatasetId: id,
 	}
 

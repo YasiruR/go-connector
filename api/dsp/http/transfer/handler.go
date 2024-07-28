@@ -1,13 +1,13 @@
 package transfer
 
 import (
-	"encoding/json"
+	"github.com/YasiruR/connector/api/dsp/http/middleware"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
-	"io"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
@@ -26,76 +26,71 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 }
 
 func (h *Handler) HandleTransferRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(transfer.RequestEndpoint, w, r)
-	if err != nil {
-		h.sendError(w, errors.InvalidRequestBody(transfer.RequestEndpoint, err), http.StatusBadRequest)
-		return
-	}
-
 	var req transfer.Request
-	if err = json.Unmarshal(body, &req); err != nil {
-		h.sendError(w, errors.UnmarshalError(transfer.RequestEndpoint, err), http.StatusBadRequest)
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(transfer.RequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
 	ack, err := h.provider.HandleTransferRequest(req)
 	if err != nil {
-		h.sendError(w, errors.DSPHandlerFailed(transfer.RequestEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.RequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, transfer.RequestEndpoint, ack, http.StatusCreated)
+	middleware.WriteAck(w, ack, http.StatusCreated)
 }
 
-func (h *Handler) HandleStartTransferRequest(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(transfer.StartTransferEndpoint, w, r)
-	if err != nil {
-		h.sendError(w, errors.InvalidRequestBody(transfer.StartTransferEndpoint, err), http.StatusBadRequest)
-		return
-	}
-
+func (h *Handler) HandleTransferStart(w http.ResponseWriter, r *http.Request) {
 	var req transfer.StartRequest
-	if err = json.Unmarshal(body, &req); err != nil {
-		h.sendError(w, errors.UnmarshalError(transfer.StartTransferEndpoint, err), http.StatusBadRequest)
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(transfer.StartEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
 	ack, err := h.consumer.HandleTransferStart(req)
 	if err != nil {
-		h.sendError(w, errors.DSPHandlerFailed(transfer.StartTransferEndpoint, core.RoleProvider, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.StartEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, transfer.StartTransferEndpoint, ack, http.StatusOK)
+	middleware.WriteAck(w, ack, http.StatusOK)
 }
 
-func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		err = errors.InvalidRequestBody(endpoint, err)
-		w.WriteHeader(http.StatusBadRequest)
-		r.Body.Close()
-		return nil, err
-	}
-	defer r.Body.Close()
-
-	return body, nil
-}
-
-func (h *Handler) sendAck(w http.ResponseWriter, receivedEndpoint string, data any, code int) {
-	body, err := json.Marshal(data)
-	if err != nil {
-		h.sendError(w, errors.MarshalError(receivedEndpoint, err), http.StatusInternalServerError)
+func (h *Handler) HandleTransferSuspension(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid, ok := vars[transfer.ParamPid]
+	if !ok {
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.SuspendEndpoint, transfer.ParamPid), http.StatusBadRequest)
 		return
 	}
 
-	w.WriteHeader(code)
-	if _, err = w.Write(body); err != nil {
-		h.sendError(w, errors.WriteBodyError(receivedEndpoint, err), http.StatusInternalServerError)
+	var req transfer.SuspendRequest
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(transfer.SuspendEndpoint, err), http.StatusBadRequest)
+		return
 	}
-}
 
-func (h *Handler) sendError(w http.ResponseWriter, err error, code int) {
-	w.WriteHeader(code)
-	h.log.Error(errors.APIFailed(`gateway`, err))
+	var ack transfer.Ack
+	var err error
+
+	switch pid {
+	case req.ProvPId:
+		ack, err = h.provider.HandleTransferSuspension(req)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.SuspendEndpoint, err), http.StatusBadRequest)
+			return
+		}
+	case req.ConsPId:
+		ack, err = h.consumer.HandleTransferSuspension(req)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, transfer.SuspendEndpoint, err), http.StatusBadRequest)
+			return
+		}
+	default:
+		middleware.WriteError(w, errors.InvalidRequestBody(transfer.SuspendEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	middleware.WriteAck(w, ack, http.StatusOK)
 }

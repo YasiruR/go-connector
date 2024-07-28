@@ -9,7 +9,7 @@ const (
 	apiFailed     = "api failed (type: %s) - %s"
 )
 
-func InitFailed(module string, err error) error {
+func InitModuleFailed(module string, err error) error {
 	return fmt.Errorf(initFailedMsg, module, err)
 }
 

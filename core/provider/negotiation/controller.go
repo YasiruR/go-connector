@@ -62,7 +62,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 
 	ca := negotiation.ContractAgreement{
 		Ctx:     core.Context,
-		Type:    negotiation.TypeContractAgreement,
+		Type:    negotiation.MsgTypeContractAgreement,
 		ProvPId: cn.ProvPId,
 		ConsPId: cn.ConsPId,
 		Agreement: odrl.Agreement{
@@ -115,7 +115,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 
 	event := negotiation.ContractNegotiationEvent{
 		Ctx:       core.Context,
-		Type:      negotiation.TypeNegotiationEvent,
+		Type:      negotiation.MsgTypeNegotiationEvent,
 		ProvPId:   providerPid,
 		ConsPId:   neg.ConsPId,
 		EventType: negotiation.EventFinalized,

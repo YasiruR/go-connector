@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	RoleProvider = `Provider`
-	RoleConsumer = `Consumer`
-	RoleOwner    = `Owner`
+	RoleProvider = `provider`
+	RoleConsumer = `consumer`
+	RoleOwner    = `owner`
 )
 
 type Provider interface {

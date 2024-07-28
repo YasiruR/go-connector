@@ -32,9 +32,14 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
 	}
 
+	consumerAddr, err := c.tpStore.CallbackAddr(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
+	}
+
 	req := transfer.StartRequest{
 		Ctx:     core.Context,
-		Type:    transfer.TypeTransferStart,
+		Type:    transfer.MsgTypStart,
 		ConsPId: tp.ConsPId,
 		ProvPId: tpId,
 	}
@@ -45,7 +50,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		}
 
 		req.Address = transfer.Address{
-			Type:               transfer.TypeDataAddress,
+			Type:               transfer.MsgTypDataAddress,
 			EndpointType:       transfer.EndpointTypeHTTP,
 			Endpoint:           sourceEndpoint,
 			EndpointProperties: nil, // e.g. auth tokens
@@ -54,15 +59,10 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return errors.MarshalError(transfer.StartTransferEndpoint, err)
+		return errors.MarshalError(transfer.StartEndpoint, err)
 	}
 
-	consumerAddr, err := c.tpStore.CallbackAddr(tpId)
-	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
-	}
-
-	endpoint := strings.Replace(consumerAddr+transfer.StartTransferEndpoint, `{`+transfer.ParamConsumerPid+`}`, tp.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+transfer.StartEndpoint, `{`+transfer.ParamConsumerPid+`}`, tp.ConsPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
@@ -70,7 +70,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 
 	var ack transfer.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(transfer.StartTransferEndpoint, err)
+		return errors.UnmarshalError(transfer.StartEndpoint, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateStarted); err != nil {
@@ -78,5 +78,50 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 	}
 
 	c.log.Info(fmt.Sprintf("updated transfer process state (id: %s, state: %s)", tpId, transfer.StateStarted))
+	return nil
+}
+
+func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) error {
+	// check if valid tp
+	tp, err := c.tpStore.GetProcess(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+	}
+
+	consumerAddr, err := c.tpStore.CallbackAddr(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
+	}
+
+	req := transfer.SuspendRequest{
+		Ctx:     core.Context,
+		Type:    transfer.MsgTypSuspend,
+		ConsPId: tp.ConsPId,
+		ProvPId: tpId,
+		Code:    code,
+		Reason:  reasons,
+	}
+
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.MarshalError(transfer.SuspendEndpoint, err)
+	}
+
+	endpoint := strings.Replace(consumerAddr+transfer.SuspendEndpoint, `{`+transfer.ParamPid+`}`, tp.ConsPId, 1)
+	res, err := c.client.Send(data, endpoint)
+	if err != nil {
+		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
+	}
+
+	var ack transfer.Ack
+	if err = json.Unmarshal(res, &ack); err != nil {
+		return errors.UnmarshalError(transfer.SuspendEndpoint, err)
+	}
+
+	if err = c.tpStore.UpdateState(tpId, transfer.StateSuspended); err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	c.log.Info(fmt.Sprintf("updated transfer process state (id: %s, state: %s)", tpId, transfer.StateSuspended))
 	return nil
 }

@@ -29,13 +29,13 @@ const (
 
 // Message types
 const (
-	TypeNegotiation           = `dspace:ContractNegotiation`
-	TypeContractOffer         = `dspace:ContractOfferMessage`
-	TypeContractRequest       = `dspace:ContractRequestMessage`
-	TypeNegotiationAck        = `dspace:ContractNegotiationAckMessage`
-	TypeContractAgreement     = `dspace:ContractAgreementMessage`
-	TypeAgreementVerification = `dspace:ContractAgreementVerificationMessage`
-	TypeNegotiationEvent      = `dspace:ContractNegotiationEventMessage`
+	MsgTypeNegotiation           = `dspace:ContractNegotiation`
+	MsgTypeContractOffer         = `dspace:ContractOfferMessage`
+	MsgTypeContractRequest       = `dspace:ContractRequestMessage`
+	MsgTypeNegotiationAck        = `dspace:ContractNegotiationAckMessage`
+	MsgTypeContractAgreement     = `dspace:ContractAgreementMessage`
+	MsgTypeAgreementVerification = `dspace:ContractAgreementVerificationMessage`
+	MsgTypeNegotiationEvent      = `dspace:ContractNegotiationEventMessage`
 )
 
 // Endpoints

@@ -11,3 +11,10 @@ type StartRequest struct {
 	TransferId     string `json:"transferProcessId"`
 	SourceEndpoint string `json:"sourceEndpoint"`
 }
+
+type SuspendRequest struct {
+	Provider   bool          `json:"provider"`
+	TransferId string        `json:"transferProcessId"`
+	Code       string        `json:"code"`
+	Reasons    []interface{} `json:"reasons"`
+}

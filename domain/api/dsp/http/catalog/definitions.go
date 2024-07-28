@@ -2,8 +2,8 @@ package catalog
 
 // Message types
 const (
-	TypeCatalogRequest = `dspace:CatalogRequestMessage`
-	TypeDatasetRequest = `dspace:DatasetRequestMessage`
+	MsgTypRequest        = `dspace:CatalogRequestMessage`
+	MsgTypDatasetRequest = `dspace:DatasetRequestMessage`
 )
 
 // Endpoints

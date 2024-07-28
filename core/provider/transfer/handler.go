@@ -40,7 +40,7 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 
 	ack := transfer.Ack{
 		Ctx:     core.Context,
-		Type:    transfer.TypeTransferProcess,
+		Type:    transfer.MsgTypeProcess,
 		ProvPId: tpId,
 		ConsPId: tr.ConsPId,
 		State:   transfer.StateRequested,
@@ -51,4 +51,19 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 	h.log.Trace("stored transfer process", ack)
 	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", tpId, transfer.StateRequested))
 	return ack, nil
+}
+
+func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error) {
+	tp, err := h.tpStore.GetProcess(sr.ProvPId)
+	if err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+	}
+
+	if err := h.tpStore.UpdateState(sr.ProvPId, transfer.StateSuspended); err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	tp.State = transfer.StateSuspended
+	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ProvPId, transfer.StateSuspended))
+	return transfer.Ack(tp), nil
 }

@@ -51,7 +51,8 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 
 	// transfer process related endpoints
 	r.HandleFunc(transfer.RequestEndpoint, s.th.HandleTransferRequest).Methods(http.MethodPost)
-	r.HandleFunc(transfer.StartTransferEndpoint, s.th.HandleStartTransferRequest).Methods(http.MethodPost)
+	r.HandleFunc(transfer.StartEndpoint, s.th.HandleTransferStart).Methods(http.MethodPost)
+	r.HandleFunc(transfer.SuspendEndpoint, s.th.HandleTransferSuspension).Methods(http.MethodPost)
 
 	return &s
 }
@@ -59,6 +60,6 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 func (s *Server) Start() {
 	s.log.Info("DSP HTTP server is listening on " + strconv.Itoa(s.port))
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
-		s.log.Fatal(errors.InitFailed(`DSP API`, err))
+		s.log.Fatal(errors.InitModuleFailed(`DSP API`, err))
 	}
 }

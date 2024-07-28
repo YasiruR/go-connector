@@ -5,6 +5,7 @@ type State string
 const (
 	StateRequested State = `dspace:REQUESTED`
 	StateStarted   State = `dspace:STARTED`
+	StateSuspended State = `dspace:SUSPENDED`
 )
 
 type DataTransferType string
@@ -16,22 +17,25 @@ const (
 
 // Message types
 const (
-	TypeTransferProcess  = `dspace:TransferProcess`
-	TypeTransferRequest  = `dspace:TransferRequestMessage`
-	TypeTransferStart    = `dspace:TransferStartMessage`
-	TypeDataAddress      = `dspace:DataAddress`
-	TypeEndpointProperty = `dspace:EndpointProperty`
+	MsgTypeProcess         = `dspace:TransferProcess`
+	MsgTypeRequest         = `dspace:TransferRequestMessage`
+	MsgTypStart            = `dspace:TransferStartMessage`
+	MsgTypSuspend          = `dspace:TransferSuspensionMessage`
+	MsgTypDataAddress      = `dspace:DataAddress`
+	MsgTypEndpointProperty = `dspace:EndpointProperty`
 )
 
 // Path parameters
 const (
+	ParamPid         = `Pid`
 	ParamConsumerPid = `consumerPid`
 )
 
 // Endpoints
 const (
-	RequestEndpoint       = `/transfers/request`
-	StartTransferEndpoint = `/transfers/{` + ParamConsumerPid + `}/start`
+	RequestEndpoint = `/transfers/request`
+	StartEndpoint   = `/transfers/{` + ParamConsumerPid + `}/start`
+	SuspendEndpoint = `/transfers/{` + ParamPid + `}/suspend`
 )
 
 const (

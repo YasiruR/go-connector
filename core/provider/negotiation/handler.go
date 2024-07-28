@@ -57,7 +57,7 @@ func (h *Handler) HandleContractRequest(cr negotiation2.ContractRequest) (ack ne
 		}
 
 		cn.State = negotiation2.StateRequested
-		cn.Type = negotiation2.TypeNegotiationAck
+		cn.Type = negotiation2.MsgTypeNegotiationAck
 		h.log.Trace("a valid contract negotiation exists", cn.ProvPId)
 	} else {
 		provPId, err = h.urn.NewURN()
@@ -67,7 +67,7 @@ func (h *Handler) HandleContractRequest(cr negotiation2.ContractRequest) (ack ne
 
 		cn = negotiation2.Negotiation{
 			Ctx:     core.Context,
-			Type:    negotiation2.TypeNegotiationAck,
+			Type:    negotiation2.MsgTypeNegotiationAck,
 			ConsPId: cr.ConsPId,
 			ProvPId: provPId,
 			State:   negotiation2.StateRequested,
@@ -93,7 +93,7 @@ func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation2.
 	}
 
 	cn.State = negotiation2.StateVerified
-	cn.Type = negotiation2.TypeNegotiationAck
+	cn.Type = negotiation2.MsgTypeNegotiationAck
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation2.StateVerified))
 	return negotiation2.Ack(cn), nil
 }

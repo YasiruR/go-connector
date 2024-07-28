@@ -18,6 +18,15 @@ type StartRequest struct {
 	Address Address `json:"dspace:address"`
 }
 
+type SuspendRequest struct {
+	Ctx     string        `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
+	Type    string        `json:"@type" default:"dspace:TransferSuspensionMessage"`
+	ConsPId string        `json:"dspace:consumerPid"`
+	ProvPId string        `json:"dspace:providerPid"`
+	Code    string        `json:"dspace:code"`
+	Reason  []interface{} `json:"dspace:reason"`
+}
+
 type Address struct {
 	Type               string             `json:"@type" default:"dspace:DataAddress"`
 	EndpointType       string             `json:"dspace:endpointType"`

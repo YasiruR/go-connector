@@ -55,7 +55,8 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 
 	// endpoints related to transfer process
 	r.HandleFunc(transfer.RequestEndpoint, s.th.RequestTransfer).Methods(http.MethodPost)
-	r.HandleFunc(transfer.StartTransferEndpoint, s.th.StartTransfer).Methods(http.MethodPost)
+	r.HandleFunc(transfer.StartEndpoint, s.th.StartTransfer).Methods(http.MethodPost)
+	r.HandleFunc(transfer.SuspendEndpoint, s.th.SuspendTransfer).Methods(http.MethodPost)
 
 	return &s
 }
@@ -63,6 +64,6 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 func (s *Server) Start() {
 	s.log.Info("gateway HTTP server is listening on " + strconv.Itoa(s.port))
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
-		s.log.Fatal(errors.InitFailed(`gateway API`, err))
+		s.log.Fatal(errors.InitModuleFailed(`gateway API`, err))
 	}
 }

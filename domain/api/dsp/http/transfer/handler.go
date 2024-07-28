@@ -6,5 +6,6 @@ import (
 
 type Handler interface {
 	HandleTransferRequest(w http.ResponseWriter, r *http.Request)
-	HandleStartTransferRequest(w http.ResponseWriter, r *http.Request)
+	HandleTransferStart(w http.ResponseWriter, r *http.Request)
+	HandleTransferSuspension(w http.ResponseWriter, r *http.Request)
 }

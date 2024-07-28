@@ -8,7 +8,10 @@ const (
 	invalidRequestBody = "invalid request body (endpoint: %s) - %s"
 	unmarshalError     = "unmarshal error (endpoint: %s) - %s"
 	marshalError       = "marshal error (endpoint: %s) - %s"
-	writeBodyError     = "writing response body failed (endpoint: %s) - %s"
+	writeBodyError     = "writing body failed (endpoint: %s) - %s"
+	parseError         = "parsing request failed (endpoint: %s) - %s"
+	writeAckFailure    = "ack response failed (endpoint: %s) - %s"
+	writeErrFailure    = "error response failed (endpoint: %s) - %s"
 )
 
 func InvalidRequestBody(endpoint string, err error) error {
@@ -25,6 +28,18 @@ func MarshalError(endpoint string, err error) error {
 
 func WriteBodyError(endpoint string, err error) error {
 	return fmt.Errorf(writeBodyError, endpoint, err)
+}
+
+func ParseRequestFailed(endpoint string, err error) error {
+	return fmt.Errorf(parseError, endpoint, err)
+}
+
+func WriteAckFailed(endpoint string, err error) error {
+	return fmt.Errorf(writeAckFailure, endpoint, err)
+}
+
+func WriteErrorFailed(endpoint string, err error) error {
+	return fmt.Errorf(writeErrFailure, endpoint, err)
 }
 
 // Errors related to HTTP transport

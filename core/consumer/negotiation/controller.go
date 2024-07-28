@@ -42,7 +42,7 @@ func (c *Controller) RequestContract(providerEndpoint string, ofr odrl.Offer) (c
 	// construct payload
 	req := negotiation2.ContractRequest{
 		Ctx:          core.Context,
-		Type:         negotiation2.TypeContractRequest,
+		Type:         negotiation2.MsgTypeContractRequest,
 		ConsPId:      consPId,
 		Offer:        ofr,
 		CallbackAddr: c.callbackAddr,
@@ -80,7 +80,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 
 	req := negotiation2.ContractVerification{
 		Ctx:     core.Context,
-		Type:    negotiation2.TypeAgreementVerification,
+		Type:    negotiation2.MsgTypeAgreementVerification,
 		ProvPId: neg.ProvPId,
 		ConsPId: consumerPid,
 	}

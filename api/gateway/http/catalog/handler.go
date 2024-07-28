@@ -1,14 +1,13 @@
 package catalog
 
 import (
-	"encoding/json"
+	"github.com/YasiruR/connector/api/gateway/http/middleware"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/gateway/http/catalog"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
-	"io"
 	"net/http"
 )
 
@@ -27,15 +26,9 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 }
 
 func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.CreatePolicyEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
 	var req catalog.CreatePolicyRequest
-	if err = json.Unmarshal(body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.UnmarshalError(catalog.CreatePolicyEndpoint, err))
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(catalog.CreatePolicyEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -55,107 +48,57 @@ func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	// todo check if target is required here
 	id, err := h.owner.CreatePolicy(`test`, perms, []odrl.Rule{})
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err))
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, catalog.CreatePolicyEndpoint, catalog.PolicyResponse{Id: id}, http.StatusOK)
+	middleware.WriteAck(w, catalog.PolicyResponse{Id: id}, http.StatusOK)
 }
 
 func (h *Handler) CreateDataset(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.CreateDatasetEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
 	var req catalog.CreateDatasetRequest
-	if err = json.Unmarshal(body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.UnmarshalError(catalog.CreateDatasetEndpoint, err))
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(catalog.CreateDatasetEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
 	id, err := h.owner.CreateDataset(req.Title, req.Format, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err))
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, catalog.CreateDatasetEndpoint, catalog.DatasetResponse{Id: id}, http.StatusOK)
+	middleware.WriteAck(w, catalog.DatasetResponse{Id: id}, http.StatusOK)
 }
 
 func (h *Handler) RequestCatalog(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.RequestCatalogEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
 	var req catalog.Request
-	if err = json.Unmarshal(body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.UnmarshalError(catalog.RequestCatalogEndpoint, err))
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(catalog.RequestCatalogEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
 	cat, err := h.consumer.RequestCatalog(req.ProviderEndpoint)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err))
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, catalog.RequestCatalogEndpoint, cat, http.StatusOK)
+	middleware.WriteAck(w, cat, http.StatusOK)
 }
 
 func (h *Handler) RequestDataset(w http.ResponseWriter, r *http.Request) {
-	body, err := h.readBody(catalog.RequestDatasetEndpoint, w, r)
-	if err != nil {
-		return
-	}
-
 	var req catalog.DatasetRequest
-	if err = json.Unmarshal(body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.UnmarshalError(catalog.RequestDatasetEndpoint, err))
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(catalog.RequestDatasetEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
 	ds, err := h.consumer.RequestDataset(req.DatasetId, req.ProviderEndpoint)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		h.log.Error(errors.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err))
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err), http.StatusBadRequest)
 		return
 	}
 
-	h.sendAck(w, catalog.RequestDatasetEndpoint, ds, http.StatusOK)
-}
-
-func (h *Handler) readBody(endpoint string, w http.ResponseWriter, r *http.Request) ([]byte, error) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		err = errors.InvalidRequestBody(endpoint, err)
-		w.WriteHeader(http.StatusBadRequest)
-		r.Body.Close()
-		return nil, err
-	}
-	defer r.Body.Close()
-
-	return body, nil
-}
-
-func (h *Handler) sendAck(w http.ResponseWriter, receivedEndpoint string, data any, code int) {
-	body, err := json.Marshal(data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(errors.MarshalError(receivedEndpoint, err))
-		return
-	}
-
-	w.WriteHeader(code)
-	if _, err = w.Write(body); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(errors.WriteBodyError(receivedEndpoint, err))
-	}
+	middleware.WriteAck(w, ds, http.StatusOK)
 }
