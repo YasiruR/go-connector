@@ -26,10 +26,12 @@ type NegotiationHandler interface {
 type TransferController interface {
 	StartTransfer(tpId, sourceEndpoint string) error
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
+	CompleteTransfer(tpId string) error
 }
 
 type TransferHandler interface {
 	//  should be idempotent for multiple transfer requests
 	HandleTransferRequest(tr transfer.Request) (transfer.Ack, error)
 	HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error)
+	HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error)
 }

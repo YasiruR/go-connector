@@ -28,9 +28,11 @@ type NegotiationHandler interface {
 type TransferController interface {
 	RequestTransfer(transferType, agreementId, sinkEndpoint, providerEndpoint string) (tpId string, err error)
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
+	CompleteTransfer(tpId string) error
 }
 
 type TransferHandler interface {
 	HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error)
 	HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error)
+	HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error)
 }

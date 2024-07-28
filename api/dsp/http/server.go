@@ -53,6 +53,7 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	r.HandleFunc(transfer.RequestEndpoint, s.th.HandleTransferRequest).Methods(http.MethodPost)
 	r.HandleFunc(transfer.StartEndpoint, s.th.HandleTransferStart).Methods(http.MethodPost)
 	r.HandleFunc(transfer.SuspendEndpoint, s.th.HandleTransferSuspension).Methods(http.MethodPost)
+	r.HandleFunc(transfer.CompleteEndpoint, s.th.HandleTransferCompletion).Methods(http.MethodPost)
 
 	return &s
 }

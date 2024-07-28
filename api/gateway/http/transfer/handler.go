@@ -76,3 +76,25 @@ func (h *Handler) SuspendTransfer(w http.ResponseWriter, r *http.Request) {
 
 	middleware.WriteAck(w, nil, http.StatusOK)
 }
+
+func (h *Handler) CompleteTransfer(w http.ResponseWriter, r *http.Request) {
+	var req transfer.CompleteRequest
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(transfer.CompleteEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	if req.Provider {
+		if err := h.provider.CompleteTransfer(req.TransferId); err != nil {
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `CompleteTransfer`, err), http.StatusBadRequest)
+			return
+		}
+	} else {
+		if err := h.consumer.CompleteTransfer(req.TransferId); err != nil {
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `CompleteTransfer`, err), http.StatusBadRequest)
+			return
+		}
+	}
+
+	middleware.WriteAck(w, nil, http.StatusOK)
+}

@@ -18,3 +18,8 @@ type SuspendRequest struct {
 	Code       string        `json:"code"`
 	Reasons    []interface{} `json:"reasons"`
 }
+
+type CompleteRequest struct {
+	Provider   bool   `json:"provider"`
+	TransferId string `json:"transferProcessId"`
+}

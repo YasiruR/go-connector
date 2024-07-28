@@ -27,6 +27,13 @@ type SuspendRequest struct {
 	Reason  []interface{} `json:"dspace:reason"`
 }
 
+type CompleteRequest struct {
+	Ctx     string `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
+	Type    string `json:"@type" default:"dspace:TransferCompletionMessage"`
+	ConsPId string `json:"dspace:consumerPid"`
+	ProvPId string `json:"dspace:providerPid"`
+}
+
 type Address struct {
 	Type               string             `json:"@type" default:"dspace:DataAddress"`
 	EndpointType       string             `json:"dspace:endpointType"`

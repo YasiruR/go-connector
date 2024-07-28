@@ -30,3 +30,4 @@ Sample requests provided in this document assume the following endpoints to be u
 1. Request transfer (Consumer): ``curl -X POST -d '{"transferType": "HTTP_PUSH", "agreementId": "<agreement-id>", "sinkEndpoint": "http://localhost:8080/datasink", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/transfer/request``
 2. Start transfer (Provider): ``curl -X POST -d '{"transferProcessId": "<providerPid>"}' http://localhost:9081/gateway/transfer/start``
 3. Suspend transfer (Consumer/Provider): ``curl -X POST -d '{"provider": false, "transferProcessId": "<consumerPid>", "code": "2400", "Reasons": ["invalid data", "incompatible syntax"]}' http://localhost:8081/gateway/transfer/suspend``
+4. Complete transfer 

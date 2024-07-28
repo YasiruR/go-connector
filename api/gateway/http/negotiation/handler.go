@@ -3,7 +3,6 @@ package negotiation
 import (
 	"github.com/YasiruR/connector/api/gateway/http/middleware"
 	"github.com/YasiruR/connector/domain"
-	negotiation2 "github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
@@ -108,7 +107,7 @@ func (h *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	providerPid, ok := params[negotiation.ParamProviderPid]
 	if !ok {
-		middleware.WriteError(w, errors.PathParamNotFound(negotiation.FinalizeContractEndpoint, negotiation2.ParamProviderId), http.StatusBadRequest)
+		middleware.WriteError(w, errors.PathParamNotFound(negotiation.FinalizeContractEndpoint, negotiation.ParamProviderPid), http.StatusBadRequest)
 		return
 	}
 

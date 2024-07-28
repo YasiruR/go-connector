@@ -59,11 +59,26 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
 	}
 
-	if err := h.tpStore.UpdateState(sr.ProvPId, transfer.StateSuspended); err != nil {
+	if err = h.tpStore.UpdateState(sr.ProvPId, transfer.StateSuspended); err != nil {
 		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	tp.State = transfer.StateSuspended
 	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ProvPId, transfer.StateSuspended))
+	return transfer.Ack(tp), nil
+}
+
+func (h *Handler) HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error) {
+	tp, err := h.tpStore.GetProcess(cr.ProvPId)
+	if err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+	}
+
+	if err = h.tpStore.UpdateState(cr.ProvPId, transfer.StateCompleted); err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	tp.State = transfer.StateCompleted
+	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", cr.ProvPId, transfer.StateCompleted))
 	return transfer.Ack(tp), nil
 }

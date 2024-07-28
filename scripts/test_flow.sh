@@ -31,3 +31,4 @@ tpConsPid=$(echo "$res" | awk -F[\"\"] '{print $4}')
 read -p "Transfer Process ID (Provider): " tpProvId
 data='{"transferProcessId": "'$tpProvId'"}'
 curl -X POST -d "$data" http://localhost:9081/gateway/transfer/start
+
