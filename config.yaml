@@ -1,0 +1,18 @@
+data_space:
+  participantId: test-participant
+catalog:
+  title: Ceit catalog
+  keywords:
+    - data spaces
+    - machine learning
+  access_services:
+    - http://localhost:9090/connector
+  descriptions:
+    - This is a sample catalog for Ceit Connector
+servers:
+  dsp:
+    http:
+      port: 9080
+  gateway:
+    http:
+      port: 9081
