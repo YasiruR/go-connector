@@ -22,11 +22,12 @@ Sample requests provided in this document assume the following endpoints to be u
 
 1. Request contract (Consumer): ``curl -X POST -d '{"offerId": "<offer-id>", "providerEndpoint": "http://localhost:9080", "odrlTarget": "test-target", "assigner": "provider1", "assignee": "consumer1", "action": "odrl:use"}' http://localhost:8081/gateway/request-contract``
 2. Offer contract (Provider): ``curl -X POST -d '{"offerId": "<offer-id>", "consumerAddr": "http://localhost:8080"}' http://localhost:9081/gateway/offer-contract``
-3. Get negotiation (Provider): ``curl -X GET http://localhost:9080/negotiations/{providerPid} | jq``
-4. Agree contract (Provider): ``curl -X POST -d '{"offerId": "<offer-id>", "contractNegotiationId": "<providerPid>"}' http://localhost:9081/gateway/agree-contract``
-5. Get agreement (Consumer): ``curl -X GET http://localhost:8081/gateway/agreement/{id}``
-6. Verify agreement (Consumer): ``curl -X POST http://localhost:8081/gateway/verify-agreement/{consumerPid}``
-7. Finalize contract (Provider): ``curl -X POST http://localhost:9081/gateway/finalize-contract/{providerPid}`` 
+3. Accept contract (Consumer): ``curl -X POST http://localhost:8081/gateway/accept-offer/<consumerPid>``
+4. Get negotiation (Provider): ``curl -X GET http://localhost:9080/negotiations/{providerPid} | jq`` 
+5. Agree contract (Provider): ``curl -X POST -d '{"offerId": "<offer-id>", "contractNegotiationId": "<providerPid>"}' http://localhost:9081/gateway/agree-contract``
+6. Get agreement (Consumer): ``curl -X GET http://localhost:8081/gateway/agreement/{id}``
+7. Verify agreement (Consumer): ``curl -X POST http://localhost:8081/gateway/verify-agreement/{consumerPid}``
+8. Finalize contract (Provider): ``curl -X POST http://localhost:9081/gateway/finalize-contract/{providerPid}`` 
 
 ### Transfer Process
 
