@@ -32,12 +32,13 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 	}
 }
 
-func (c *Controller) RequestContract(consumerPid, providerEndpoint string, ofr odrl.Offer) (cnId string, err error) {
+func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error) {
 	var providerPid string
+	var endpoint string
 	if consumerPid != `` {
-		cn, err := c.cnStore.Negotiation(consumerPid)
+		cn, err := c.cnStore.GetNegotiation(consumerPid)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 		}
 
 		if cn.State != negotiation.StateOffered {
@@ -45,6 +46,7 @@ func (c *Controller) RequestContract(consumerPid, providerEndpoint string, ofr o
 		}
 
 		providerPid = cn.ProvPId
+		endpoint = strings.Replace(negotiation.ContractRequestToOfferEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
 		c.log.Trace("a contract negotiation already exists for the request", consumerPid)
 	} else {
 		// generate consumerPid
@@ -52,6 +54,7 @@ func (c *Controller) RequestContract(consumerPid, providerEndpoint string, ofr o
 		if err != nil {
 			return ``, errors.URNFailed(`consumerPid`, `NewURN`, err)
 		}
+		endpoint = negotiation.ContractRequestEndpoint
 	}
 
 	// construct payload
@@ -66,17 +69,17 @@ func (c *Controller) RequestContract(consumerPid, providerEndpoint string, ofr o
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return ``, errors.MarshalError(``, err)
+		return ``, errors.MarshalError(endpoint, err)
 	}
 
-	res, err := c.client.Send(data, providerEndpoint+negotiation.ContractRequestEndpoint)
+	res, err := c.client.Send(data, providerAddr+endpoint)
 	if err != nil {
 		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
 	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return ``, errors.UnmarshalError(providerEndpoint+negotiation.ContractRequestEndpoint, err)
+		return ``, errors.UnmarshalError(providerAddr+negotiation.ContractRequestEndpoint, err)
 	}
 
 	c.cnStore.Set(consumerPid, negotiation.Negotiation(ack)) // check if received state is REQUESTED (and correctness of other attributes)
@@ -86,18 +89,62 @@ func (c *Controller) RequestContract(consumerPid, providerEndpoint string, ofr o
 	return consumerPid, nil
 }
 
-func (c *Controller) AcceptContract() {}
+func (c *Controller) AcceptOffer(consumerPid string) error {
+	cn, err := c.cnStore.GetNegotiation(consumerPid)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+	}
+
+	if cn.State != negotiation.StateOffered {
+		return errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
+	}
+
+	event := negotiation.ContractNegotiationEvent{
+		Ctx:       core.Context,
+		Type:      negotiation.MsgTypeNegotiationEvent,
+		ProvPId:   cn.ProvPId,
+		ConsPId:   cn.ConsPId,
+		EventType: negotiation.EventAccepted,
+	}
+
+	provAddr, err := c.cnStore.CallbackAddr(consumerPid)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
+	}
+
+	data, err := json.Marshal(event)
+	if err != nil {
+		return errors.MarshalError(negotiation.AcceptOfferEndpoint, err)
+	}
+
+	res, err := c.client.Send(data, provAddr+negotiation.AcceptOfferEndpoint)
+	if err != nil {
+		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
+	}
+
+	var ack negotiation.Ack
+	if err = json.Unmarshal(res, &ack); err != nil {
+		return errors.UnmarshalError(negotiation.AcceptOfferEndpoint, err)
+	}
+
+	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateAccepted); err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+	}
+
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateAccepted))
+	return nil
+}
 
 func (c *Controller) VerifyAgreement(consumerPid string) error {
-	neg, err := c.cnStore.Negotiation(consumerPid)
+	cn, err := c.cnStore.GetNegotiation(consumerPid)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
 	req := negotiation.ContractVerification{
 		Ctx:     core.Context,
 		Type:    negotiation.MsgTypeAgreementVerification,
-		ProvPId: neg.ProvPId,
+		ProvPId: cn.ProvPId,
 		ConsPId: consumerPid,
 	}
 
@@ -111,7 +158,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
 	}
 
-	endpoint := strings.Replace(providerAddr+negotiation.AgreementVerificationEndpoint, `{`+negotiation.ParamProviderId+`}`, neg.ProvPId, 1)
+	endpoint := strings.Replace(providerAddr+negotiation.AgreementVerificationEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
@@ -119,7 +166,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 
 	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(providerAddr+negotiation.AgreementVerificationEndpoint, err)
+		return errors.UnmarshalError(negotiation.AgreementVerificationEndpoint, err)
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {

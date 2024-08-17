@@ -23,6 +23,7 @@ type NegotiationController interface {
 type NegotiationHandler interface {
 	HandleNegotiationsRequest(providerPid string) (negotiation.Ack, error)
 	HandleContractRequest(cr negotiation.ContractRequest) (negotiation.Ack, error)
+	HandleAcceptOffer(providerPid string) (negotiation.Ack, error)
 	HandleAgreementVerification(providerPid string) (negotiation.Ack, error)
 }
 

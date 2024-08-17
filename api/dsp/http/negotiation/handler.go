@@ -43,15 +43,23 @@ func (h *Handler) GetNegotiation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleContractRequest(w http.ResponseWriter, r *http.Request) {
+	var endpoint string
+	_, ok := mux.Vars(r)[negotiation.ParamConsumerPid]
+	if ok {
+		endpoint = negotiation.ContractOfferToRequestEndpoint
+	} else {
+		endpoint = negotiation.ContractOfferEndpoint
+	}
+
 	var req negotiation.ContractRequest
 	if err := middleware.ParseRequest(r, &req); err != nil {
-		middleware.WriteError(w, errors.ParseRequestFailed(negotiation.ContractRequestEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.ParseRequestFailed(endpoint, err), http.StatusBadRequest)
 		return
 	}
 
 	ack, err := h.provider.HandleContractRequest(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, negotiation.ContractRequestEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, endpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -114,10 +122,10 @@ func (h *Handler) HandleAgreementVerification(w http.ResponseWriter, r *http.Req
 	middleware.WriteAck(w, ack, http.StatusOK)
 }
 
-func (h *Handler) HandleEventConsumer(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleNegotiationEvent(w http.ResponseWriter, r *http.Request) {
 	var req negotiation.ContractNegotiationEvent
 	if err := middleware.ParseRequest(r, &req); err != nil {
-		middleware.WriteError(w, errors.ParseRequestFailed(negotiation.EventConsumerEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.ParseRequestFailed(`negotiation event endpoint`, err), http.StatusBadRequest)
 		return
 	}
 
@@ -125,12 +133,18 @@ func (h *Handler) HandleEventConsumer(w http.ResponseWriter, r *http.Request) {
 	case negotiation.EventFinalized:
 		ack, err := h.consumer.HandleFinalizedEvent(req.ConsPId)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, req.ConsPId, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, negotiation.FinalizeContractEndpoint, err), http.StatusBadRequest)
 			return
 		}
-
+		middleware.WriteAck(w, ack, http.StatusOK)
+	case negotiation.EventAccepted:
+		ack, err := h.provider.HandleAcceptOffer(req.ProvPId)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, negotiation.AcceptOfferEndpoint, err), http.StatusBadRequest)
+			return
+		}
 		middleware.WriteAck(w, ack, http.StatusOK)
 	default:
-		middleware.WriteError(w, errors.InvalidRequestBody(negotiation.EventConsumerEndpoint, nil), http.StatusBadRequest)
+		middleware.WriteError(w, errors.InvalidRequestBody(negotiation.FinalizeContractEndpoint, nil), http.StatusBadRequest)
 	}
 }

@@ -1,7 +1,7 @@
 package catalog
 
 type PolicyResponse struct {
-	Id string `json:"offerId"`
+	Id string `json:"policyId"`
 }
 
 type DatasetResponse struct {

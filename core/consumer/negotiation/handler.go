@@ -30,9 +30,9 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 	var cn negotiation.Negotiation
 	if co.ConsPId != `` {
 		// validate the given consumerPid
-		cn, err = h.cnStore.Negotiation(co.ConsPId)
+		cn, err = h.cnStore.GetNegotiation(co.ConsPId)
 		if err != nil {
-			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 		}
 		h.log.Trace("a contract negotiation already exists for the contract offer", co.ConsPId)
 	} else {
@@ -49,6 +49,7 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 	cn.ProvPId = co.ProvPId
 	cn.State = negotiation.StateOffered
 	h.cnStore.Set(cn.ConsPId, cn)
+	h.cnStore.SetCallbackAddr(cn.ConsPId, co.CallbackAddr)
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", cn.ConsPId, negotiation.StateOffered))
 	return negotiation.Ack(cn), nil
 }
@@ -64,9 +65,9 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	cn, err := h.cnStore.Negotiation(ca.ConsPId)
+	cn, err := h.cnStore.GetNegotiation(ca.ConsPId)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
@@ -78,9 +79,9 @@ func (h *Handler) HandleFinalizedEvent(consumerPid string) (negotiation.Ack, err
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	cn, err := h.cnStore.Negotiation(consumerPid)
+	cn, err := h.cnStore.GetNegotiation(consumerPid)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateFinalized))

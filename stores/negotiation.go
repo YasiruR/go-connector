@@ -34,7 +34,7 @@ func (cn *ContractNegotiation) Set(cnId string, val negotiation.Negotiation) {
 	_ = cn.store.Set(cnId, val)
 }
 
-func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation.Negotiation, error) {
+func (cn *ContractNegotiation) GetNegotiation(cnId string) (negotiation.Negotiation, error) {
 	val, err := cn.store.Get(cnId)
 	if err != nil {
 		return negotiation.Negotiation{}, errors.QueryFailed(negotiationCollection, `Get`, err)
@@ -43,7 +43,7 @@ func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation.Negotiation
 }
 
 func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) error {
-	neg, err := cn.Negotiation(cnId)
+	neg, err := cn.GetNegotiation(cnId)
 	if err != nil {
 		return errors.QueryFailed(negotiationCollection, `Get`, err)
 	}
@@ -54,7 +54,7 @@ func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) err
 }
 
 func (cn *ContractNegotiation) State(cnId string) (negotiation.State, error) {
-	neg, err := cn.Negotiation(cnId)
+	neg, err := cn.GetNegotiation(cnId)
 	if err != nil {
 		return ``, errors.QueryFailed(negotiationCollection, `Get`, err)
 	}

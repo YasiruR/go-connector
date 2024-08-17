@@ -70,6 +70,22 @@ func (h *Handler) OfferContract(w http.ResponseWriter, r *http.Request) {
 	middleware.WriteAck(w, negotiation.ContractRequestResponse{Id: cnId}, http.StatusOK)
 }
 
+func (h *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	consumerPid, ok := params[negotiation.ParamConsumerPid]
+	if !ok {
+		middleware.WriteError(w, errors.PathParamNotFound(negotiation.AcceptOfferEndpoint, negotiation.ParamConsumerPid), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.consumer.AcceptOffer(consumerPid); err != nil {
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `AcceptOffer`, err), http.StatusBadRequest)
+		return
+	}
+
+	middleware.WriteAck(w, nil, http.StatusOK)
+}
+
 func (h *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {
 	var req negotiation.AgreeContractRequest
 	if err := middleware.ParseRequest(r, &req); err != nil {

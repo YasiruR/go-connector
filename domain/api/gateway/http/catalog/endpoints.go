@@ -1,7 +1,7 @@
 package catalog
 
 const (
-	CreateOfferEndpoint    = `/gateway/create-offer`
+	CreatePolicyEndpoint   = `/gateway/create-policy`
 	CreateDatasetEndpoint  = `/gateway/create-dataset`
 	RequestCatalogEndpoint = `/gateway/catalog`
 	RequestDatasetEndpoint = `/gateway/dataset`

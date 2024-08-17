@@ -11,6 +11,7 @@ const (
 const (
 	RequestContractEndpoint  = `/gateway/request-contract`
 	OfferContractEndpoint    = `/gateway/offer-contract`
+	AcceptOfferEndpoint      = `/gateway/accept-offer/{` + ParamConsumerPid + `}`
 	AgreeContractEndpoint    = `/gateway/agree-contract`
 	GetAgreementEndpoint     = `/gateway/agreement/{` + ParamAgreementId + `}`
 	VerifyAgreementEndpoint  = `/gateway/verify-agreement/{` + ParamConsumerPid + `}`

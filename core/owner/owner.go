@@ -27,7 +27,7 @@ func New(stores domain.Stores, plugins domain.Plugins) *Service {
 	}
 }
 
-func (s *Service) CreateOffer(target string, permissions, prohibitions []odrl.Rule) (ofrId string, err error) {
+func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (ofrId string, err error) {
 	ofrId, err = s.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`offerId`, `NewURN`, err)

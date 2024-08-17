@@ -25,9 +25,9 @@ func NewHandler(cnStore stores.ContractNegotiation, plugins domain.Plugins) *Han
 }
 
 func (h *Handler) HandleNegotiationsRequest(providerPid string) (negotiation.Ack, error) {
-	ack, err := h.cnStore.Negotiation(providerPid)
+	ack, err := h.cnStore.GetNegotiation(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
 	return negotiation.Ack(ack), nil
@@ -43,9 +43,9 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 	var cn negotiation.Negotiation
 	provPId := cr.ProvPId
 	if provPId != `` {
-		cn, err = h.cnStore.Negotiation(provPId)
+		cn, err = h.cnStore.GetNegotiation(provPId)
 		if err != nil {
-			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 		}
 
 		if cn.State != negotiation.StateOffered {
@@ -82,10 +82,28 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 	return negotiation.Ack(cn), nil
 }
 
-func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.Ack, error) {
-	cn, err := h.cnStore.Negotiation(providerPid)
+func (h *Handler) HandleAcceptOffer(providerPid string) (negotiation.Ack, error) {
+	cn, err := h.cnStore.GetNegotiation(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+	}
+
+	if cn.State != negotiation.StateOffered {
+		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
+	}
+
+	if err = h.cnStore.UpdateState(providerPid, negotiation.StateAccepted); err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+	}
+
+	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateAccepted))
+	return negotiation.Ack(cn), nil
+}
+
+func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.Ack, error) {
+	cn, err := h.cnStore.GetNegotiation(providerPid)
+	if err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
 	if err = h.cnStore.UpdateState(providerPid, negotiation.StateVerified); err != nil {
@@ -97,3 +115,6 @@ func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.A
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateVerified))
 	return negotiation.Ack(cn), nil
 }
+
+// validate
+// - state, consPid

@@ -2,7 +2,7 @@ package negotiation
 
 type State string
 
-// States used during the protocol
+// States used during the negotiation protocol
 const (
 	StateRequested  State = "REQUESTED"
 	StateOffered    State = "OFFERED"
@@ -38,14 +38,20 @@ const (
 	MsgTypeNegotiationEvent      = `dspace:ContractNegotiationEventMessage`
 )
 
-// Endpoints
+// Provider endpoints
 const (
 	RequestEndpoint                = `/negotiations/{` + ParamProviderId + `}`
 	ContractRequestEndpoint        = `/negotiations/request`
+	ContractRequestToOfferEndpoint = `/negotiations/{` + ParamProviderId + `}/request`
+	AcceptOfferEndpoint            = `/negotiations/{` + ParamProviderId + `}/events`
+
+	ContractAgreementEndpoint     = `/negotiations/{` + ParamConsumerPid + `}/agreement`
+	AgreementVerificationEndpoint = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
+)
+
+// Consumer endpoints
+const (
 	ContractOfferEndpoint          = `/negotiations/offers`
 	ContractOfferToRequestEndpoint = `/negotiations/{` + ParamConsumerPid + `}/offers`
-	ContractAgreementEndpoint      = `/negotiations/{` + ParamConsumerPid + `}/agreement`
-	AgreementVerificationEndpoint  = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
-	EventConsumerEndpoint          = `/negotiations/{` + ParamConsumerPid + `}/events`
-	EventProviderEndpoint          = `/negotiations/{` + ParamProviderId + `}/events`
+	FinalizeContractEndpoint       = `/negotiations/{` + ParamConsumerPid + `}/events`
 )

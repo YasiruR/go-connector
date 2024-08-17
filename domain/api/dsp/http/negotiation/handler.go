@@ -7,6 +7,6 @@ type Handler interface {
 	HandleContractOffer(w http.ResponseWriter, r *http.Request)
 	HandleContractAgreement(w http.ResponseWriter, r *http.Request)
 	HandleAgreementVerification(w http.ResponseWriter, r *http.Request)
-	HandleEventConsumer(w http.ResponseWriter, r *http.Request)
+	HandleNegotiationEvent(w http.ResponseWriter, r *http.Request)
 	GetNegotiation(w http.ResponseWriter, r *http.Request)
 }

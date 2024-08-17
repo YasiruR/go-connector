@@ -48,9 +48,9 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 	var endpoint string
 	var consumerPid string
 	if providerPid != `` {
-		cn, err := c.cnStore.Negotiation(providerPid)
+		cn, err := c.cnStore.GetNegotiation(providerPid)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 		}
 
 		if cn.State != negotiation.StateRequested {
@@ -128,9 +128,9 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
 	}
 
-	cn, err := c.cnStore.Negotiation(providerPid)
+	cn, err := c.cnStore.GetNegotiation(providerPid)
 	if err != nil {
-		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
 	ca := negotiation.ContractAgreement{
@@ -181,9 +181,9 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 }
 
 func (c *Controller) FinalizeContract(providerPid string) error {
-	neg, err := c.cnStore.Negotiation(providerPid)
+	neg, err := c.cnStore.GetNegotiation(providerPid)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
 	event := negotiation.ContractNegotiationEvent{
@@ -204,7 +204,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 		return errors.MarshalError(``, err)
 	}
 
-	endpoint := strings.Replace(consumerAddr+negotiation.EventConsumerEndpoint, `{`+negotiation.ParamConsumerPid+`}`, neg.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+negotiation.FinalizeContractEndpoint, `{`+negotiation.ParamConsumerPid+`}`, neg.ConsPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
@@ -212,7 +212,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 
 	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(negotiation.EventConsumerEndpoint, err)
+		return errors.UnmarshalError(negotiation.FinalizeContractEndpoint, err)
 	}
 
 	if err = c.cnStore.UpdateState(providerPid, negotiation.StateFinalized); err != nil {

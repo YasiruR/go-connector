@@ -15,7 +15,7 @@ type CatalogController interface {
 type NegotiationController interface {
 	// change endpoint to generic
 	RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error)
-	AcceptContract()
+	AcceptOffer(consumerPid string) error
 	VerifyAgreement(consumerPid string) error
 	TerminateContract()
 }

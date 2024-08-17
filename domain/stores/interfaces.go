@@ -28,7 +28,7 @@ type Catalog interface {
 // in Negotiation Protocol ('cnId' refers to Contract Negotiation ID)
 type ContractNegotiation interface {
 	Set(cnId string, val negotiation.Negotiation)
-	Negotiation(cnId string) (negotiation.Negotiation, error)
+	GetNegotiation(cnId string) (negotiation.Negotiation, error)
 	UpdateState(cnId string, s negotiation.State) error
 	State(cnId string) (negotiation.State, error)
 	SetAssignee(cnId string, a odrl.Assignee)
