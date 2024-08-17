@@ -16,7 +16,7 @@ import (
 
 type Controller struct {
 	callbackAddr string
-	negStore     stores.ContractNegotiation
+	cnStore      stores.ContractNegotiation
 	urn          pkg.URNService
 	client       pkg.Client
 	log          pkg.Log
@@ -25,25 +25,41 @@ type Controller struct {
 func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
-		negStore:     stores.ContractNegotiation,
+		cnStore:      stores.ContractNegotiation,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
 		log:          plugins.Log,
 	}
 }
 
-func (c *Controller) RequestContract(providerEndpoint string, ofr odrl.Offer) (cnId string, err error) {
-	// generate consumerPid
-	consPId, err := c.urn.NewURN()
-	if err != nil {
-		return ``, errors.URNFailed(`consumerPid`, `NewURN`, err)
+func (c *Controller) RequestContract(consumerPid, providerEndpoint string, ofr odrl.Offer) (cnId string, err error) {
+	var providerPid string
+	if consumerPid != `` {
+		cn, err := c.cnStore.Negotiation(consumerPid)
+		if err != nil {
+			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		}
+
+		if cn.State != negotiation.StateOffered {
+			return ``, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
+		}
+
+		providerPid = cn.ProvPId
+		c.log.Trace("a contract negotiation already exists for the request", consumerPid)
+	} else {
+		// generate consumerPid
+		consumerPid, err = c.urn.NewURN()
+		if err != nil {
+			return ``, errors.URNFailed(`consumerPid`, `NewURN`, err)
+		}
 	}
 
 	// construct payload
 	req := negotiation.ContractRequest{
 		Ctx:          core.Context,
 		Type:         negotiation.MsgTypeContractRequest,
-		ConsPId:      consPId,
+		ConsPId:      consumerPid,
+		ProvPId:      providerPid,
 		Offer:        ofr,
 		CallbackAddr: c.callbackAddr,
 	}
@@ -63,17 +79,17 @@ func (c *Controller) RequestContract(providerEndpoint string, ofr odrl.Offer) (c
 		return ``, errors.UnmarshalError(providerEndpoint+negotiation.ContractRequestEndpoint, err)
 	}
 
-	c.negStore.Set(consPId, negotiation.Negotiation(ack)) // check if received state is REQUESTED (and correctness of other attributes)
-	c.negStore.SetAssignee(consPId, ofr.Assignee)
-	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consPId, ofr.Assigner, ofr.Assignee))
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consPId, negotiation.StateRequested))
-	return consPId, nil
+	c.cnStore.Set(consumerPid, negotiation.Negotiation(ack)) // check if received state is REQUESTED (and correctness of other attributes)
+	c.cnStore.SetAssignee(consumerPid, ofr.Assignee)
+	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consumerPid, ofr.Assigner, ofr.Assignee))
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateRequested))
+	return consumerPid, nil
 }
 
 func (c *Controller) AcceptContract() {}
 
 func (c *Controller) VerifyAgreement(consumerPid string) error {
-	neg, err := c.negStore.Negotiation(consumerPid)
+	neg, err := c.cnStore.Negotiation(consumerPid)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
@@ -90,7 +106,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.MarshalError(``, err)
 	}
 
-	providerAddr, err := c.negStore.CallbackAddr(consumerPid)
+	providerAddr, err := c.cnStore.CallbackAddr(consumerPid)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
 	}
@@ -106,7 +122,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.UnmarshalError(providerAddr+negotiation.AgreementVerificationEndpoint, err)
 	}
 
-	if err = c.negStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {
+	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 

@@ -1,8 +1,8 @@
 package stores
 
 import (
-	"github.com/YasiruR/connector/boot/config"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/pkg"
@@ -23,7 +23,7 @@ func NewCatalog(plugins domain.Plugins) *Catalog {
 	}
 }
 
-func (c *Catalog) Init(cfg config.Config) error {
+func (c *Catalog) Init(cfg boot.Config) error {
 	catId, err := c.urn.NewURN()
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeURN, `New`, err)

@@ -25,10 +25,10 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 	}
 }
 
-func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
-	var req catalog.CreatePolicyRequest
+func (h *Handler) CreateOffer(w http.ResponseWriter, r *http.Request) {
+	var req catalog.CreateOfferRequest
 	if err := middleware.ParseRequest(r, &req); err != nil {
-		middleware.WriteError(w, errors.ParseRequestFailed(catalog.CreatePolicyEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.ParseRequestFailed(catalog.CreateOfferEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -45,10 +45,9 @@ func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 		perms = append(perms, odrl.Rule{Action: odrl.Action(p.Action), Constraints: cons})
 	}
 
-	// todo check if target is required here
-	id, err := h.owner.CreatePolicy(`test`, perms, []odrl.Rule{})
+	id, err := h.owner.CreateOffer(req.Target, perms, []odrl.Rule{})
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreateOffer`, err), http.StatusBadRequest)
 		return
 	}
 

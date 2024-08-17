@@ -27,15 +27,15 @@ func New(stores domain.Stores, plugins domain.Plugins) *Service {
 	}
 }
 
-func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (policyId string, err error) {
-	policyId, err = s.urn.NewURN()
+func (s *Service) CreateOffer(target string, permissions, prohibitions []odrl.Rule) (ofrId string, err error) {
+	ofrId, err = s.urn.NewURN()
 	if err != nil {
-		return ``, errors.URNFailed(`policyId`, `NewURN`, err)
+		return ``, errors.URNFailed(`offerId`, `NewURN`, err)
 	}
 
 	// handle other policy types
 	ofr := odrl.Offer{
-		Id:           policyId,
+		Id:           ofrId,
 		Type:         odrl.TypeOffer,
 		Target:       odrl.Target(target),
 		Assigner:     odrl.Assigner(s.host),
@@ -43,19 +43,19 @@ func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.R
 		Prohibitions: prohibitions,
 	}
 
-	s.policyStore.SetOffer(policyId, ofr)
-	s.log.Trace("created and stored a new policy", ofr)
-	return policyId, nil
+	s.policyStore.SetOffer(ofrId, ofr)
+	s.log.Trace("created and stored a new offer", ofr)
+	return ofrId, nil
 }
 
 // CreateDataset currently supports only one data distribution per a dataset
-func (s *Service) CreateDataset(title, format string, descriptions, keywords, endpoints, policyIds []string) (datasetId string, err error) {
+func (s *Service) CreateDataset(title, format string, descriptions, keywords, endpoints, offerIds []string) (dsId string, err error) {
 	// construct policies (handle policies than offers later)
 	var policies []odrl.Offer
-	for _, pId := range policyIds {
-		ofr, err := s.policyStore.Offer(pId)
+	for _, pId := range offerIds {
+		ofr, err := s.policyStore.GetOffer(pId)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
+			return ``, errors.StoreFailed(stores.TypePolicy, `GetOffer`, err)
 		}
 
 		policies = append(policies, ofr)
@@ -83,7 +83,7 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 	}
 
 	// construct and store final dataset
-	datasetId, err = s.urn.NewURN()
+	dsId, err = s.urn.NewURN()
 	if err != nil {
 		return ``, errors.URNFailed(`datasetId`, `NewURN`, err)
 	}
@@ -102,7 +102,7 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 	}
 
 	ds := dcat.Dataset{
-		ID:               datasetId,
+		ID:               dsId,
 		Type:             dcat.TypeDataset,
 		DctTitle:         title,
 		DctDescription:   descs,
@@ -111,7 +111,7 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 		DcatDistribution: []dcat.Distribution{dist}, // support more distributions
 	}
 
-	s.catalog.AddDataset(datasetId, ds)
+	s.catalog.AddDataset(dsId, ds)
 	s.log.Trace("created and stored a new dataset", ds)
-	return datasetId, nil
+	return dsId, nil
 }

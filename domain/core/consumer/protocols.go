@@ -14,19 +14,20 @@ type CatalogController interface {
 
 type NegotiationController interface {
 	// change endpoint to generic
-	RequestContract(providerEndpoint string, ofr odrl.Offer) (cnId string, err error)
+	RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error)
 	AcceptContract()
 	VerifyAgreement(consumerPid string) error
 	TerminateContract()
 }
 
 type NegotiationHandler interface {
+	HandleContractOffer(co negotiation.ContractOffer) (ack negotiation.Ack, err error)
 	HandleContractAgreement(ca negotiation.ContractAgreement) (negotiation.Ack, error)
 	HandleFinalizedEvent(consumerPid string) (negotiation.Ack, error)
 }
 
 type TransferController interface {
-	RequestTransfer(transferType, agreementId, sinkEndpoint, providerEndpoint string) (tpId string, err error)
+	RequestTransfer(transferType, agreementId, sinkEndpoint, providerAddr string) (tpId string, err error)
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
 	CompleteTransfer(tpId string) error
 }

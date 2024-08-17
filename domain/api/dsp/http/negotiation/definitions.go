@@ -40,10 +40,12 @@ const (
 
 // Endpoints
 const (
-	RequestEndpoint               = `/negotiations/{` + ParamProviderId + `}`
-	ContractRequestEndpoint       = `/negotiations/request`
-	ContractAgreementEndpoint     = `/negotiations/{` + ParamConsumerPid + `}/agreement`
-	AgreementVerificationEndpoint = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
-	EventConsumerEndpoint         = `/negotiations/{` + ParamConsumerPid + `}/events`
-	EventProviderEndpoint         = `/negotiations/{` + ParamProviderId + `}/events`
+	RequestEndpoint                = `/negotiations/{` + ParamProviderId + `}`
+	ContractRequestEndpoint        = `/negotiations/request`
+	ContractOfferEndpoint          = `/negotiations/offers`
+	ContractOfferToRequestEndpoint = `/negotiations/{` + ParamConsumerPid + `}/offers`
+	ContractAgreementEndpoint      = `/negotiations/{` + ParamConsumerPid + `}/agreement`
+	AgreementVerificationEndpoint  = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
+	EventConsumerEndpoint          = `/negotiations/{` + ParamConsumerPid + `}/events`
+	EventProviderEndpoint          = `/negotiations/{` + ParamProviderId + `}/events`
 )

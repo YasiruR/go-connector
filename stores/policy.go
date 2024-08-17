@@ -21,7 +21,7 @@ func (p *Policy) SetOffer(id string, val odrl.Offer) {
 	_ = p.store.Set(id, val)
 }
 
-func (p *Policy) Offer(id string) (odrl.Offer, error) {
+func (p *Policy) GetOffer(id string) (odrl.Offer, error) {
 	val, err := p.store.Get(id)
 	if err != nil {
 		return odrl.Offer{}, errors.QueryFailed(`policy`, `get`, err)

@@ -1,4 +1,4 @@
-package config
+package boot
 
 type Config struct {
 	Catalog struct {

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	dspSHttp "github.com/YasiruR/connector/api/dsp/http"
 	gatewayHttp "github.com/YasiruR/connector/api/gateway/http"
-	"github.com/YasiruR/connector/boot/config"
 	"github.com/YasiruR/connector/core/consumer"
 	"github.com/YasiruR/connector/core/owner"
 	"github.com/YasiruR/connector/core/provider"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/pkg/client/http"
 	"github.com/YasiruR/connector/pkg/database/memory"
@@ -19,7 +19,7 @@ import (
 
 func Start() {
 	log := pkgLog.NewLogger()
-	cfg := config.Load(log)
+	cfg := loadConfig(log)
 
 	plugins := initPlugins(log)
 	stors := initStores(plugins)
@@ -54,7 +54,7 @@ func initStores(plugins domain.Plugins) domain.Stores {
 	}
 }
 
-func initRoles(cfg config.Config, stores domain.Stores, plugins domain.Plugins) domain.Roles {
+func initRoles(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) domain.Roles {
 	return domain.Roles{
 		Provider: provider.New(cfg.Servers.DSP.HTTP.Port, stores, plugins),
 		Consumer: consumer.New(cfg.Servers.DSP.HTTP.Port, stores, plugins),
@@ -62,7 +62,7 @@ func initRoles(cfg config.Config, stores domain.Stores, plugins domain.Plugins) 
 	}
 }
 
-func initServers(cfg config.Config, roles domain.Roles, stores domain.Stores, plugins domain.Plugins) domain.Servers {
+func initServers(cfg boot.Config, roles domain.Roles, stores domain.Stores, plugins domain.Plugins) domain.Servers {
 	return domain.Servers{
 		DSP:     dspSHttp.NewServer(cfg.Servers.DSP.HTTP.Port, roles, plugins.Log),
 		Gateway: gatewayHttp.NewServer(cfg.Servers.Gateway.HTTP.Port, roles, stores, plugins.Log),

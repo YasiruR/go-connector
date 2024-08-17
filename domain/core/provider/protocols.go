@@ -12,7 +12,10 @@ type CatalogHandler interface {
 }
 
 type NegotiationController interface {
-	OfferContract()
+	// OfferContract sends an Offer to the consumer. providerPid and consumerAddr parameters are
+	// mutually exclusive. Former should be given when the Provider is responding to a Contract
+	// Request by a Consumer, whereas the latter when the Provider is the initiator of the flow.
+	OfferContract(offerId, providerPid, consumerAddr string) (cnId string, err error)
 	AgreeContract(offerId, negotiationId string) (agreementId string, err error)
 	FinalizeContract(providerPid string) error
 }

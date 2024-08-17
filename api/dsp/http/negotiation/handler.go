@@ -58,6 +58,30 @@ func (h *Handler) HandleContractRequest(w http.ResponseWriter, r *http.Request) 
 	middleware.WriteAck(w, ack, http.StatusCreated)
 }
 
+func (h *Handler) HandleContractOffer(w http.ResponseWriter, r *http.Request) {
+	var endpoint string
+	_, ok := mux.Vars(r)[negotiation.ParamConsumerPid]
+	if ok {
+		endpoint = negotiation.ContractOfferToRequestEndpoint
+	} else {
+		endpoint = negotiation.ContractOfferEndpoint
+	}
+
+	var req negotiation.ContractOffer
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(endpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	ack, err := h.consumer.HandleContractOffer(req)
+	if err != nil {
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, endpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	middleware.WriteAck(w, ack, http.StatusCreated)
+}
+
 func (h *Handler) HandleContractAgreement(w http.ResponseWriter, r *http.Request) {
 	var req negotiation.ContractAgreement
 	if err := middleware.ParseRequest(r, &req); err != nil {

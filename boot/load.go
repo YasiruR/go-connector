@@ -1,7 +1,8 @@
-package config
+package boot
 
 import (
 	"fmt"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/pkg"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -9,8 +10,8 @@ import (
 
 const configFile = `config.yaml`
 
-func Load(log pkg.Log) Config {
-	var c Config
+func loadConfig(log pkg.Log) boot.Config {
+	var c boot.Config
 	file, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("%s not found - %s", configFile, err))

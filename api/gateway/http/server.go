@@ -41,13 +41,14 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	}
 
 	// endpoints related to catalog
-	r.HandleFunc(catalog.CreatePolicyEndpoint, s.ch.CreatePolicy).Methods(http.MethodPost)
+	r.HandleFunc(catalog.CreateOfferEndpoint, s.ch.CreateOffer).Methods(http.MethodPost)
 	r.HandleFunc(catalog.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)
 
 	// endpoints related to negotiation
 	r.HandleFunc(negotiation.RequestContractEndpoint, s.nh.RequestContract).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.OfferContractEndpoint, s.nh.OfferContract).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.AgreeContractEndpoint, s.nh.AgreeContract).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.GetAgreementEndpoint, s.nh.GetAgreement).Methods(http.MethodGet)
 	r.HandleFunc(negotiation.VerifyAgreementEndpoint, s.nh.VerifyAgreement).Methods(http.MethodPost)

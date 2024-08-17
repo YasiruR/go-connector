@@ -45,6 +45,8 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	// negotiation protocol related endpoints
 	r.HandleFunc(negotiation.RequestEndpoint, s.nh.GetNegotiation).Methods(http.MethodGet)
 	r.HandleFunc(negotiation.ContractRequestEndpoint, s.nh.HandleContractRequest).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.ContractOfferEndpoint, s.nh.HandleContractOffer).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.ContractOfferToRequestEndpoint, s.nh.HandleContractOffer).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.nh.HandleContractAgreement).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.AgreementVerificationEndpoint, s.nh.HandleAgreementVerification).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.EventConsumerEndpoint, s.nh.HandleEventConsumer).Methods(http.MethodPost)

@@ -45,13 +45,29 @@ func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 		Permissions: []odrl.Rule{{Action: odrl.Action(req.Action)}}, // should handle constraints
 	}
 
-	negId, err := h.consumer.RequestContract(req.ProviderEndpoint, ofr)
+	cnId, err := h.consumer.RequestContract(req.ConsumerPId, req.ProviderEndpoint, ofr)
 	if err != nil {
 		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestContract`, err), http.StatusBadRequest)
 		return
 	}
 
-	middleware.WriteAck(w, negotiation.ContractRequestResponse{Id: negId}, http.StatusOK)
+	middleware.WriteAck(w, negotiation.ContractRequestResponse{Id: cnId}, http.StatusOK)
+}
+
+func (h *Handler) OfferContract(w http.ResponseWriter, r *http.Request) {
+	var req negotiation.OfferRequest
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(negotiation.OfferContractEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	cnId, err := h.provider.OfferContract(req.OfferId, req.ProviderPid, req.ConsumerAddr)
+	if err != nil {
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `OfferContract`, err), http.StatusBadRequest)
+		return
+	}
+
+	middleware.WriteAck(w, negotiation.ContractRequestResponse{Id: cnId}, http.StatusOK)
 }
 
 func (h *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {

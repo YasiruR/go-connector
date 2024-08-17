@@ -9,7 +9,8 @@ type DatasetRequest struct {
 	ProviderEndpoint string `json:"providerEndpoint"`
 }
 
-type CreatePolicyRequest struct {
+type CreateOfferRequest struct {
+	Target       string `json:"target"`
 	Permissions  []Rule `json:"permissions"`
 	Prohibitions []Rule `json:"prohibitions"`
 	Obligations  []Rule `json:"obligations"`
