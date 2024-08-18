@@ -24,3 +24,10 @@ type AgreeContractRequest struct {
 type VerifyAgreementRequest struct {
 	ConsumerPid string `json:"consumerPid"`
 }
+
+type TerminateContractRequest struct {
+	ConsumerPid string   `json:"consumerPid"`
+	ProviderPid string   `json:"providerPid"`
+	Code        string   `json:"code"`
+	Reasons     []string `json:"reasons"`
+}

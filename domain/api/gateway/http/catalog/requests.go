@@ -20,7 +20,7 @@ type CreateDatasetRequest struct {
 	Title        string   `json:"title"`
 	Descriptions []string `json:"descriptions"`
 	Endpoints    []string `json:"endpoints"`
-	OfferIds     []string `json:"offerIds"`
+	PolicyIds    []string `json:"policyIds"`
 	Keywords     []string `json:"keywords"`
 	Format       string   `json:"format"`
 }

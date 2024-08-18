@@ -25,6 +25,7 @@ type NegotiationHandler interface {
 	HandleContractRequest(cr negotiation.ContractRequest) (negotiation.Ack, error)
 	HandleAcceptOffer(providerPid string) (negotiation.Ack, error)
 	HandleAgreementVerification(providerPid string) (negotiation.Ack, error)
+	HandleTermination(ct negotiation.ContractTermination) (negotiation.Ack, error)
 }
 
 type TransferController interface {

@@ -58,7 +58,7 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 
 		cn.State = negotiation.StateRequested
 		cn.Type = negotiation.MsgTypeNegotiationAck
-		h.log.Trace("a valid contract negotiation exists", cn.ProvPId)
+		h.log.Debug("a valid contract negotiation exists", cn.ProvPId)
 	} else {
 		provPId, err = h.urn.NewURN()
 		if err != nil {
@@ -111,8 +111,25 @@ func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.A
 	}
 
 	cn.State = negotiation.StateVerified
-	cn.Type = negotiation.MsgTypeNegotiationAck
+	cn.Type = negotiation.MsgTypeNegotiationAck // todo check if all stored negotiations have negotiations msg type
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateVerified))
+	return negotiation.Ack(cn), nil
+}
+
+func (h *Handler) HandleTermination(ct negotiation.ContractTermination) (negotiation.Ack, error) {
+	cn, err := h.cnStore.GetNegotiation(ct.ProvPId)
+	if err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+	}
+
+	// can clear stores instead of this
+	if err = h.cnStore.UpdateState(ct.ProvPId, negotiation.StateTerminated); err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+	}
+
+	cn.State = negotiation.StateTerminated
+	cn.Type = negotiation.MsgTypeNegotiationAck
+	h.log.Info("consumer terminated the negotiation flow", ct.ProvPId)
 	return negotiation.Ack(cn), nil
 }
 

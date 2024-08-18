@@ -46,15 +46,12 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	r.HandleFunc(negotiation.RequestEndpoint, s.nh.GetNegotiation).Methods(http.MethodGet)
 	r.HandleFunc(negotiation.ContractRequestEndpoint, s.nh.HandleContractRequest).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.ContractRequestToOfferEndpoint, s.nh.HandleContractRequest).Methods(http.MethodPost)
-
 	r.HandleFunc(negotiation.ContractOfferEndpoint, s.nh.HandleContractOffer).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.ContractOfferToRequestEndpoint, s.nh.HandleContractOffer).Methods(http.MethodPost)
-
-	r.HandleFunc(negotiation.AcceptOfferEndpoint, s.nh.HandleNegotiationEvent).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.AgreementVerificationEndpoint, s.nh.HandleAgreementVerification).Methods(http.MethodPost)
-
 	r.HandleFunc(negotiation.ContractAgreementEndpoint, s.nh.HandleContractAgreement).Methods(http.MethodPost)
-	r.HandleFunc(negotiation.FinalizeContractEndpoint, s.nh.HandleNegotiationEvent).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.EventsEndpoint, s.nh.HandleNegotiationEvent).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.TerminateEndpoint, s.nh.HandleTermination).Methods(http.MethodPost)
 
 	// transfer process related endpoints
 	r.HandleFunc(transfer.RequestEndpoint, s.th.HandleTransferRequest).Methods(http.MethodPost)

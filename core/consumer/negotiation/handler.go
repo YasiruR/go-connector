@@ -50,6 +50,7 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 	cn.State = negotiation.StateOffered
 	h.cnStore.Set(cn.ConsPId, cn)
 	h.cnStore.SetCallbackAddr(cn.ConsPId, co.CallbackAddr)
+	h.log.Debug(fmt.Sprintf("updated callback address (%s) for negotiation %s", co.CallbackAddr, cn.ConsPId))
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", cn.ConsPId, negotiation.StateOffered))
 	return negotiation.Ack(cn), nil
 }

@@ -61,7 +61,7 @@ func (h *Handler) CreateDataset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.owner.CreateDataset(req.Title, req.Format, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
+	id, err := h.owner.CreateDataset(req.Title, req.Format, req.Descriptions, req.Keywords, req.Endpoints, req.PolicyIds)
 	if err != nil {
 		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err), http.StatusBadRequest)
 		return

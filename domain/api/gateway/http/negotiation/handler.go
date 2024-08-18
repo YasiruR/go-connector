@@ -10,4 +10,5 @@ type Handler interface {
 	GetAgreement(w http.ResponseWriter, r *http.Request)
 	VerifyAgreement(w http.ResponseWriter, r *http.Request)
 	FinalizeContract(w http.ResponseWriter, r *http.Request)
+	TerminateContract(w http.ResponseWriter, r *http.Request)
 }

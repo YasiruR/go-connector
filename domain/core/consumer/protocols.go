@@ -17,7 +17,7 @@ type NegotiationController interface {
 	RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error)
 	AcceptOffer(consumerPid string) error
 	VerifyAgreement(consumerPid string) error
-	TerminateContract()
+	TerminateContract(consumerPid, code string, reasons []string) error
 }
 
 type NegotiationHandler interface {

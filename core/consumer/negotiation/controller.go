@@ -47,7 +47,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 
 		providerPid = cn.ProvPId
 		endpoint = strings.Replace(negotiation.ContractRequestToOfferEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
-		c.log.Trace("a contract negotiation already exists for the request", consumerPid)
+		c.log.Debug("found an existing contract negotiation for the request", consumerPid)
 	} else {
 		// generate consumerPid
 		consumerPid, err = c.urn.NewURN()
@@ -114,17 +114,17 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 
 	data, err := json.Marshal(event)
 	if err != nil {
-		return errors.MarshalError(negotiation.AcceptOfferEndpoint, err)
+		return errors.MarshalError(negotiation.EventsEndpoint, err)
 	}
 
-	res, err := c.client.Send(data, provAddr+negotiation.AcceptOfferEndpoint)
+	res, err := c.client.Send(data, provAddr+negotiation.EventsEndpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
 
 	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(negotiation.AcceptOfferEndpoint, err)
+		return errors.UnmarshalError(negotiation.EventsEndpoint, err)
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateAccepted); err != nil {
@@ -158,8 +158,8 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
 	}
 
-	endpoint := strings.Replace(providerAddr+negotiation.AgreementVerificationEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
-	res, err := c.client.Send(data, endpoint)
+	endpoint := strings.Replace(negotiation.AgreementVerificationEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
+	res, err := c.client.Send(data, providerAddr+endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
 	}
@@ -177,4 +177,55 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 	return nil
 }
 
-func (c *Controller) TerminateContract() {}
+func (c *Controller) TerminateContract(consumerPid, code string, reasons []string) error {
+	cn, err := c.cnStore.GetNegotiation(consumerPid)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+	}
+
+	var rsnList []negotiation.Reason
+	for _, r := range reasons {
+		rsnList = append(rsnList, negotiation.Reason{
+			Value:    r,
+			Language: "en",
+		})
+	}
+
+	req := negotiation.ContractTermination{
+		Ctx:     core.Context,
+		Type:    negotiation.MsgTypeTermination,
+		ProvPId: cn.ProvPId,
+		ConsPId: consumerPid,
+		Code:    code,
+		Reason:  rsnList,
+	}
+
+	providerAddr, err := c.cnStore.CallbackAddr(consumerPid)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
+	}
+
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.MarshalError(negotiation.TerminateEndpoint, err)
+	}
+
+	endpoint := strings.Replace(negotiation.TerminateEndpoint, `{`+negotiation.ParamContractId+`}`, cn.ProvPId, 1)
+	res, err := c.client.Send(data, providerAddr+endpoint)
+	if err != nil {
+		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
+	}
+
+	var ack negotiation.Ack
+	if err = json.Unmarshal(res, &ack); err != nil {
+		return errors.UnmarshalError(negotiation.TerminateEndpoint, err)
+	}
+
+	// clear all store entries for the contract negotiation
+	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateTerminated); err != nil {
+		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+	}
+
+	c.log.Info("consumer terminated the negotiation flow", consumerPid)
+	return nil
+}

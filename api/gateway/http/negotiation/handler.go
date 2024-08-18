@@ -1,6 +1,7 @@
 package negotiation
 
 import (
+	"fmt"
 	"github.com/YasiruR/connector/api/gateway/http/middleware"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
@@ -149,4 +150,28 @@ func (h *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
 	}
 
 	middleware.WriteAck(w, nil, http.StatusOK)
+}
+
+func (h *Handler) TerminateContract(w http.ResponseWriter, r *http.Request) {
+	var req negotiation.TerminateContractRequest
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(negotiation.TerminateContractEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	if req.ProviderPid == `` && req.ConsumerPid != `` {
+		if err := h.consumer.TerminateContract(req.ConsumerPid, req.Code, req.Reasons); err != nil {
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `TerminateContract`, err), http.StatusBadRequest)
+			return
+		}
+		middleware.WriteAck(w, nil, http.StatusOK)
+		return
+	}
+
+	if req.ProviderPid != `` && req.ConsumerPid == `` {
+
+	}
+
+	middleware.WriteError(w, errors.InvalidRequestBody(negotiation.TerminateContractEndpoint,
+		fmt.Errorf(`only one of consumerPid and providerPid should be provided`)), http.StatusBadRequest)
 }

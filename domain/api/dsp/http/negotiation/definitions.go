@@ -25,6 +25,7 @@ const (
 const (
 	ParamProviderId  = `providerPid`
 	ParamConsumerPid = `consumerPid`
+	ParamContractId  = `contractId`
 )
 
 // Message types
@@ -36,6 +37,7 @@ const (
 	MsgTypeContractAgreement     = `dspace:ContractAgreementMessage`
 	MsgTypeAgreementVerification = `dspace:ContractAgreementVerificationMessage`
 	MsgTypeNegotiationEvent      = `dspace:ContractNegotiationEventMessage`
+	MsgTypeTermination           = `dspace:ContractNegotiationTerminationMessage`
 )
 
 // Provider endpoints
@@ -43,15 +45,18 @@ const (
 	RequestEndpoint                = `/negotiations/{` + ParamProviderId + `}`
 	ContractRequestEndpoint        = `/negotiations/request`
 	ContractRequestToOfferEndpoint = `/negotiations/{` + ParamProviderId + `}/request`
-	AcceptOfferEndpoint            = `/negotiations/{` + ParamProviderId + `}/events`
-
-	ContractAgreementEndpoint     = `/negotiations/{` + ParamConsumerPid + `}/agreement`
-	AgreementVerificationEndpoint = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
+	AgreementVerificationEndpoint  = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
 )
 
 // Consumer endpoints
 const (
 	ContractOfferEndpoint          = `/negotiations/offers`
 	ContractOfferToRequestEndpoint = `/negotiations/{` + ParamConsumerPid + `}/offers`
-	FinalizeContractEndpoint       = `/negotiations/{` + ParamConsumerPid + `}/events`
+	ContractAgreementEndpoint      = `/negotiations/{` + ParamConsumerPid + `}/agreement`
+)
+
+// common endpoints
+const (
+	EventsEndpoint    = `/negotiations/{` + ParamContractId + `}/events`
+	TerminateEndpoint = `/negotiations/{` + ParamContractId + `}/termination`
 )

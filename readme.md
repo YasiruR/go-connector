@@ -14,7 +14,7 @@ Sample requests provided in this document assume the following endpoints to be u
 ### Catalog Protocol
 
 1. Create policy (Provider): ``curl -X POST -d '{"permissions": [{"action": "use", "constraints": [{"leftOperand": "region", "operator": "eq", "rightOperand": "eu"}]}]}' http://localhost:9081/gateway/create-policy``
-2. Create dataset (Provider): ``curl -X POST -d '{"title": "sample dataset", "description": ["sample description"], "endpoints": ["http://localhost:9080/datasource"], "offerIds": ["<offer-id>"], "keywords": ["dataspace", "connector"]}' http://localhost:9081/gateway/create-dataset``
+2. Create dataset (Provider): ``curl -X POST -d '{"title": "sample dataset", "description": ["sample description"], "endpoints": ["http://localhost:9080/datasource"], "policyIds": ["<policy-id>"], "keywords": ["dataspace", "connector"]}' http://localhost:9081/gateway/create-dataset``
 3. Get Catalog (Consumer): ``curl -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/catalog``
 4. Get Dataset (Consumer): ``curl -X POST -d '{"datasetId": "<dataset-id>", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/dataset | jq``
 
@@ -28,6 +28,7 @@ Sample requests provided in this document assume the following endpoints to be u
 6. Get agreement (Consumer): ``curl -X GET http://localhost:8081/gateway/agreement/{id}``
 7. Verify agreement (Consumer): ``curl -X POST http://localhost:8081/gateway/verify-agreement/{consumerPid}``
 8. Finalize contract (Provider): ``curl -X POST http://localhost:9081/gateway/finalize-contract/{providerPid}`` 
+9. Request contract as a response to an offer (Consumer): ``curl -X POST -d '{"consumerPid": "<consumerPid>", """offerId": "<offer-id>", "providerEndpoint": "http://localhost:9080", "odrlTarget": "test-target", "assigner": "provider1", "assignee": "consumer1", "action": "odrl:use"}' http://localhost:8081/gateway/request-contract``
 
 ### Transfer Process
 

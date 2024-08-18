@@ -204,7 +204,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 		return errors.MarshalError(``, err)
 	}
 
-	endpoint := strings.Replace(consumerAddr+negotiation.FinalizeContractEndpoint, `{`+negotiation.ParamConsumerPid+`}`, neg.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+negotiation.EventsEndpoint, `{`+negotiation.ParamContractId+`}`, neg.ConsPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
@@ -212,7 +212,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 
 	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(negotiation.FinalizeContractEndpoint, err)
+		return errors.UnmarshalError(negotiation.EventsEndpoint, err)
 	}
 
 	if err = c.cnStore.UpdateState(providerPid, negotiation.StateFinalized); err != nil {
