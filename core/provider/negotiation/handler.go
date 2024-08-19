@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
@@ -19,11 +20,13 @@ type Handler struct {
 	log         pkg.Log
 }
 
-func NewHandler(cnStore stores.ContractNegotiation, plugins domain.Plugins) *Handler {
+func NewHandler(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Handler {
 	return &Handler{
-		cnStore: cnStore,
-		urn:     plugins.URNService,
-		log:     plugins.Log,
+		assignerId:  cfg.DataSpace.AssignerId,
+		cnStore:     stores.ContractNegotiation,
+		policyStore: stores.Policy,
+		urn:         plugins.URNService,
+		log:         plugins.Log,
 	}
 }
 

@@ -1,6 +1,6 @@
 data_space:
   participant_id: test-participant
-  assigner_id: test-assigner
+  assigner_id: provider1
 catalog:
   title: Ceit catalog
   keywords:

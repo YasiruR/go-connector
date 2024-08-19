@@ -56,7 +56,7 @@ func initStores(plugins domain.Plugins) domain.Stores {
 
 func initRoles(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) domain.Roles {
 	return domain.Roles{
-		Provider: provider.New(cfg.Servers.DSP.HTTP.Port, stores, plugins),
+		Provider: provider.New(cfg, stores, plugins),
 		Consumer: consumer.New(cfg.Servers.DSP.HTTP.Port, stores, plugins),
 		Owner:    owner.New(cfg, stores, plugins),
 	}

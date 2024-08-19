@@ -9,6 +9,7 @@ const (
 	missingRequiredAttr = "required attribute was not provided (attribute: %s, reason: %s)"
 	dspControllerFailed = "DSP controller failed (role: %s, function: %s) - %s"
 	dspHandlerFailed    = "DSP handler failed (role: %s, endpoint: %s) - %s"
+	invalidAck          = "received invalid acknowledgement (request: %v, ack: %v)"
 )
 
 func IncompatibleValues(name, received, expected string) error {
@@ -25,4 +26,8 @@ func DSPControllerFailed(role, function string, err error) error {
 
 func DSPHandlerFailed(role, endpoint string, err error) error {
 	return fmt.Errorf(dspHandlerFailed, role, endpoint, err)
+}
+
+func InvalidAck(requestType string, ack any) error {
+	return fmt.Errorf(invalidAck, requestType, ack)
 }

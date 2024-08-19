@@ -47,7 +47,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 
 		providerPid = cn.ProvPId
 		endpoint = strings.Replace(negotiation.ContractRequestToOfferEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
-		c.log.Debug("found an existing contract negotiation for the request", "id: "+consumerPid)
+		c.log.Trace("found an existing contract negotiation for the request", "id: "+consumerPid)
 	} else {
 		// generate consumerPid
 		consumerPid, err = c.urn.NewURN()
@@ -83,7 +83,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 	}
 
 	if !c.validAck(consumerPid, ack, negotiation.StateRequested) {
-		return ``, fmt.Errorf("received invalid acknowledgement for contract request (ack: %v)", ack)
+		return ``, errors.InvalidAck(`ContractRequest`, ack)
 	}
 
 	ack.Type = negotiation.MsgTypeNegotiation
@@ -238,17 +238,12 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 	return nil
 }
 
-func (c *Controller) validAck(pid string, ack negotiation.Ack, currentState negotiation.State) bool {
+func (c *Controller) validAck(pid string, ack negotiation.Ack, state negotiation.State) bool {
 	if ack.ConsPId != pid {
 		return false
 	}
 
-	switch currentState {
-	case negotiation.StateRequested:
-		if ack.State != negotiation.StateRequested {
-			return false
-		}
-	default:
+	if ack.State != state {
 		return false
 	}
 

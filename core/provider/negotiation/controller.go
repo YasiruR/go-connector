@@ -106,9 +106,13 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 		return ``, errors.UnmarshalError(endpoint, err)
 	}
 
-	// validate ack first
+	if !c.validAck(providerPid, ack, negotiation.StateOffered) {
+		return ``, errors.InvalidAck(`ContractOffer`, ack)
+	}
+
+	ack.Type = negotiation.MsgTypeNegotiation
 	c.cnStore.Set(providerPid, negotiation.Negotiation(ack))
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateOffered))
+	c.log.Info("updated negotiation state", "id: "+providerPid, "state: "+negotiation.StateOffered)
 	return providerPid, nil
 }
 
@@ -221,4 +225,16 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 
 	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateFinalized))
 	return nil
+}
+
+func (c *Controller) validAck(providerPid string, ack negotiation.Ack, state negotiation.State) bool {
+	if ack.ProvPId != providerPid {
+		return false
+	}
+
+	if ack.State != state {
+		return false
+	}
+
+	return true
 }
