@@ -47,7 +47,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 
 		providerPid = cn.ProvPId
 		endpoint = strings.Replace(negotiation.ContractRequestToOfferEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
-		c.log.Debug("found an existing contract negotiation for the request", consumerPid)
+		c.log.Debug("found an existing contract negotiation for the request", "id: "+consumerPid)
 	} else {
 		// generate consumerPid
 		consumerPid, err = c.urn.NewURN()
@@ -82,10 +82,18 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 		return ``, errors.UnmarshalError(providerAddr+negotiation.ContractRequestEndpoint, err)
 	}
 
-	c.cnStore.Set(consumerPid, negotiation.Negotiation(ack)) // check if received state is REQUESTED (and correctness of other attributes)
+	if !c.validAck(consumerPid, ack, negotiation.StateRequested) {
+		return ``, fmt.Errorf("received invalid acknowledgement for contract request (ack: %v)", ack)
+	}
+
+	ack.Type = negotiation.MsgTypeNegotiation
+	c.cnStore.Set(consumerPid, negotiation.Negotiation(ack))
 	c.cnStore.SetAssignee(consumerPid, ofr.Assignee)
-	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s)", consumerPid, ofr.Assigner, ofr.Assignee))
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateRequested))
+	c.cnStore.SetCallbackAddr(consumerPid, providerAddr)
+
+	c.log.Trace("stored contract negotiation", "id: "+consumerPid, "assigner: "+ofr.Assigner,
+		"assignee: "+ofr.Assignee, "address: "+providerAddr)
+	c.log.Debug("updated negotiation state", "id: "+consumerPid, "state: "+negotiation.StateRequested)
 	return consumerPid, nil
 }
 
@@ -228,4 +236,21 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 
 	c.log.Info("consumer terminated the negotiation flow", consumerPid)
 	return nil
+}
+
+func (c *Controller) validAck(pid string, ack negotiation.Ack, currentState negotiation.State) bool {
+	if ack.ConsPId != pid {
+		return false
+	}
+
+	switch currentState {
+	case negotiation.StateRequested:
+		if ack.State != negotiation.StateRequested {
+			return false
+		}
+	default:
+		return false
+	}
+
+	return true
 }

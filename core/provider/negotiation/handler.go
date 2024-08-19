@@ -6,14 +6,17 @@ import (
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
 )
 
 type Handler struct {
-	cnStore stores.ContractNegotiation
-	urn     pkg.URNService
-	log     pkg.Log
+	assignerId  string
+	cnStore     stores.ContractNegotiation
+	policyStore stores.Policy
+	urn         pkg.URNService
+	log         pkg.Log
 }
 
 func NewHandler(cnStore stores.ContractNegotiation, plugins domain.Plugins) *Handler {
@@ -34,10 +37,6 @@ func (h *Handler) HandleNegotiationsRequest(providerPid string) (negotiation.Ack
 }
 
 func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack negotiation.Ack, err error) {
-	// return error message if offerId is invalid
-
-	// return error message if callbackAddress is invalid
-
 	// associate with existing contract negotiation if providerPid exists and create a new contract
 	// negotiation if otherwise
 	var cn negotiation.Negotiation
@@ -57,7 +56,6 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 		}
 
 		cn.State = negotiation.StateRequested
-		cn.Type = negotiation.MsgTypeNegotiationAck
 		h.log.Debug("a valid contract negotiation exists", cn.ProvPId)
 	} else {
 		provPId, err = h.urn.NewURN()
@@ -67,18 +65,32 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 
 		cn = negotiation.Negotiation{
 			Ctx:     core.Context,
-			Type:    negotiation.MsgTypeNegotiationAck,
+			Type:    negotiation.MsgTypeNegotiation,
 			ConsPId: cr.ConsPId,
 			ProvPId: provPId,
 			State:   negotiation.StateRequested,
 		}
 	}
 
+	// return error message if the offer is invalid
+	if !h.validOffer(cr.Offer) {
+		return negotiation.Ack{}, fmt.Errorf("received an invalid offer")
+	}
+
+	// return error message if callback address is invalid
+	if !h.validAddress(cr.CallbackAddr) {
+		return negotiation.Ack{}, fmt.Errorf("received an invalid callback address")
+	}
+
+	// store (new or updated) contract negotiation, assignee and its callback address
 	h.cnStore.Set(provPId, cn)
 	h.cnStore.SetAssignee(provPId, cr.Offer.Assignee)
 	h.cnStore.SetCallbackAddr(provPId, cr.CallbackAddr)
-	h.log.Trace(fmt.Sprintf("stored contract negotiation (assigner: %s, assignee: %s)", cr.Offer.Assigner, cr.Offer.Assignee), cn)
-	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", provPId, negotiation.StateRequested))
+	h.log.Trace("stored contract negotiation", "id: "+provPId, "assigner: "+cr.Offer.Assigner,
+		"assignee: "+cr.Offer.Assignee, "address: "+cr.CallbackAddr)
+	h.log.Debug("updated negotiation state", "id: "+provPId, "state: "+negotiation.StateRequested)
+
+	cn.Type = negotiation.MsgTypeNegotiationAck
 	return negotiation.Ack(cn), nil
 }
 
@@ -133,5 +145,24 @@ func (h *Handler) HandleTermination(ct negotiation.ContractTermination) (negotia
 	return negotiation.Ack(cn), nil
 }
 
-// validate
-// - state, consPid
+// todo move policy engine validator as a package
+func (h *Handler) validOffer(receivedOfr odrl.Offer) bool {
+	storedOfr, err := h.policyStore.GetOffer(receivedOfr.Id)
+	if err != nil {
+		h.log.Debug(errors.StoreFailed(stores.TypePolicy, `GetOffer`, err))
+		return false
+	}
+
+	if receivedOfr.Assigner != storedOfr.Assigner {
+		h.log.Debug("assigner in the received offer did not match with the stored offer",
+			"received:"+receivedOfr.Assigner, "stored:"+storedOfr.Assigner)
+		return false
+	}
+
+	// validate rules
+	return true
+}
+
+func (h *Handler) validAddress(addr string) bool {
+	return true
+}

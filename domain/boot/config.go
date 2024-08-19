@@ -1,6 +1,10 @@
 package boot
 
 type Config struct {
+	DataSpace struct {
+		ParticipantId string `yaml:"participant_id"`
+		AssignerId    string `yaml:"assigner_id"`
+	}
 	Catalog struct {
 		Title          string   `yaml:"title"`
 		Keywords       []string `yaml:"keywords"`

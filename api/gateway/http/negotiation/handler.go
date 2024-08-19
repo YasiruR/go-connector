@@ -37,6 +37,7 @@ func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// todo store offer details when fetched (store dataset id as the target) and provide only the constraints here
 	ofr := odrl.Offer{
 		Id:          req.OfferId,
 		Type:        odrl.TypeOffer,

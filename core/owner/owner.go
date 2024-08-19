@@ -2,6 +2,7 @@ package owner
 
 import (
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/models/odrl"
@@ -10,16 +11,16 @@ import (
 )
 
 type Service struct {
-	host        string
+	assignerId  string
 	catalog     stores.Catalog
 	policyStore stores.Policy
 	urn         pkg.URNService
 	log         pkg.Log
 }
 
-func New(stores domain.Stores, plugins domain.Plugins) *Service {
+func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Service {
 	return &Service{
-		host:        `test-owner`, // can we assign participant ID from config to assigner?
+		assignerId:  cfg.DataSpace.AssignerId, // can we assign participant ID from config to assigner?
 		policyStore: stores.Policy,
 		catalog:     stores.Catalog,
 		urn:         plugins.URNService,
@@ -38,7 +39,7 @@ func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.R
 		Id:           ofrId,
 		Type:         odrl.TypeOffer,
 		Target:       odrl.Target(target),
-		Assigner:     odrl.Assigner(s.host),
+		Assigner:     odrl.Assigner(s.assignerId),
 		Permissions:  permissions,
 		Prohibitions: prohibitions,
 	}
