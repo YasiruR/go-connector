@@ -15,44 +15,42 @@ const (
 	TypeTransfer            = `transfer`
 )
 
-// Catalog stores Datasets as per the DCAT profile recommended by IDSA
-type Catalog interface {
-	Get() (dcat.Catalog, error)
+// CatalogStore stores Datasets as per the DCAT profile recommended by IDSA
+type CatalogStore interface {
+	Catalog() (dcat.Catalog, error)
 	AddDataset(id string, val dcat.Dataset)
 	Dataset(id string) (dcat.Dataset, error)
 }
 
-// ContractNegotiation includes get and set methods for attributes required
+// ContractNegotiationStore includes get and set methods for attributes required
 // in Negotiation Protocol ('cnId' refers to Contract Negotiation ID)
-type ContractNegotiation interface {
-	Set(cnId string, val negotiation.Negotiation)
-	GetNegotiation(cnId string) (negotiation.Negotiation, error)
+type ContractNegotiationStore interface {
+	AddNegotiation(cnId string, val negotiation.Negotiation)
+	Negotiation(cnId string) (negotiation.Negotiation, error)
 	UpdateState(cnId string, s negotiation.State) error
 	State(cnId string) (negotiation.State, error)
-	SetAssignee(cnId string, a odrl.Assignee)
+	SetParticipants(cnId, callbackAddr string, assigner odrl.Assigner, assignee odrl.Assignee)
 	Assignee(cnId string) (odrl.Assignee, error)
-	SetAssigner(cnId string, a odrl.Assigner)
 	Assigner(cnId string) (odrl.Assigner, error)
-	SetCallbackAddr(cnId, addr string)
 	CallbackAddr(cnId string) (string, error)
 }
 
-type Policy interface {
-	SetOffer(id string, val odrl.Offer)
-	GetOffer(id string) (odrl.Offer, error)
+type PolicyStore interface {
+	AddOffer(id string, val odrl.Offer)
+	Offer(id string) (odrl.Offer, error)
 }
 
-type Agreement interface {
-	// Set stores contract agreement with agreement ID as the key
-	Set(id string, val odrl.Agreement)
-	// Get retrieves contract agreement by agreement ID
-	Get(id string) (odrl.Agreement, error)
-	GetByNegotiationID(cnId string) (odrl.Agreement, error)
+type AgreementStore interface {
+	// AddAgreement stores contract agreement with agreement ID as the key
+	AddAgreement(id string, val odrl.Agreement)
+	// Agreement retrieves contract agreement by agreement ID
+	Agreement(id string) (odrl.Agreement, error)
+	AgreementByNegotiationID(cnId string) (odrl.Agreement, error)
 }
 
-type Transfer interface {
-	Set(tpId string, val transfer.Process)
-	GetProcess(id string) (transfer.Process, error)
+type TransferStore interface {
+	AddProcess(tpId string, val transfer.Process)
+	Process(id string) (transfer.Process, error)
 	SetCallbackAddr(tpId, addr string)
 	CallbackAddr(tpId string) (string, error)
 	UpdateState(tpId string, s transfer.State) error

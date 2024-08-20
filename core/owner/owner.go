@@ -12,8 +12,8 @@ import (
 
 type Service struct {
 	assignerId  string
-	catalog     stores.Catalog
-	policyStore stores.Policy
+	catStore    stores.CatalogStore
+	policyStore stores.PolicyStore
 	urn         pkg.URNService
 	log         pkg.Log
 }
@@ -21,8 +21,8 @@ type Service struct {
 func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Service {
 	return &Service{
 		assignerId:  cfg.DataSpace.AssignerId, // can we assign participant ID from config to assigner?
-		policyStore: stores.Policy,
-		catalog:     stores.ProviderCatalog,
+		policyStore: stores.PolicyStore,
+		catStore:    stores.ProviderCatalog,
 		urn:         plugins.URNService,
 		log:         plugins.Log,
 	}
@@ -44,7 +44,7 @@ func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.R
 		Prohibitions: prohibitions,
 	}
 
-	s.policyStore.SetOffer(ofrId, ofr)
+	s.policyStore.AddOffer(ofrId, ofr)
 	s.log.Trace("created and stored a new offer", ofr)
 	return ofrId, nil
 }
@@ -54,9 +54,9 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 	// construct policies (handle policies than offers later)
 	var policies []odrl.Offer
 	for _, pId := range offerIds {
-		ofr, err := s.policyStore.GetOffer(pId)
+		ofr, err := s.policyStore.Offer(pId)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypePolicy, `GetOffer`, err)
+			return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
 		}
 
 		policies = append(policies, ofr)
@@ -112,7 +112,7 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 		DcatDistribution: []dcat.Distribution{dist}, // support more distributions
 	}
 
-	s.catalog.AddDataset(dsId, ds)
+	s.catStore.AddDataset(dsId, ds)
 	s.log.Trace("created and stored a new dataset", ds)
 	return dsId, nil
 }

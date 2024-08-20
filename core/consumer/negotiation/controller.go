@@ -16,7 +16,7 @@ import (
 
 type Controller struct {
 	callbackAddr string
-	cnStore      stores.ContractNegotiation
+	cnStore      stores.ContractNegotiationStore
 	urn          pkg.URNService
 	client       pkg.Client
 	log          pkg.Log
@@ -25,7 +25,7 @@ type Controller struct {
 func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
-		cnStore:      stores.ContractNegotiation,
+		cnStore:      stores.ContractNegotiationStore,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
 		log:          plugins.Log,
@@ -38,9 +38,9 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 	if consumerPid != `` {
 		// can take the provider address from existing CN for this case
 
-		cn, err := c.cnStore.GetNegotiation(consumerPid)
+		cn, err := c.cnStore.Negotiation(consumerPid)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 		}
 
 		if cn.State != negotiation.StateOffered {
@@ -89,9 +89,8 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 	}
 
 	ack.Type = negotiation.MsgTypeNegotiation
-	c.cnStore.Set(consumerPid, negotiation.Negotiation(ack))
-	c.cnStore.SetAssignee(consumerPid, ofr.Assignee)
-	c.cnStore.SetCallbackAddr(consumerPid, providerAddr)
+	c.cnStore.AddNegotiation(consumerPid, negotiation.Negotiation(ack))
+	c.cnStore.SetParticipants(consumerPid, providerAddr, ofr.Assigner, ofr.Assignee)
 
 	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
 		consumerPid, ofr.Assigner, ofr.Assignee, providerAddr))
@@ -100,9 +99,9 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 }
 
 func (c *Controller) AcceptOffer(consumerPid string) error {
-	cn, err := c.cnStore.GetNegotiation(consumerPid)
+	cn, err := c.cnStore.Negotiation(consumerPid)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	if cn.State != negotiation.StateOffered {
@@ -146,9 +145,9 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 }
 
 func (c *Controller) VerifyAgreement(consumerPid string) error {
-	cn, err := c.cnStore.GetNegotiation(consumerPid)
+	cn, err := c.cnStore.Negotiation(consumerPid)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	req := negotiation.ContractVerification{
@@ -188,9 +187,9 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 }
 
 func (c *Controller) TerminateContract(consumerPid, code string, reasons []string) error {
-	cn, err := c.cnStore.GetNegotiation(consumerPid)
+	cn, err := c.cnStore.Negotiation(consumerPid)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	var rsnList []negotiation.Reason

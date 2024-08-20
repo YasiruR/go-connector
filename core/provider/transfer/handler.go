@@ -12,15 +12,15 @@ import (
 
 type Handler struct {
 	urn      pkg.URNService
-	agrStore stores.Agreement
-	tpStore  stores.Transfer
+	agrStore stores.AgreementStore
+	tpStore  stores.TransferStore
 	log      pkg.Log
 }
 
 func NewHandler(stores domain.Stores, plugins domain.Plugins) *Handler {
 	return &Handler{
-		agrStore: stores.Agreement,
-		tpStore:  stores.Transfer,
+		agrStore: stores.AgreementStore,
+		tpStore:  stores.TransferStore,
 		urn:      plugins.URNService,
 		log:      plugins.Log,
 	}
@@ -28,7 +28,7 @@ func NewHandler(stores domain.Stores, plugins domain.Plugins) *Handler {
 
 func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, error) {
 	// validate agreement
-	_, err := h.agrStore.Get(tr.AgreementId)
+	_, err := h.agrStore.Agreement(tr.AgreementId)
 	if err != nil {
 		return transfer.Ack{}, errors.StoreFailed(stores.TypeAgreement, `Get`, err)
 	}
@@ -46,7 +46,7 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 		State:   transfer.StateRequested,
 	}
 
-	h.tpStore.Set(tpId, transfer.Process(ack))
+	h.tpStore.AddProcess(tpId, transfer.Process(ack))
 	h.tpStore.SetCallbackAddr(tpId, tr.CallbackAddr)
 	h.log.Trace("stored transfer process", ack)
 	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", tpId, transfer.StateRequested))
@@ -54,9 +54,9 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 }
 
 func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error) {
-	tp, err := h.tpStore.GetProcess(sr.ProvPId)
+	tp, err := h.tpStore.Process(sr.ProvPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	if err = h.tpStore.UpdateState(sr.ProvPId, transfer.StateSuspended); err != nil {
@@ -69,9 +69,9 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 }
 
 func (h *Handler) HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error) {
-	tp, err := h.tpStore.GetProcess(cr.ProvPId)
+	tp, err := h.tpStore.Process(cr.ProvPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	if err = h.tpStore.UpdateState(cr.ProvPId, transfer.StateCompleted); err != nil {

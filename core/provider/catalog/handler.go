@@ -12,20 +12,20 @@ import (
 
 type Handler struct {
 	participantId string // data space specific identifier for Provider
-	catalog       stores.Catalog
+	catStore      stores.CatalogStore
 	log           pkg.Log
 }
 
-func NewHandler(cnStore stores.Catalog, log pkg.Log) *Handler {
+func NewHandler(cnStore stores.CatalogStore, log pkg.Log) *Handler {
 	return &Handler{
 		participantId: `participant-id-provider`,
-		catalog:       cnStore,
+		catStore:      cnStore,
 		log:           log,
 	}
 }
 
 func (h *Handler) HandleCatalogRequest(_ any) (catalog.Response, error) {
-	cat, err := h.catalog.Get()
+	cat, err := h.catStore.Catalog()
 	if err != nil {
 		return catalog.Response{}, errors.StoreFailed(stores.TypeCatalog, `Get`, err)
 	}
@@ -38,7 +38,7 @@ func (h *Handler) HandleCatalogRequest(_ any) (catalog.Response, error) {
 }
 
 func (h *Handler) HandleDatasetRequest(id string) (catalog.DatasetResponse, error) {
-	ds, err := h.catalog.Dataset(id)
+	ds, err := h.catStore.Dataset(id)
 	if err != nil {
 		return catalog.DatasetResponse{}, errors.StoreFailed(stores.TypeCatalog, `Dataset`, err)
 	}

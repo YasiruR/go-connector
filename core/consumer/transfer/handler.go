@@ -9,18 +9,18 @@ import (
 )
 
 type Handler struct {
-	tpStore stores.Transfer
+	tpStore stores.TransferStore
 	log     pkg.Log
 }
 
-func NewHandler(tpStore stores.Transfer, log pkg.Log) *Handler {
+func NewHandler(tpStore stores.TransferStore, log pkg.Log) *Handler {
 	return &Handler{tpStore: tpStore, log: log}
 }
 
 func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error) {
-	tp, err := h.tpStore.GetProcess(sr.ConsPId)
+	tp, err := h.tpStore.Process(sr.ConsPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	// validate if received details are compatible with existing TP
@@ -35,9 +35,9 @@ func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, e
 }
 
 func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error) {
-	tp, err := h.tpStore.GetProcess(sr.ConsPId)
+	tp, err := h.tpStore.Process(sr.ConsPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	if err := h.tpStore.UpdateState(sr.ConsPId, transfer.StateSuspended); err != nil {
@@ -50,9 +50,9 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 }
 
 func (h *Handler) HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error) {
-	tp, err := h.tpStore.GetProcess(cr.ConsPId)
+	tp, err := h.tpStore.Process(cr.ConsPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	if err = h.tpStore.UpdateState(cr.ConsPId, transfer.StateCompleted); err != nil {

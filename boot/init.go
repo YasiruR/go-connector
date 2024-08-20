@@ -41,11 +41,11 @@ func initPlugins(log pkg.Log) domain.Plugins {
 
 func initStores(cfg boot.Config, plugins domain.Plugins) domain.Stores {
 	return domain.Stores{
-		ProviderCatalog:     stores.NewCatalog(cfg, plugins),
-		Policy:              stores.NewPolicyStore(plugins),
-		ContractNegotiation: stores.NewContractNegotiationStore(plugins),
-		Agreement:           stores.NewAgreementStore(plugins),
-		Transfer:            stores.NewTransferStore(plugins),
+		ProviderCatalog:          stores.NewCatalog(cfg, plugins),
+		PolicyStore:              stores.NewPolicyStore(plugins),
+		ContractNegotiationStore: stores.NewContractNegotiationStore(plugins),
+		AgreementStore:           stores.NewAgreementStore(plugins),
+		TransferStore:            stores.NewTransferStore(plugins),
 	}
 }
 

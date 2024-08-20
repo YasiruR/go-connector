@@ -17,14 +17,14 @@ type Controller struct {
 	callbackAddr string
 	urn          pkg.URNService
 	client       pkg.Client
-	tpStore      stores.Transfer
+	tpStore      stores.TransferStore
 	log          pkg.Log
 }
 
 func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
-		tpStore:      stores.Transfer,
+		tpStore:      stores.TransferStore,
 		client:       plugins.Client,
 		urn:          plugins.URNService,
 		log:          plugins.Log,
@@ -79,7 +79,7 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint, prov
 		return ``, errors.UnmarshalError(providerEndpoint+transfer.RequestEndpoint, err)
 	}
 
-	c.tpStore.Set(tpId, transfer.Process(ack)) // validate if received attributes are correct
+	c.tpStore.AddProcess(tpId, transfer.Process(ack)) // validate if received attributes are correct
 	c.tpStore.SetCallbackAddr(tpId, providerEndpoint)
 	c.log.Trace("stored transfer process", ack)
 	c.log.Info(fmt.Sprintf("updated transfer process state (id: %s, state: %s)", tpId, transfer.StateRequested))
@@ -88,9 +88,9 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint, prov
 
 func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) error {
 	// check if valid tp
-	tp, err := c.tpStore.GetProcess(tpId)
+	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	providerAddr, err := c.tpStore.CallbackAddr(tpId)
@@ -132,9 +132,9 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 }
 
 func (c *Controller) CompleteTransfer(tpId string) error {
-	tp, err := c.tpStore.GetProcess(tpId)
+	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	providerAddr, err := c.tpStore.CallbackAddr(tpId)

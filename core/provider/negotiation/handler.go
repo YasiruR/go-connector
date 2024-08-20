@@ -14,8 +14,8 @@ import (
 
 type Handler struct {
 	assignerId  string
-	cnStore     stores.ContractNegotiation
-	policyStore stores.Policy
+	cnStore     stores.ContractNegotiationStore
+	policyStore stores.PolicyStore
 	urn         pkg.URNService
 	log         pkg.Log
 }
@@ -23,17 +23,17 @@ type Handler struct {
 func NewHandler(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Handler {
 	return &Handler{
 		assignerId:  cfg.DataSpace.AssignerId,
-		cnStore:     stores.ContractNegotiation,
-		policyStore: stores.Policy,
+		cnStore:     stores.ContractNegotiationStore,
+		policyStore: stores.PolicyStore,
 		urn:         plugins.URNService,
 		log:         plugins.Log,
 	}
 }
 
 func (h *Handler) HandleNegotiationsRequest(providerPid string) (negotiation.Ack, error) {
-	ack, err := h.cnStore.GetNegotiation(providerPid)
+	ack, err := h.cnStore.Negotiation(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	return negotiation.Ack(ack), nil
@@ -45,9 +45,9 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 	var cn negotiation.Negotiation
 	provPId := cr.ProvPId
 	if provPId != `` {
-		cn, err = h.cnStore.GetNegotiation(provPId)
+		cn, err = h.cnStore.Negotiation(provPId)
 		if err != nil {
-			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 		}
 
 		if cn.State != negotiation.StateOffered {
@@ -85,22 +85,22 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 		return negotiation.Ack{}, fmt.Errorf("received an invalid callback address")
 	}
 
-	// store (new or updated) contract negotiation, assignee and its callback address
-	h.cnStore.Set(provPId, cn)
-	h.cnStore.SetAssignee(provPId, cr.Offer.Assignee)
-	h.cnStore.SetCallbackAddr(provPId, cr.CallbackAddr)
-	h.log.Trace("stored contract negotiation", "id: "+provPId, "assigner: "+cr.Offer.Assigner,
-		"assignee: "+cr.Offer.Assignee, "address: "+cr.CallbackAddr)
-	h.log.Debug("updated negotiation state", "id: "+provPId, "state: "+negotiation.StateRequested)
+	// store (new or updated) contract negotiation, assignee, assigner and its callback address
+	h.cnStore.AddNegotiation(provPId, cn)
+	h.cnStore.SetParticipants(provPId, cr.CallbackAddr, cr.Offer.Assigner, cr.Offer.Assignee)
+
+	h.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
+		provPId, cr.Offer.Assigner, cr.Offer.Assignee, cr.CallbackAddr))
+	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", provPId, negotiation.StateRequested))
 
 	cn.Type = negotiation.MsgTypeNegotiationAck
 	return negotiation.Ack(cn), nil
 }
 
 func (h *Handler) HandleAcceptOffer(providerPid string) (negotiation.Ack, error) {
-	cn, err := h.cnStore.GetNegotiation(providerPid)
+	cn, err := h.cnStore.Negotiation(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	if cn.State != negotiation.StateOffered {
@@ -116,9 +116,9 @@ func (h *Handler) HandleAcceptOffer(providerPid string) (negotiation.Ack, error)
 }
 
 func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.Ack, error) {
-	cn, err := h.cnStore.GetNegotiation(providerPid)
+	cn, err := h.cnStore.Negotiation(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	if err = h.cnStore.UpdateState(providerPid, negotiation.StateVerified); err != nil {
@@ -132,9 +132,9 @@ func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.A
 }
 
 func (h *Handler) HandleTermination(ct negotiation.ContractTermination) (negotiation.Ack, error) {
-	cn, err := h.cnStore.GetNegotiation(ct.ProvPId)
+	cn, err := h.cnStore.Negotiation(ct.ProvPId)
 	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	// can clear stores instead of this
@@ -150,9 +150,9 @@ func (h *Handler) HandleTermination(ct negotiation.ContractTermination) (negotia
 
 // todo move policy engine validator as a package
 func (h *Handler) validOffer(receivedOfr odrl.Offer) bool {
-	storedOfr, err := h.policyStore.GetOffer(receivedOfr.Id)
+	storedOfr, err := h.policyStore.Offer(receivedOfr.Id)
 	if err != nil {
-		h.log.Debug(errors.StoreFailed(stores.TypePolicy, `GetOffer`, err))
+		h.log.Debug(errors.StoreFailed(stores.TypePolicy, `Offer`, err))
 		return false
 	}
 

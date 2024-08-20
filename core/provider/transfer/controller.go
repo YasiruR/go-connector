@@ -13,12 +13,12 @@ import (
 )
 
 type Controller struct {
-	tpStore stores.Transfer
+	tpStore stores.TransferStore
 	client  pkg.Client
 	log     pkg.Log
 }
 
-func NewController(tpStore stores.Transfer, plugins domain.Plugins) *Controller {
+func NewController(tpStore stores.TransferStore, plugins domain.Plugins) *Controller {
 	return &Controller{
 		tpStore: tpStore,
 		client:  plugins.Client,
@@ -27,9 +27,9 @@ func NewController(tpStore stores.Transfer, plugins domain.Plugins) *Controller 
 }
 
 func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
-	tp, err := c.tpStore.GetProcess(tpId)
+	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	consumerAddr, err := c.tpStore.CallbackAddr(tpId)
@@ -83,9 +83,9 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 
 func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) error {
 	// check if valid tp
-	tp, err := c.tpStore.GetProcess(tpId)
+	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	consumerAddr, err := c.tpStore.CallbackAddr(tpId)
@@ -127,9 +127,9 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 }
 
 func (c *Controller) CompleteTransfer(tpId string) error {
-	tp, err := c.tpStore.GetProcess(tpId)
+	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `GetProcess`, err)
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	consumerAddr, err := c.tpStore.CallbackAddr(tpId)

@@ -22,7 +22,7 @@ func NewAgreementStore(plugins domain.Plugins) *Agreement {
 	return &Agreement{store: plugins.Database.NewCollection(), cnMap: plugins.Database.NewCollection()}
 }
 
-func (a *Agreement) Set(cnId string, val odrl.Agreement) {
+func (a *Agreement) AddAgreement(cnId string, val odrl.Agreement) {
 	_ = a.store.Set(val.Id, val)
 	a.setNegotiationId(cnId, val.Id)
 }
@@ -31,7 +31,7 @@ func (a *Agreement) setNegotiationId(cnId, agrId string) {
 	_ = a.cnMap.Set(cnId, agrId)
 }
 
-func (a *Agreement) Get(id string) (odrl.Agreement, error) {
+func (a *Agreement) Agreement(id string) (odrl.Agreement, error) {
 	val, err := a.store.Get(id)
 	if err != nil {
 		return odrl.Agreement{}, errors.QueryFailed(agreementCollection, `Get`, err)
@@ -39,11 +39,11 @@ func (a *Agreement) Get(id string) (odrl.Agreement, error) {
 	return val.(odrl.Agreement), nil
 }
 
-func (a *Agreement) GetByNegotiationID(cnId string) (odrl.Agreement, error) {
+func (a *Agreement) AgreementByNegotiationID(cnId string) (odrl.Agreement, error) {
 	agrId, err := a.cnMap.Get(cnId)
 	if err != nil {
 		return odrl.Agreement{}, errors.QueryFailed(agreementNegotiationCollection, `Get`, err)
 	}
 
-	return a.Get(agrId.(string))
+	return a.Agreement(agrId.(string))
 }

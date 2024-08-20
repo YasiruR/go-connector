@@ -22,7 +22,7 @@ func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Provide
 		CatalogHandler:        catalog.NewHandler(stores.ProviderCatalog, plugins.Log),
 		NegotiationController: negotiation.NewController(cfg.Servers.DSP.HTTP.Port, stores, plugins),
 		NegotiationHandler:    negotiation.NewHandler(cfg, stores, plugins),
-		TransferController:    transfer.NewController(stores.Transfer, plugins),
+		TransferController:    transfer.NewController(stores.TransferStore, plugins),
 		TransferHandler:       transfer.NewHandler(stores, plugins),
 	}
 }

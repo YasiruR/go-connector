@@ -30,7 +30,7 @@ func NewCatalog(cfg boot.Config, plugins domain.Plugins) *Catalog {
 	return c
 }
 
-// check if this can be called in constructor
+// may not need to init if only a consumer
 func (c *Catalog) init(cfg boot.Config) error {
 	catId, err := c.urn.NewURN()
 	if err != nil {
@@ -74,7 +74,7 @@ func (c *Catalog) init(cfg boot.Config) error {
 	return nil
 }
 
-func (c *Catalog) Get() (dcat.Catalog, error) {
+func (c *Catalog) Catalog() (dcat.Catalog, error) {
 	vals, err := c.store.GetAll()
 	if err != nil {
 		return dcat.Catalog{}, errors.QueryFailed(`dataset`, `GetAll`, err)

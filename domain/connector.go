@@ -14,11 +14,11 @@ type Roles struct {
 }
 
 type Stores struct {
-	ProviderCatalog stores.Catalog
-	stores.Policy
-	stores.ContractNegotiation
-	stores.Agreement
-	stores.Transfer
+	ProviderCatalog stores.CatalogStore
+	stores.PolicyStore
+	stores.ContractNegotiationStore
+	stores.AgreementStore
+	stores.TransferStore
 }
 
 type Servers struct {

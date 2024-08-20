@@ -17,7 +17,7 @@ import (
 type Handler struct {
 	provider core.Provider
 	consumer core.Consumer
-	agrStore stores.Agreement
+	agrStore stores.AgreementStore
 	log      pkg.Log
 }
 
@@ -25,7 +25,7 @@ func NewHandler(roles domain.Roles, stores domain.Stores, log pkg.Log) *Handler 
 	return &Handler{
 		provider: roles.Provider,
 		consumer: roles.Consumer,
-		agrStore: stores.Agreement,
+		agrStore: stores.AgreementStore,
 		log:      log,
 	}
 }
@@ -112,7 +112,7 @@ func (h *Handler) GetAgreement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agr, err := h.agrStore.Get(agreementId)
+	agr, err := h.agrStore.Agreement(agreementId)
 	if err != nil {
 		middleware.WriteError(w, errors.StoreFailed(stores.TypeAgreement, `Get`, err), http.StatusBadRequest)
 		return

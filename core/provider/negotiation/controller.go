@@ -17,9 +17,9 @@ import (
 
 type Controller struct {
 	callbackAddr string
-	cnStore      stores.ContractNegotiation
-	policyStore  stores.Policy
-	agrStore     stores.Agreement
+	cnStore      stores.ContractNegotiationStore
+	policyStore  stores.PolicyStore
+	agrStore     stores.AgreementStore
 	urn          pkg.URNService
 	client       pkg.Client
 	log          pkg.Log
@@ -28,9 +28,9 @@ type Controller struct {
 func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
-		cnStore:      stores.ContractNegotiation,
-		policyStore:  stores.Policy,
-		agrStore:     stores.Agreement,
+		cnStore:      stores.ContractNegotiationStore,
+		policyStore:  stores.PolicyStore,
+		agrStore:     stores.AgreementStore,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
 		log:          plugins.Log,
@@ -40,17 +40,17 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (cnId string, err error) {
 	// include datasetId (optional) if provider is the initiator
 
-	ofr, err := c.policyStore.GetOffer(offerId)
+	ofr, err := c.policyStore.Offer(offerId)
 	if err != nil {
-		return ``, errors.StoreFailed(stores.TypePolicy, `GetOffer`, err)
+		return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
 	}
 
 	var endpoint string
 	var consumerPid string
 	if providerPid != `` {
-		cn, err := c.cnStore.GetNegotiation(providerPid)
+		cn, err := c.cnStore.Negotiation(providerPid)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 		}
 
 		if cn.State != negotiation.StateRequested {
@@ -111,7 +111,9 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 	}
 
 	ack.Type = negotiation.MsgTypeNegotiation
-	c.cnStore.Set(providerPid, negotiation.Negotiation(ack))
+	c.cnStore.AddNegotiation(providerPid, negotiation.Negotiation(ack))
+	c.cnStore.SetParticipants(providerPid, consumerAddr, co.Offer.Assigner, co.Offer.Assignee)
+
 	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateOffered))
 	return providerPid, nil
 }
@@ -122,9 +124,9 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.URNFailed(`providerPid`, `NewURN`, err)
 	}
 
-	offer, err := c.policyStore.GetOffer(offerId)
+	offer, err := c.policyStore.Offer(offerId)
 	if err != nil {
-		return ``, errors.StoreFailed(stores.TypePolicy, `GetOffer`, err)
+		return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
 	}
 
 	assignee, err := c.cnStore.Assignee(providerPid)
@@ -132,9 +134,9 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
 	}
 
-	cn, err := c.cnStore.GetNegotiation(providerPid)
+	cn, err := c.cnStore.Negotiation(providerPid)
 	if err != nil {
-		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	ca := negotiation.ContractAgreement{
@@ -175,7 +177,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.UnmarshalError(negotiation.ContractAgreementEndpoint, err)
 	}
 
-	c.agrStore.Set(ca.Agreement.Id, ca.Agreement)
+	c.agrStore.AddAgreement(ca.Agreement.Id, ca.Agreement)
 	c.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)", ca.Agreement.Id, providerPid))
 	if err = c.cnStore.UpdateState(providerPid, negotiation.StateAgreed); err != nil {
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
@@ -186,9 +188,9 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 }
 
 func (c *Controller) FinalizeContract(providerPid string) error {
-	neg, err := c.cnStore.GetNegotiation(providerPid)
+	neg, err := c.cnStore.Negotiation(providerPid)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	event := negotiation.ContractNegotiationEvent{

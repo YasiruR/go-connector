@@ -33,11 +33,11 @@ func NewContractNegotiationStore(plugins domain.Plugins) *ContractNegotiation {
 	}
 }
 
-func (cn *ContractNegotiation) Set(cnId string, val negotiation.Negotiation) {
+func (cn *ContractNegotiation) AddNegotiation(cnId string, val negotiation.Negotiation) {
 	_ = cn.store.Set(cnId, val)
 }
 
-func (cn *ContractNegotiation) GetNegotiation(cnId string) (negotiation.Negotiation, error) {
+func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation.Negotiation, error) {
 	val, err := cn.store.Get(cnId)
 	if err != nil {
 		return negotiation.Negotiation{}, errors.QueryFailed(negotiationCollection, `Get`, err)
@@ -46,26 +46,28 @@ func (cn *ContractNegotiation) GetNegotiation(cnId string) (negotiation.Negotiat
 }
 
 func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) error {
-	neg, err := cn.GetNegotiation(cnId)
+	neg, err := cn.Negotiation(cnId)
 	if err != nil {
 		return errors.QueryFailed(negotiationCollection, `Get`, err)
 	}
 
 	neg.State = s
-	cn.Set(cnId, neg)
+	cn.AddNegotiation(cnId, neg)
 	return nil
 }
 
 func (cn *ContractNegotiation) State(cnId string) (negotiation.State, error) {
-	neg, err := cn.GetNegotiation(cnId)
+	neg, err := cn.Negotiation(cnId)
 	if err != nil {
 		return ``, errors.QueryFailed(negotiationCollection, `Get`, err)
 	}
 	return neg.State, nil
 }
 
-func (cn *ContractNegotiation) SetAssignee(cnId string, a odrl.Assignee) {
-	_ = cn.assignees.Set(cnId, a)
+func (cn *ContractNegotiation) SetParticipants(cnId, callbackAddr string, assigner odrl.Assigner, assignee odrl.Assignee) {
+	_ = cn.assigners.Set(cnId, assigner)
+	_ = cn.assignees.Set(cnId, assignee)
+	_ = cn.callbackAddr.Set(cnId, callbackAddr)
 }
 
 func (cn *ContractNegotiation) Assignee(cnId string) (odrl.Assignee, error) {
@@ -76,20 +78,12 @@ func (cn *ContractNegotiation) Assignee(cnId string) (odrl.Assignee, error) {
 	return val.(odrl.Assignee), nil
 }
 
-func (cn *ContractNegotiation) SetAssigner(cnId string, a odrl.Assigner) {
-	_ = cn.assigners.Set(cnId, a)
-}
-
 func (cn *ContractNegotiation) Assigner(cnId string) (odrl.Assigner, error) {
 	val, err := cn.assigners.Get(cnId)
 	if err != nil {
 		return ``, errors.QueryFailed(assignerCollection, `get`, err)
 	}
 	return val.(odrl.Assigner), nil
-}
-
-func (cn *ContractNegotiation) SetCallbackAddr(cnId, addr string) {
-	_ = cn.callbackAddr.Set(cnId, addr)
 }
 
 func (cn *ContractNegotiation) CallbackAddr(cnId string) (string, error) {

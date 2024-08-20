@@ -21,11 +21,11 @@ func NewTransferStore(plugins domain.Plugins) *Transfer {
 	return &Transfer{store: plugins.Database.NewCollection(), callbackAddr: plugins.Database.NewCollection()}
 }
 
-func (t *Transfer) Set(tpId string, val transfer.Process) {
+func (t *Transfer) AddProcess(tpId string, val transfer.Process) {
 	_ = t.store.Set(tpId, val)
 }
 
-func (t *Transfer) GetProcess(id string) (transfer.Process, error) {
+func (t *Transfer) Process(id string) (transfer.Process, error) {
 	val, err := t.store.Get(id)
 	if err != nil {
 		return transfer.Process{}, errors.QueryFailed(transferCollection, `Get`, err)
@@ -46,12 +46,12 @@ func (t *Transfer) CallbackAddr(tpId string) (string, error) {
 }
 
 func (t *Transfer) UpdateState(tpId string, s transfer.State) error {
-	process, err := t.GetProcess(tpId)
+	process, err := t.Process(tpId)
 	if err != nil {
-		return errors.QueryFailed(transferCollection, `GetProcess`, err)
+		return errors.QueryFailed(transferCollection, `Process`, err)
 	}
 
 	process.State = s
-	t.Set(tpId, process)
+	t.AddProcess(tpId, process)
 	return nil
 }

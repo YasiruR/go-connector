@@ -24,6 +24,6 @@ func New(port int, stores domain.Stores, plugins domain.Plugins) *Consumer {
 		NegotiationController: negotiation.NewController(port, stores, plugins),
 		NegotiationHandler:    negotiation.NewHandler(stores, plugins),
 		TransferController:    transfer.NewController(port, stores, plugins),
-		TransferHandler:       transfer.NewHandler(stores.Transfer, plugins.Log),
+		TransferHandler:       transfer.NewHandler(stores.TransferStore, plugins.Log),
 	}
 }
