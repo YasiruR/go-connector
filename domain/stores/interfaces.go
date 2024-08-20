@@ -3,7 +3,6 @@ package stores
 import (
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
-	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/models/odrl"
 )
@@ -18,7 +17,6 @@ const (
 
 // Catalog stores Datasets as per the DCAT profile recommended by IDSA
 type Catalog interface {
-	Init(cfg boot.Config) error
 	Get() (dcat.Catalog, error)
 	AddDataset(id string, val dcat.Dataset)
 	Dataset(id string) (dcat.Dataset, error)
@@ -33,6 +31,8 @@ type ContractNegotiation interface {
 	State(cnId string) (negotiation.State, error)
 	SetAssignee(cnId string, a odrl.Assignee)
 	Assignee(cnId string) (odrl.Assignee, error)
+	SetAssigner(cnId string, a odrl.Assigner)
+	Assigner(cnId string) (odrl.Assigner, error)
 	SetCallbackAddr(cnId, addr string)
 	CallbackAddr(cnId string) (string, error)
 }

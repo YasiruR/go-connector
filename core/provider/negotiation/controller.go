@@ -112,7 +112,7 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 
 	ack.Type = negotiation.MsgTypeNegotiation
 	c.cnStore.Set(providerPid, negotiation.Negotiation(ack))
-	c.log.Info("updated negotiation state", "id: "+providerPid, "state: "+negotiation.StateOffered)
+	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateOffered))
 	return providerPid, nil
 }
 
@@ -143,12 +143,13 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		ProvPId: cn.ProvPId,
 		ConsPId: cn.ConsPId,
 		Agreement: odrl.Agreement{
-			Id:        agreementId,
-			Type:      odrl.TypeAgreement,
-			Target:    offer.Target,
-			Assigner:  offer.Assigner,
-			Assignee:  assignee,
-			Timestamp: time.Now().UTC().String(), // change format into XSD
+			Id:          agreementId,
+			Type:        odrl.TypeAgreement,
+			Target:      offer.Target,
+			Assigner:    offer.Assigner,
+			Assignee:    assignee,
+			Timestamp:   time.Now().UTC().String(), // change format into XSD
+			Permissions: offer.Permissions,         // should be able to select a subset in future
 		},
 		CallbackAddr: c.callbackAddr,
 	}
@@ -174,7 +175,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.UnmarshalError(negotiation.ContractAgreementEndpoint, err)
 	}
 
-	c.agrStore.Set(ca.ConsPId, ca.Agreement)
+	c.agrStore.Set(ca.Agreement.Id, ca.Agreement)
 	c.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)", ca.Agreement.Id, providerPid))
 	if err = c.cnStore.UpdateState(providerPid, negotiation.StateAgreed); err != nil {
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)

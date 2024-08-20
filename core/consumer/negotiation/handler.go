@@ -61,17 +61,18 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 	h.cnStore.SetCallbackAddr(cn.ConsPId, co.CallbackAddr)
 	cn.Type = negotiation.MsgTypeNegotiationAck
 
-	h.log.Trace("updated callback address for contract negotiation", "id: "+cn.ConsPId, "address: "+co.CallbackAddr)
-	h.log.Debug("updated negotiation state", "id: "+cn.ConsPId, "state: "+negotiation.StateOffered)
+	h.log.Trace(fmt.Sprintf("updated callback address for contract negotiation (id: %s, address: %s)", cn.ConsPId, co.CallbackAddr))
+	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", cn.ConsPId, negotiation.StateOffered))
 	return negotiation.Ack(cn), nil
 }
 
 func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (negotiation.Ack, error) {
 	// validate agreement (e.g. consumerPid, target)
 
-	h.agrStore.Set(ca.ConsPId, ca.Agreement)
-	h.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)", ca.Agreement.Id, ca.ConsPId))
+	h.agrStore.Set(ca.Agreement.Id, ca.Agreement)
 	h.cnStore.SetCallbackAddr(ca.ConsPId, ca.CallbackAddr)
+	h.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)",
+		ca.Agreement.Id, ca.ConsPId))
 
 	if err := h.cnStore.UpdateState(ca.ConsPId, negotiation.StateAgreed); err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
@@ -82,6 +83,7 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
 	}
 
+	cn.Type = negotiation.MsgTypeNegotiationAck
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
 	return negotiation.Ack(cn), nil
 }
@@ -98,4 +100,19 @@ func (h *Handler) HandleFinalizedEvent(consumerPid string) (negotiation.Ack, err
 
 	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateFinalized))
 	return negotiation.Ack(cn), nil
+}
+
+func (h *Handler) validAgreement(agr negotiation.ContractAgreement) bool {
+	cn, err := h.cnStore.GetNegotiation(agr.ConsPId)
+	if err != nil {
+		return false
+	}
+
+	if agr.ProvPId != cn.ProvPId {
+		return false
+	}
+
+	// todo save catalog first, then set assigner, and this
+	//if agr.Agreement.Assigner !=
+	return true
 }

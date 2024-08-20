@@ -5,6 +5,11 @@ const (
 	TypeAgreement = `odrl:Agreement`
 )
 
+// action types
+const (
+	ActionUse = `odrl:use`
+)
+
 type Action string
 type Assigner string
 type Assignee string
@@ -24,6 +29,17 @@ type Offer struct {
 	// duties/obligations should be included
 }
 
+// Agreement is a subclass of Policy that supports granting of Rules from assigner to assignee Parties
+type Agreement struct {
+	Id          string   `json:"@id"`
+	Type        string   `json:"@type" default:"odrl:Agreement"`
+	Target      Target   `json:"odrl:target"`
+	Assigner    Assigner `json:"odrl:assigner"`
+	Assignee    Assignee `json:"odrl:assignee"`
+	Timestamp   string   `json:"dspace:timestamp"` // due to this attribute may need to transfer agreement structure to dsp api
+	Permissions []Rule   `json:"odrl:permission"`
+}
+
 type Rule struct {
 	Action      Action       `json:"odrl:action"`
 	Constraints []Constraint `json:"odrl:constraint"`
@@ -37,14 +53,4 @@ type Constraint struct {
 	//	Value string `json:"@value"`
 	//	Type  string `json:"@type"`
 	//} `json:"odrl:rightOperand"`
-}
-
-// Agreement is a subclass of Policy that supports granting of Rules from assigner to assignee Parties
-type Agreement struct {
-	Id        string   `json:"@id"`
-	Type      string   `json:"@type" default:"odrl:Agreement"`
-	Target    Target   `json:"odrl:target"`
-	Assigner  Assigner `json:"odrl:assigner"`
-	Assignee  Assignee `json:"odrl:assignee"`
-	Timestamp string   `json:"dspace:timestamp"`
 }

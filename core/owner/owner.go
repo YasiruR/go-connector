@@ -22,7 +22,7 @@ func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Service
 	return &Service{
 		assignerId:  cfg.DataSpace.AssignerId, // can we assign participant ID from config to assigner?
 		policyStore: stores.Policy,
-		catalog:     stores.Catalog,
+		catalog:     stores.ProviderCatalog,
 		urn:         plugins.URNService,
 		log:         plugins.Log,
 	}

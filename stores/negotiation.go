@@ -11,6 +11,7 @@ import (
 const (
 	negotiationCollection  = `negotiation`
 	assigneeCollection     = `assignee`
+	assignerCollection     = `assigner`
 	callbackAddrCollection = `callbackAddr`
 )
 
@@ -18,6 +19,7 @@ const (
 type ContractNegotiation struct {
 	store        pkg.Collection
 	assignees    pkg.Collection
+	assigners    pkg.Collection
 	callbackAddr pkg.Collection
 }
 
@@ -26,6 +28,7 @@ func NewContractNegotiationStore(plugins domain.Plugins) *ContractNegotiation {
 	return &ContractNegotiation{
 		store:        plugins.Database.NewCollection(),
 		assignees:    plugins.Database.NewCollection(),
+		assigners:    plugins.Database.NewCollection(),
 		callbackAddr: plugins.Database.NewCollection(),
 	}
 }
@@ -71,6 +74,18 @@ func (cn *ContractNegotiation) Assignee(cnId string) (odrl.Assignee, error) {
 		return ``, errors.QueryFailed(assigneeCollection, `get`, err)
 	}
 	return val.(odrl.Assignee), nil
+}
+
+func (cn *ContractNegotiation) SetAssigner(cnId string, a odrl.Assigner) {
+	_ = cn.assigners.Set(cnId, a)
+}
+
+func (cn *ContractNegotiation) Assigner(cnId string) (odrl.Assigner, error) {
+	val, err := cn.assigners.Get(cnId)
+	if err != nil {
+		return ``, errors.QueryFailed(assignerCollection, `get`, err)
+	}
+	return val.(odrl.Assigner), nil
 }
 
 func (cn *ContractNegotiation) SetCallbackAddr(cnId, addr string) {

@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"fmt"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/errors"
@@ -15,15 +16,22 @@ type Catalog struct {
 	store pkg.Collection
 }
 
-func NewCatalog(plugins domain.Plugins) *Catalog {
-	plugins.Log.Info("initialized catalog store")
-	return &Catalog{
+func NewCatalog(cfg boot.Config, plugins domain.Plugins) *Catalog {
+	c := &Catalog{
 		urn:   plugins.URNService,
 		store: plugins.Database.NewCollection(),
 	}
+
+	if err := c.init(cfg); err != nil {
+		plugins.Log.Fatal(fmt.Sprintf("init catalog store failed: %v", err))
+	}
+
+	plugins.Log.Info("initialized catalog store", "catalog id: "+c.meta.ID)
+	return c
 }
 
-func (c *Catalog) Init(cfg boot.Config) error {
+// check if this can be called in constructor
+func (c *Catalog) init(cfg boot.Config) error {
 	catId, err := c.urn.NewURN()
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeURN, `New`, err)

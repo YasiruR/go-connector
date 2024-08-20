@@ -36,6 +36,8 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 	var providerPid string
 	var endpoint string
 	if consumerPid != `` {
+		// can take the provider address from existing CN for this case
+
 		cn, err := c.cnStore.GetNegotiation(consumerPid)
 		if err != nil {
 			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `GetNegotiation`, err)
@@ -91,9 +93,9 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 	c.cnStore.SetAssignee(consumerPid, ofr.Assignee)
 	c.cnStore.SetCallbackAddr(consumerPid, providerAddr)
 
-	c.log.Trace("stored contract negotiation", "id: "+consumerPid, "assigner: "+ofr.Assigner,
-		"assignee: "+ofr.Assignee, "address: "+providerAddr)
-	c.log.Debug("updated negotiation state", "id: "+consumerPid, "state: "+negotiation.StateRequested)
+	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
+		consumerPid, ofr.Assigner, ofr.Assignee, providerAddr))
+	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateRequested))
 	return consumerPid, nil
 }
 

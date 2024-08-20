@@ -1,7 +1,6 @@
 package boot
 
 import (
-	"fmt"
 	dspSHttp "github.com/YasiruR/connector/api/dsp/http"
 	gatewayHttp "github.com/YasiruR/connector/api/gateway/http"
 	"github.com/YasiruR/connector/core/consumer"
@@ -22,14 +21,10 @@ func Start() {
 	cfg := loadConfig(log)
 
 	plugins := initPlugins(log)
-	stors := initStores(plugins)
+	stors := initStores(cfg, plugins)
 	roles := initRoles(cfg, stors, plugins)
 	log.Info("enabled consumer, provider and owner roles")
 	servers := initServers(cfg, roles, stors, plugins)
-
-	if err := stors.Init(cfg); err != nil {
-		log.Fatal(fmt.Sprintf("configuring catalog service failed - %s", err))
-	}
 
 	go servers.DSP.Start()
 	servers.Gateway.Start()
@@ -44,9 +39,9 @@ func initPlugins(log pkg.Log) domain.Plugins {
 	}
 }
 
-func initStores(plugins domain.Plugins) domain.Stores {
+func initStores(cfg boot.Config, plugins domain.Plugins) domain.Stores {
 	return domain.Stores{
-		Catalog:             stores.NewCatalog(plugins),
+		ProviderCatalog:     stores.NewCatalog(cfg, plugins),
 		Policy:              stores.NewPolicyStore(plugins),
 		ContractNegotiation: stores.NewContractNegotiationStore(plugins),
 		Agreement:           stores.NewAgreementStore(plugins),
