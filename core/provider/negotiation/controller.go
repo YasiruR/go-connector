@@ -139,6 +139,11 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
+	if cn.State != negotiation.StateRequested && cn.State != negotiation.StateAccepted {
+		return ``, errors.IncompatibleValues(`state`, string(cn.State),
+			string(negotiation.StateRequested)+" or "+string(negotiation.StateAccepted))
+	}
+
 	ca := negotiation.ContractAgreement{
 		Ctx:     core.Context,
 		Type:    negotiation.MsgTypeContractAgreement,
@@ -183,21 +188,25 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateAgreed))
+	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateAgreed))
 	return agreementId, nil
 }
 
 func (c *Controller) FinalizeContract(providerPid string) error {
-	neg, err := c.cnStore.Negotiation(providerPid)
+	cn, err := c.cnStore.Negotiation(providerPid)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+	}
+
+	if cn.State != negotiation.StateVerified {
+		return errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateVerified))
 	}
 
 	event := negotiation.ContractNegotiationEvent{
 		Ctx:       core.Context,
 		Type:      negotiation.MsgTypeNegotiationEvent,
 		ProvPId:   providerPid,
-		ConsPId:   neg.ConsPId,
+		ConsPId:   cn.ConsPId,
 		EventType: negotiation.EventFinalized,
 	}
 
@@ -211,7 +220,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 		return errors.MarshalError(``, err)
 	}
 
-	endpoint := strings.Replace(consumerAddr+negotiation.EventsEndpoint, `{`+negotiation.ParamContractId+`}`, neg.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+negotiation.EventsEndpoint, `{`+negotiation.ParamContractId+`}`, cn.ConsPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)

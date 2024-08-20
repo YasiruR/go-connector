@@ -67,10 +67,19 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 }
 
 func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (negotiation.Ack, error) {
-	// validate agreement (e.g. consumerPid, target)
+	// validate agreement (e.g. consumerPid, providerPid, target)
+
+	cn, err := h.cnStore.Negotiation(ca.ConsPId)
+	if err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+	}
+
+	if cn.State != negotiation.StateRequested && cn.State != negotiation.StateAccepted {
+		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State),
+			string(negotiation.StateRequested)+" or "+string(negotiation.StateAccepted))
+	}
 
 	h.agrStore.AddAgreement(ca.Agreement.Id, ca.Agreement)
-	//h.cnStore.SetCallbackAddr(ca.ConsPId, ca.CallbackAddr)
 	h.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)",
 		ca.Agreement.Id, ca.ConsPId))
 
@@ -78,13 +87,8 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	cn, err := h.cnStore.Negotiation(ca.ConsPId)
-	if err != nil {
-		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
-	}
-
 	cn.Type = negotiation.MsgTypeNegotiationAck
-	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
+	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
 	return negotiation.Ack(cn), nil
 }
 

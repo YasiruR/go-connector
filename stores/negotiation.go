@@ -51,6 +51,36 @@ func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) err
 		return errors.QueryFailed(negotiationCollection, `Get`, err)
 	}
 
+	//switch s {
+	//case negotiation.StateRequested:
+	//	if neg.State != negotiation.StateOffered && neg.State != `` {
+	//		return negotiation.Negotiation{}, errors.IncompatibleValues(`state`, string(neg.State), string(negotiation.StateOffered)+" or null")
+	//	}
+	//case negotiation.StateOffered:
+	//	if neg.State != negotiation.StateRequested && neg.State != `` {
+	//		return negotiation.Negotiation{}, errors.IncompatibleValues(`state`, string(neg.State), string(negotiation.StateRequested)+" or null")
+	//	}
+	//case negotiation.StateAccepted:
+	//	if neg.State != negotiation.StateOffered {
+	//		return negotiation.Negotiation{}, errors.IncompatibleValues(`state`, string(neg.State), string(negotiation.StateOffered))
+	//	}
+	//case negotiation.StateAgreed:
+	//	if neg.State != negotiation.StateAccepted && neg.State != negotiation.StateRequested {
+	//		return negotiation.Negotiation{}, errors.IncompatibleValues(`state`, string(neg.State), string(negotiation.StateAccepted)+
+	//			" or "+string(negotiation.StateRequested))
+	//	}
+	//case negotiation.StateVerified:
+	//	if neg.State != negotiation.StateAgreed {
+	//		return negotiation.Negotiation{}, errors.IncompatibleValues(`state`, string(neg.State), string(negotiation.StateAgreed))
+	//	}
+	//case negotiation.StateFinalized:
+	//	if neg.State != negotiation.StateVerified {
+	//		return negotiation.Negotiation{}, errors.IncompatibleValues(`state`, string(neg.State), string(negotiation.StateVerified))
+	//	}
+	//default:
+	//	return negotiation.Negotiation{}, errors.IncompatibleValues(`state`, string(neg.State), "valid state value")
+	//}
+
 	neg.State = s
 	cn.AddNegotiation(cnId, neg)
 	return nil

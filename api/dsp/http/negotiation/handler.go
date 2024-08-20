@@ -131,17 +131,17 @@ func (h *Handler) HandleNegotiationEvent(w http.ResponseWriter, r *http.Request)
 	}
 
 	switch req.EventType {
-	case negotiation.EventFinalized:
-		ack, err := h.consumer.HandleFinalizedEvent(req.ConsPId)
-		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, negotiation.EventsEndpoint, err), http.StatusBadRequest)
-			return
-		}
-		middleware.WriteAck(w, ack, http.StatusOK)
 	case negotiation.EventAccepted:
 		ack, err := h.provider.HandleAcceptOffer(req.ProvPId)
 		if err != nil {
 			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, negotiation.EventsEndpoint, err), http.StatusBadRequest)
+			return
+		}
+		middleware.WriteAck(w, ack, http.StatusOK)
+	case negotiation.EventFinalized:
+		ack, err := h.consumer.HandleFinalizedEvent(req.ConsPId)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, negotiation.EventsEndpoint, err), http.StatusBadRequest)
 			return
 		}
 		middleware.WriteAck(w, ack, http.StatusOK)

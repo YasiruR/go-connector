@@ -98,6 +98,8 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 }
 
 func (h *Handler) HandleAcceptOffer(providerPid string) (negotiation.Ack, error) {
+	// validate other attributes (consPid)
+
 	cn, err := h.cnStore.Negotiation(providerPid)
 	if err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
@@ -111,14 +113,22 @@ func (h *Handler) HandleAcceptOffer(providerPid string) (negotiation.Ack, error)
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateAccepted))
+	cn.State = negotiation.StateAccepted
+	cn.Type = negotiation.MsgTypeNegotiationAck
+	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateAccepted))
 	return negotiation.Ack(cn), nil
 }
 
 func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.Ack, error) {
+	// validate message (must contain consumerPid, providerPid)
+
 	cn, err := h.cnStore.Negotiation(providerPid)
 	if err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+	}
+
+	if cn.State != negotiation.StateAgreed {
+		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateAgreed))
 	}
 
 	if err = h.cnStore.UpdateState(providerPid, negotiation.StateVerified); err != nil {
@@ -126,8 +136,8 @@ func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.A
 	}
 
 	cn.State = negotiation.StateVerified
-	cn.Type = negotiation.MsgTypeNegotiationAck // todo check if all stored negotiations have negotiations msg type
-	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateVerified))
+	cn.Type = negotiation.MsgTypeNegotiationAck
+	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateVerified))
 	return negotiation.Ack(cn), nil
 }
 

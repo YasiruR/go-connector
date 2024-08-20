@@ -37,7 +37,6 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 	var endpoint string
 	if consumerPid != `` {
 		// can take the provider address from existing CN for this case
-
 		cn, err := c.cnStore.Negotiation(consumerPid)
 		if err != nil {
 			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
@@ -140,7 +139,7 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateAccepted))
+	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateAccepted))
 	return nil
 }
 
@@ -148,6 +147,10 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 	cn, err := c.cnStore.Negotiation(consumerPid)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+	}
+
+	if cn.State != negotiation.StateAgreed {
+		return errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateAgreed))
 	}
 
 	req := negotiation.ContractVerification{
