@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
@@ -69,7 +70,7 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 
 		consumerPid = cn.ConsPId
 		ofr.Assignee = assignee
-		endpoint = strings.Replace(negotiation.ContractOfferToRequestEndpoint, `{`+negotiation.ParamConsumerPid+`}`, consumerPid, 1)
+		endpoint = strings.Replace(negotiation.ContractOfferToRequestEndpoint, `{`+api.ParamConsumerPid+`}`, consumerPid, 1)
 	} else {
 		if consumerAddr == `` {
 			return ``, errors.MissingRequiredAttr(`consumer address`, `must be provided when Provider is the initiator`)
@@ -166,7 +167,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
 	}
 
-	endpoint := strings.Replace(consumerAddr+negotiation.ContractAgreementEndpoint, `{`+negotiation.ParamConsumerPid+`}`, cn.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+negotiation.ContractAgreementEndpoint, `{`+api.ParamConsumerPid+`}`, cn.ConsPId, 1)
 	data, err := json.Marshal(ca)
 	if err != nil {
 		return ``, errors.MarshalError(endpoint, err)
@@ -220,7 +221,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 		return errors.MarshalError(``, err)
 	}
 
-	endpoint := strings.Replace(consumerAddr+negotiation.EventsEndpoint, `{`+negotiation.ParamContractId+`}`, cn.ConsPId, 1)
+	endpoint := strings.Replace(consumerAddr+negotiation.EventsEndpoint, `{`+api.ParamPid+`}`, cn.ConsPId, 1)
 	res, err := c.client.Send(data, endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)

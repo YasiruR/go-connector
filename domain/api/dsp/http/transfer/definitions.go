@@ -1,5 +1,7 @@
 package transfer
 
+import "github.com/YasiruR/connector/domain/api"
+
 type State string
 
 const (
@@ -27,18 +29,12 @@ const (
 	MsgTypeEndpointProperty = `dspace:EndpointProperty`
 )
 
-// Path parameters
-const (
-	ParamPid         = `Pid`
-	ParamConsumerPid = `consumerPid`
-)
-
 // Endpoints
 const (
 	RequestEndpoint  = `/transfers/request`
-	StartEndpoint    = `/transfers/{` + ParamConsumerPid + `}/start`
-	SuspendEndpoint  = `/transfers/{` + ParamPid + `}/suspension`
-	CompleteEndpoint = `/transfers/{` + ParamPid + `}/completion`
+	StartEndpoint    = `/transfers/{` + api.ParamConsumerPid + `}/start`
+	SuspendEndpoint  = `/transfers/{` + api.ParamPid + `}/suspension`
+	CompleteEndpoint = `/transfers/{` + api.ParamPid + `}/completion`
 )
 
 const (

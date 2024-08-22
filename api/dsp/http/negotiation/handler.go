@@ -3,6 +3,7 @@ package negotiation
 import (
 	"github.com/YasiruR/connector/api/dsp/http/middleware"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
@@ -27,9 +28,9 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 
 func (h *Handler) GetNegotiation(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	providerPid, ok := params[negotiation.ParamProviderId]
+	providerPid, ok := params[api.ParamProviderPid]
 	if !ok {
-		middleware.WriteError(w, errors.PathParamNotFound(negotiation.RequestEndpoint, negotiation.ParamProviderId), http.StatusBadRequest)
+		middleware.WriteError(w, errors.PathParamNotFound(negotiation.RequestEndpoint, api.ParamProviderPid), http.StatusBadRequest)
 		return
 	}
 
@@ -44,7 +45,7 @@ func (h *Handler) GetNegotiation(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) HandleContractRequest(w http.ResponseWriter, r *http.Request) {
 	var endpoint string
-	_, ok := mux.Vars(r)[negotiation.ParamConsumerPid]
+	_, ok := mux.Vars(r)[api.ParamConsumerPid]
 	if ok {
 		endpoint = negotiation.ContractOfferToRequestEndpoint
 	} else {
@@ -68,7 +69,7 @@ func (h *Handler) HandleContractRequest(w http.ResponseWriter, r *http.Request) 
 
 func (h *Handler) HandleContractOffer(w http.ResponseWriter, r *http.Request) {
 	var endpoint string
-	_, ok := mux.Vars(r)[negotiation.ParamConsumerPid]
+	_, ok := mux.Vars(r)[api.ParamConsumerPid]
 	if ok {
 		endpoint = negotiation.ContractOfferToRequestEndpoint
 	} else {

@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
-	"strings"
 )
 
 type Controller struct {
@@ -36,7 +36,6 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateRequested)+" or "+string(transfer.StateSuspended))
 	}
 
-	endpoint := strings.Replace(transfer.StartEndpoint, `{`+transfer.ParamConsumerPid+`}`, tp.ConsPId, 1)
 	req := transfer.StartRequest{
 		Ctx:     core.Context,
 		Type:    transfer.MsgTypeStart,
@@ -56,7 +55,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		}
 	}
 
-	if err = c.send(tpId, endpoint, req); err != nil {
+	if err = c.send(tpId, api.SetConsumerPidParam(transfer.StartEndpoint, tp.ConsPId), req); err != nil {
 		return errors.CustomFuncError(`send`, err)
 	}
 
@@ -80,7 +79,6 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
 	}
 
-	endpoint := strings.Replace(transfer.SuspendEndpoint, `{`+transfer.ParamPid+`}`, tp.ConsPId, 1)
 	req := transfer.SuspendRequest{
 		Ctx:     core.Context,
 		Type:    transfer.MsgTypeSuspend,
@@ -90,7 +88,7 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 		Reason:  reasons,
 	}
 
-	if err = c.send(tpId, endpoint, req); err != nil {
+	if err = c.send(tpId, api.SetConsumerPidParam(transfer.SuspendEndpoint, tp.ConsPId), req); err != nil {
 		return errors.CustomFuncError(`send`, err)
 	}
 
@@ -114,7 +112,6 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
 	}
 
-	endpoint := strings.Replace(transfer.CompleteEndpoint, `{`+transfer.ParamPid+`}`, tp.ConsPId, 1)
 	req := transfer.CompleteRequest{
 		Ctx:     core.Context,
 		Type:    transfer.MsgTypeComplete,
@@ -122,7 +119,7 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 		ProvPId: tpId,
 	}
 
-	if err = c.send(tpId, endpoint, req); err != nil {
+	if err = c.send(tpId, api.SetConsumerPidParam(transfer.CompleteEndpoint, tp.ConsPId), req); err != nil {
 		return errors.CustomFuncError(`send`, err)
 	}
 

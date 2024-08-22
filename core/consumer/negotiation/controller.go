@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
@@ -47,7 +48,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 		}
 
 		providerPid = cn.ProvPId
-		endpoint = strings.Replace(negotiation.ContractRequestToOfferEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
+		endpoint = strings.Replace(negotiation.ContractRequestToOfferEndpoint, `{`+api.ParamProviderPid+`}`, cn.ProvPId, 1)
 		c.log.Trace("found an existing contract negotiation for the request", "id: "+consumerPid)
 	} else {
 		// generate consumerPid
@@ -170,7 +171,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
 	}
 
-	endpoint := strings.Replace(negotiation.AgreementVerificationEndpoint, `{`+negotiation.ParamProviderId+`}`, cn.ProvPId, 1)
+	endpoint := strings.Replace(negotiation.AgreementVerificationEndpoint, `{`+api.ParamProviderPid+`}`, cn.ProvPId, 1)
 	res, err := c.client.Send(data, providerAddr+endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
@@ -222,7 +223,7 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 		return errors.MarshalError(negotiation.TerminateEndpoint, err)
 	}
 
-	endpoint := strings.Replace(negotiation.TerminateEndpoint, `{`+negotiation.ParamContractId+`}`, cn.ProvPId, 1)
+	endpoint := strings.Replace(negotiation.TerminateEndpoint, `{`+api.ParamPid+`}`, cn.ProvPId, 1)
 	res, err := c.client.Send(data, providerAddr+endpoint)
 	if err != nil {
 		return errors.PkgFailed(pkg.TypeClient, `Send`, err)

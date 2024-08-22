@@ -3,6 +3,7 @@ package transfer
 import (
 	"github.com/YasiruR/connector/api/dsp/http/middleware"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
@@ -59,9 +60,9 @@ func (h *Handler) HandleTransferStart(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) HandleTransferSuspension(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	pid, ok := vars[transfer.ParamPid]
+	pid, ok := vars[api.ParamPid]
 	if !ok {
-		middleware.WriteError(w, errors.PathParamNotFound(transfer.SuspendEndpoint, transfer.ParamPid), http.StatusBadRequest)
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.SuspendEndpoint, api.ParamPid), http.StatusBadRequest)
 		return
 	}
 
@@ -96,9 +97,9 @@ func (h *Handler) HandleTransferSuspension(w http.ResponseWriter, r *http.Reques
 
 func (h *Handler) HandleTransferCompletion(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	pid, ok := vars[transfer.ParamPid]
+	pid, ok := vars[api.ParamPid]
 	if !ok {
-		middleware.WriteError(w, errors.PathParamNotFound(transfer.CompleteEndpoint, transfer.ParamPid), http.StatusBadRequest)
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.CompleteEndpoint, api.ParamPid), http.StatusBadRequest)
 		return
 	}
 
