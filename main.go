@@ -14,3 +14,5 @@ Todos:
  - authentication
  - data plane functions (exchange process)
 */
+
+// todo: endpoints (transfers, start at provider), validations (data format, agreement, ack)

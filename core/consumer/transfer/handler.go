@@ -25,12 +25,16 @@ func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, e
 
 	// validate if received details are compatible with existing TP
 
+	if tp.State != transfer.StateRequested {
+		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateRequested))
+	}
+
 	if err = h.tpStore.UpdateState(sr.ConsPId, transfer.StateStarted); err != nil {
 		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	tp.State = transfer.StateStarted
-	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateStarted))
+	h.log.Debug(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateStarted))
 	return transfer.Ack(tp), nil
 }
 
@@ -40,12 +44,16 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
+	if tp.State != transfer.StateStarted {
+		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
+	}
+
 	if err := h.tpStore.UpdateState(sr.ConsPId, transfer.StateSuspended); err != nil {
 		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	tp.State = transfer.StateSuspended
-	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateSuspended))
+	h.log.Debug(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateSuspended))
 	return transfer.Ack(tp), nil
 }
 
@@ -60,6 +68,6 @@ func (h *Handler) HandleTransferCompletion(cr transfer.CompleteRequest) (transfe
 	}
 
 	tp.State = transfer.StateCompleted
-	h.log.Info(fmt.Sprintf("updated transfer process (id: %s, state: %s)", cr.ConsPId, transfer.StateCompleted))
+	h.log.Info(fmt.Sprintf("data exchange process completed successfully (id: %s)", cr.ConsPId))
 	return transfer.Ack(tp), nil
 }

@@ -10,6 +10,7 @@ const (
 	dspControllerFailed = "DSP controller failed (role: %s, function: %s) - %s"
 	dspHandlerFailed    = "DSP handler failed (role: %s, endpoint: %s) - %s"
 	invalidAck          = "received invalid acknowledgement (request: %v, ack: %v)"
+	customFuncError     = "%s failed - %s"
 )
 
 func IncompatibleValues(name, received, expected string) error {
@@ -30,4 +31,8 @@ func DSPHandlerFailed(role, endpoint string, err error) error {
 
 func InvalidAck(requestType string, ack any) error {
 	return fmt.Errorf(invalidAck, requestType, ack)
+}
+
+func CustomFuncError(function string, err error) error {
+	return fmt.Errorf(customFuncError, function, err)
 }

@@ -13,7 +13,7 @@ catalog:
 servers:
   dsp:
     http:
-      port: 9080
+      port: 8080
   gateway:
     http:
-      port: 9081
+      port: 8081
