@@ -12,7 +12,6 @@ import (
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
 	"strconv"
-	"strings"
 )
 
 type Controller struct {
@@ -34,10 +33,8 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 }
 
 func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error) {
-	var providerPid string
-	var endpoint string
+	var providerPid, endpoint string
 	if consumerPid != `` {
-		// can take the provider address from existing CN for this case
 		cn, err := c.cnStore.Negotiation(consumerPid)
 		if err != nil {
 			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
@@ -47,9 +44,18 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 			return ``, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
 		}
 
+		// if provider's address is not provided, use the stored one. If provided, it will override
+		// the existing address.
+		if providerAddr == `` {
+			providerAddr, err = c.cnStore.CallbackAddr(consumerPid)
+			if err != nil {
+				return ``, errors.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
+			}
+		}
+
 		providerPid = cn.ProvPId
-		endpoint = strings.Replace(negotiation.ContractRequestToOfferEndpoint, `{`+api.ParamProviderPid+`}`, cn.ProvPId, 1)
-		c.log.Trace("found an existing contract negotiation for the request", "id: "+consumerPid)
+		endpoint = api.SetParamProviderPid(negotiation.ContractRequestToOfferEndpoint, providerPid)
+		c.log.Trace(fmt.Sprintf("found an existing contract negotiation for the request (id: %s)", consumerPid))
 	} else {
 		// generate consumerPid
 		consumerPid, err = c.urn.NewURN()
@@ -59,7 +65,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 		endpoint = negotiation.ContractRequestEndpoint
 	}
 
-	// construct payload
+	c.cnStore.SetParticipants(consumerPid, providerAddr, ofr.Assigner, ofr.Assignee)
 	req := negotiation.ContractRequest{
 		Ctx:          core.Context,
 		Type:         negotiation.MsgTypeContractRequest,
@@ -69,19 +75,9 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 		CallbackAddr: c.callbackAddr,
 	}
 
-	data, err := json.Marshal(req)
+	ack, err := c.send(consumerPid, endpoint, req)
 	if err != nil {
-		return ``, errors.MarshalError(endpoint, err)
-	}
-
-	res, err := c.client.Send(data, providerAddr+endpoint)
-	if err != nil {
-		return ``, errors.PkgFailed(pkg.TypeClient, `Send`, err)
-	}
-
-	var ack negotiation.Ack
-	if err = json.Unmarshal(res, &ack); err != nil {
-		return ``, errors.UnmarshalError(providerAddr+negotiation.ContractRequestEndpoint, err)
+		return ``, errors.CustomFuncError(`send`, err)
 	}
 
 	if !c.validAck(consumerPid, ack, negotiation.StateRequested) {
@@ -90,7 +86,6 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 
 	ack.Type = negotiation.MsgTypeNegotiation
 	c.cnStore.AddNegotiation(consumerPid, negotiation.Negotiation(ack))
-	c.cnStore.SetParticipants(consumerPid, providerAddr, ofr.Assigner, ofr.Assignee)
 
 	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
 		consumerPid, ofr.Assigner, ofr.Assignee, providerAddr))
@@ -112,28 +107,12 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 		Ctx:       core.Context,
 		Type:      negotiation.MsgTypeNegotiationEvent,
 		ProvPId:   cn.ProvPId,
-		ConsPId:   cn.ConsPId,
+		ConsPId:   consumerPid,
 		EventType: negotiation.EventAccepted,
 	}
 
-	provAddr, err := c.cnStore.CallbackAddr(consumerPid)
-	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
-	}
-
-	data, err := json.Marshal(event)
-	if err != nil {
-		return errors.MarshalError(negotiation.EventsEndpoint, err)
-	}
-
-	res, err := c.client.Send(data, provAddr+negotiation.EventsEndpoint)
-	if err != nil {
-		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
-	}
-
-	var ack negotiation.Ack
-	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(negotiation.EventsEndpoint, err)
+	if _, err = c.send(consumerPid, api.SetParamPid(negotiation.EventsEndpoint, cn.ProvPId), event); err != nil {
+		return errors.CustomFuncError(`send`, err)
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateAccepted); err != nil {
@@ -161,32 +140,15 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		ConsPId: consumerPid,
 	}
 
-	data, err := json.Marshal(req)
-	if err != nil {
-		return errors.MarshalError(``, err)
-	}
-
-	providerAddr, err := c.cnStore.CallbackAddr(consumerPid)
-	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
-	}
-
-	endpoint := strings.Replace(negotiation.AgreementVerificationEndpoint, `{`+api.ParamProviderPid+`}`, cn.ProvPId, 1)
-	res, err := c.client.Send(data, providerAddr+endpoint)
-	if err != nil {
-		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
-	}
-
-	var ack negotiation.Ack
-	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(negotiation.AgreementVerificationEndpoint, err)
+	if _, err = c.send(consumerPid, api.SetParamProviderPid(negotiation.AgreementVerificationEndpoint, cn.ProvPId), req); err != nil {
+		return errors.CustomFuncError(`send`, err)
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateVerified))
+	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateVerified))
 	return nil
 }
 
@@ -213,25 +175,8 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 		Reason:  rsnList,
 	}
 
-	providerAddr, err := c.cnStore.CallbackAddr(consumerPid)
-	if err != nil {
-		return errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
-	}
-
-	data, err := json.Marshal(req)
-	if err != nil {
-		return errors.MarshalError(negotiation.TerminateEndpoint, err)
-	}
-
-	endpoint := strings.Replace(negotiation.TerminateEndpoint, `{`+api.ParamPid+`}`, cn.ProvPId, 1)
-	res, err := c.client.Send(data, providerAddr+endpoint)
-	if err != nil {
-		return errors.PkgFailed(pkg.TypeClient, `Send`, err)
-	}
-
-	var ack negotiation.Ack
-	if err = json.Unmarshal(res, &ack); err != nil {
-		return errors.UnmarshalError(negotiation.TerminateEndpoint, err)
+	if _, err = c.send(consumerPid, api.SetParamPid(negotiation.TerminateEndpoint, cn.ProvPId), req); err != nil {
+		return errors.CustomFuncError(`send`, err)
 	}
 
 	// clear all store entries for the contract negotiation
@@ -239,8 +184,32 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info("consumer terminated the negotiation flow", consumerPid)
+	c.log.Info(fmt.Sprintf("terminated the negotiation flow successfully (id: %s)", consumerPid))
 	return nil
+}
+
+func (c *Controller) send(consumerPid, endpoint string, req any) (negotiation.Ack, error) {
+	providerAddr, err := c.cnStore.CallbackAddr(consumerPid)
+	if err != nil {
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `CallBackAddr`, err)
+	}
+
+	data, err := json.Marshal(req)
+	if err != nil {
+		return negotiation.Ack{}, errors.MarshalError(negotiation.TerminateEndpoint, err)
+	}
+
+	res, err := c.client.Send(data, providerAddr+endpoint)
+	if err != nil {
+		return negotiation.Ack{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
+	}
+
+	var ack negotiation.Ack
+	if err = json.Unmarshal(res, &ack); err != nil {
+		return negotiation.Ack{}, errors.UnmarshalError(endpoint, err)
+	}
+
+	return ack, nil
 }
 
 func (c *Controller) validAck(pid string, ack negotiation.Ack, state negotiation.State) bool {
@@ -254,3 +223,5 @@ func (c *Controller) validAck(pid string, ack negotiation.Ack, state negotiation
 
 	return true
 }
+
+// todo: remove handlertype in parser, add generics to request and make send a generic function

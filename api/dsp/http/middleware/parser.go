@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/json"
-	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/tryfix/log"
@@ -19,15 +18,6 @@ func init() {
 		log.WithFilePath(true),
 		log.WithSkipFrameCount(4),
 	)
-}
-
-type Parser struct {
-	typ api.HandlerType
-}
-
-// to compose error messages based on handler
-func NewParser(typ api.HandlerType) *Parser {
-	return &Parser{typ: typ}
 }
 
 func ParseRequest(r *http.Request, val any) error {

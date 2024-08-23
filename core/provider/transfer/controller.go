@@ -55,7 +55,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		}
 	}
 
-	if err = c.send(tpId, api.SetConsumerPidParam(transfer.StartEndpoint, tp.ConsPId), req); err != nil {
+	if err = c.send(tpId, api.SetParamConsumerPid(transfer.StartEndpoint, tp.ConsPId), req); err != nil {
 		return errors.CustomFuncError(`send`, err)
 	}
 
@@ -88,7 +88,7 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 		Reason:  reasons,
 	}
 
-	if err = c.send(tpId, api.SetConsumerPidParam(transfer.SuspendEndpoint, tp.ConsPId), req); err != nil {
+	if err = c.send(tpId, api.SetParamPid(transfer.SuspendEndpoint, tp.ConsPId), req); err != nil {
 		return errors.CustomFuncError(`send`, err)
 	}
 
@@ -119,7 +119,7 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 		ProvPId: tpId,
 	}
 
-	if err = c.send(tpId, api.SetConsumerPidParam(transfer.CompleteEndpoint, tp.ConsPId), req); err != nil {
+	if err = c.send(tpId, api.SetParamPid(transfer.CompleteEndpoint, tp.ConsPId), req); err != nil {
 		return errors.CustomFuncError(`send`, err)
 	}
 
