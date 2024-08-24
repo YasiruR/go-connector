@@ -35,8 +35,9 @@ type TransferController interface {
 }
 
 type TransferHandler interface {
-	//  should be idempotent for multiple transfer requests
-	HandleTransferRequest(tr transfer.Request) (transfer.Ack, error)
+	HandleTransfers(tpId string) (transfer.Ack, error)
+	HandleTransferRequest(tr transfer.Request) (transfer.Ack, error) // todo: should be idempotent for multiple transfer requests
 	HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error)
+	HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error)
 	HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error)
 }

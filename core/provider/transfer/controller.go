@@ -33,7 +33,8 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 	}
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateSuspended {
-		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateRequested)+" or "+string(transfer.StateSuspended))
+		return errors.IncompatibleValues(`state`, string(tp.State),
+			string(transfer.StateRequested)+" or "+string(transfer.StateSuspended))
 	}
 
 	req := transfer.StartRequest{
@@ -55,7 +56,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		}
 	}
 
-	if err = c.send(tpId, api.SetParamConsumerPid(transfer.StartEndpoint, tp.ConsPId), req); err != nil {
+	if err = c.send(tpId, api.SetParamPid(transfer.StartEndpoint, tp.ConsPId), req); err != nil {
 		return errors.CustomFuncError(`send`, err)
 	}
 

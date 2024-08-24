@@ -107,6 +107,40 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 	return nil
 }
 
+func (c *Controller) StartTransfer(tpId string) error {
+	// todo handler for start in provider
+	tp, err := c.tpStore.Process(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+	}
+
+	// validate tp
+
+	if tp.State != transfer.StateSuspended {
+		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateSuspended))
+	}
+
+	req := transfer.StartRequest{
+		Ctx:     core.Context,
+		Type:    transfer.MsgTypeStart,
+		ConsPId: tp.ConsPId,
+		ProvPId: tpId,
+	}
+	// check if it needs to provide the data address as well
+
+	if _, err = c.send(tpId, api.SetParamPid(transfer.StartEndpoint, tp.ProvPId), req); err != nil {
+		return errors.CustomFuncError(`send`, err)
+	}
+
+	if err = c.tpStore.UpdateState(tpId, transfer.StateStarted); err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	c.log.Debug(fmt.Sprintf("updated state of the suspended transfer process (id: %s, state: %s)",
+		tpId, transfer.StateStarted))
+	return nil
+}
+
 func (c *Controller) CompleteTransfer(tpId string) error {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {

@@ -53,7 +53,8 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 	r.HandleFunc(negotiation.EventsEndpoint, s.nh.HandleNegotiationEvent).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.TerminateEndpoint, s.nh.HandleTermination).Methods(http.MethodPost)
 
-	// transfer process related endpoints
+	// transfer protocol related endpoints
+	r.HandleFunc(transfer.TransfersEndpoint, s.th.HandleTransfers).Methods(http.MethodGet)
 	r.HandleFunc(transfer.RequestEndpoint, s.th.HandleTransferRequest).Methods(http.MethodPost)
 	r.HandleFunc(transfer.StartEndpoint, s.th.HandleTransferStart).Methods(http.MethodPost)
 	r.HandleFunc(transfer.SuspendEndpoint, s.th.HandleTransferSuspension).Methods(http.MethodPost)

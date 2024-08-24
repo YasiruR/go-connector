@@ -26,11 +26,20 @@ func NewHandler(stores domain.Stores, plugins domain.Plugins) *Handler {
 	}
 }
 
+func (h *Handler) HandleTransfers(tpId string) (transfer.Ack, error) {
+	tp, err := h.tpStore.Process(tpId)
+	if err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeAgreement, `Process`, err)
+	}
+
+	return transfer.Ack(tp), nil
+}
+
 func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, error) {
 	// validate agreement
 	_, err := h.agrStore.Agreement(tr.AgreementId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeAgreement, `Get`, err)
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeAgreement, `Agreement`, err)
 	}
 
 	tpId, err := h.urn.NewURN()
@@ -71,6 +80,27 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 
 	tp.State = transfer.StateSuspended
 	h.log.Debug(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ProvPId, transfer.StateSuspended))
+	return transfer.Ack(tp), nil
+}
+
+func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error) {
+	tp, err := h.tpStore.Process(sr.ProvPId)
+	if err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+	}
+
+	// validate if received details are compatible with existing TP
+
+	if tp.State != transfer.StateSuspended {
+		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateSuspended))
+	}
+
+	if err = h.tpStore.UpdateState(sr.ProvPId, transfer.StateStarted); err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	tp.State = transfer.StateStarted
+	h.log.Debug(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ProvPId, transfer.StateStarted))
 	return transfer.Ack(tp), nil
 }
 

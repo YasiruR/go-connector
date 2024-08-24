@@ -26,6 +26,23 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 	}
 }
 
+func (h *Handler) HandleTransfers(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	tpId, ok := vars[api.ParamPid]
+	if !ok {
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.TransfersEndpoint, api.ParamPid), http.StatusBadRequest)
+		return
+	}
+
+	ack, err := h.provider.HandleTransfers(tpId)
+	if err != nil {
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.TransfersEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	middleware.WriteAck(w, ack, http.StatusOK)
+}
+
 func (h *Handler) HandleTransferRequest(w http.ResponseWriter, r *http.Request) {
 	var req transfer.Request
 	if err := middleware.ParseRequest(r, &req); err != nil {

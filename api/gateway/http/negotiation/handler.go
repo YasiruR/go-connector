@@ -114,7 +114,7 @@ func (h *Handler) GetAgreement(w http.ResponseWriter, r *http.Request) {
 
 	agr, err := h.agrStore.Agreement(agreementId)
 	if err != nil {
-		middleware.WriteError(w, errors.StoreFailed(stores.TypeAgreement, `Get`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.StoreFailed(stores.TypeAgreement, `Agreement`, err), http.StatusBadRequest)
 		return
 	}
 

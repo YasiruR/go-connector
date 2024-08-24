@@ -50,7 +50,7 @@ const (
 	ContractAgreementEndpoint      = `/negotiations/{` + api.ParamConsumerPid + `}/agreement`
 )
 
-// common endpoints
+// Common endpoints
 const (
 	EventsEndpoint    = `/negotiations/{` + api.ParamPid + `}/events`
 	TerminateEndpoint = `/negotiations/{` + api.ParamPid + `}/termination`

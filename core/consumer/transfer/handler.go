@@ -25,8 +25,9 @@ func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, e
 
 	// validate if received details are compatible with existing TP
 
-	if tp.State != transfer.StateRequested {
-		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateRequested))
+	if tp.State != transfer.StateRequested && tp.State != transfer.StateSuspended {
+		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State),
+			string(transfer.StateRequested)+" or "+string(transfer.StateSuspended))
 	}
 
 	if err = h.tpStore.UpdateState(sr.ConsPId, transfer.StateStarted); err != nil {

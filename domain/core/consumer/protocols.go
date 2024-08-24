@@ -13,7 +13,7 @@ type CatalogController interface {
 }
 
 type NegotiationController interface {
-	// change endpoint to generic
+	// change endpoint to general params
 	RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error)
 	AcceptOffer(consumerPid string) error
 	VerifyAgreement(consumerPid string) error
@@ -29,6 +29,7 @@ type NegotiationHandler interface {
 type TransferController interface {
 	RequestTransfer(transferType, agreementId, sinkEndpoint, providerAddr string) (tpId string, err error)
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
+	StartTransfer(tpId string) error
 	CompleteTransfer(tpId string) error
 }
 

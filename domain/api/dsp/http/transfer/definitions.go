@@ -29,14 +29,21 @@ const (
 	MsgTypeEndpointProperty = `dspace:EndpointProperty`
 )
 
-// Endpoints
+// Provider endpoints
 const (
-	RequestEndpoint  = `/transfers/request`
-	StartEndpoint    = `/transfers/{` + api.ParamConsumerPid + `}/start`
-	SuspendEndpoint  = `/transfers/{` + api.ParamPid + `}/suspension`
-	CompleteEndpoint = `/transfers/{` + api.ParamPid + `}/completion`
+	RequestEndpoint = `/transfers/request`
 )
 
+// Consumer endpoints
 const (
-	EndpointTypeHTTP = `https://w3id.org/idsa/v4.1/HTTP`
+	StartEndpoint = `/transfers/{` + api.ParamPid + `}/start`
+)
+
+// Common endpoints
+const (
+	SuspendEndpoint  = `/transfers/{` + api.ParamPid + `}/suspension`
+	CompleteEndpoint = `/transfers/{` + api.ParamPid + `}/completion`
+
+	TransfersEndpoint = `/transfers/{` + api.ParamPid + `}`
+	EndpointTypeHTTP  = `https://w3id.org/idsa/v4.1/HTTP`
 )
