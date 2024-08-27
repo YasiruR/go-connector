@@ -223,5 +223,3 @@ func (c *Controller) validAck(pid string, ack negotiation.Ack, state negotiation
 
 	return true
 }
-
-// todo: remove handlertype in parser, add generics to request and make send a generic function
