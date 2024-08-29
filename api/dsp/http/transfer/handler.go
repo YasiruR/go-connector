@@ -26,17 +26,19 @@ func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
 	}
 }
 
-func (h *Handler) HandleTransfers(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleGetProcess(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	tpId, ok := vars[api.ParamPid]
+	tpId, ok := vars[api.ParamProviderPid]
 	if !ok {
-		middleware.WriteError(w, errors.PathParamNotFound(transfer.TransfersEndpoint, api.ParamPid), http.StatusBadRequest)
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.GetProcessEndpoint,
+			api.ParamProviderPid), http.StatusBadRequest)
 		return
 	}
 
-	ack, err := h.provider.HandleTransfers(tpId)
+	ack, err := h.provider.HandleGetProcess(tpId)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.TransfersEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+			transfer.GetProcessEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -46,13 +48,15 @@ func (h *Handler) HandleTransfers(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) HandleTransferRequest(w http.ResponseWriter, r *http.Request) {
 	var req transfer.Request
 	if err := middleware.ParseRequest(r, &req); err != nil {
-		middleware.WriteError(w, errors.ParseRequestFailed(transfer.RequestEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.ParseRequestFailed(transfer.RequestEndpoint,
+			err), http.StatusBadRequest)
 		return
 	}
 
 	ack, err := h.provider.HandleTransferRequest(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.RequestEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+			transfer.RequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -60,15 +64,39 @@ func (h *Handler) HandleTransferRequest(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handler) HandleTransferStart(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid, ok := vars[api.ParamPid]
+	if !ok {
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.StartEndpoint,
+			api.ParamPid), http.StatusBadRequest)
+		return
+	}
+
 	var req transfer.StartRequest
 	if err := middleware.ParseRequest(r, &req); err != nil {
 		middleware.WriteError(w, errors.ParseRequestFailed(transfer.StartEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
-	ack, err := h.consumer.HandleTransferStart(req)
-	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.StartEndpoint, err), http.StatusBadRequest)
+	var ack transfer.Ack
+	var err error
+	switch pid {
+	case req.ProvPId:
+		ack, err = h.provider.HandleTransferStart(req)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+				transfer.StartEndpoint, err), http.StatusBadRequest)
+			return
+		}
+	case req.ConsPId:
+		ack, err = h.consumer.HandleTransferStart(req)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+				transfer.StartEndpoint, err), http.StatusBadRequest)
+			return
+		}
+	default:
+		middleware.WriteError(w, errors.InvalidRequestBody(transfer.SuspendEndpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -79,7 +107,8 @@ func (h *Handler) HandleTransferSuspension(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	pid, ok := vars[api.ParamPid]
 	if !ok {
-		middleware.WriteError(w, errors.PathParamNotFound(transfer.SuspendEndpoint, api.ParamPid), http.StatusBadRequest)
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.SuspendEndpoint,
+			api.ParamPid), http.StatusBadRequest)
 		return
 	}
 
@@ -95,13 +124,15 @@ func (h *Handler) HandleTransferSuspension(w http.ResponseWriter, r *http.Reques
 	case req.ProvPId:
 		ack, err = h.provider.HandleTransferSuspension(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.SuspendEndpoint, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+				transfer.SuspendEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	case req.ConsPId:
 		ack, err = h.consumer.HandleTransferSuspension(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, transfer.SuspendEndpoint, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+				transfer.SuspendEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	default:
@@ -116,7 +147,8 @@ func (h *Handler) HandleTransferCompletion(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	pid, ok := vars[api.ParamPid]
 	if !ok {
-		middleware.WriteError(w, errors.PathParamNotFound(transfer.CompleteEndpoint, api.ParamPid), http.StatusBadRequest)
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.CompleteEndpoint,
+			api.ParamPid), http.StatusBadRequest)
 		return
 	}
 
@@ -132,17 +164,54 @@ func (h *Handler) HandleTransferCompletion(w http.ResponseWriter, r *http.Reques
 	case req.ProvPId:
 		ack, err = h.provider.HandleTransferCompletion(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, transfer.CompleteEndpoint, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+				transfer.CompleteEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	case req.ConsPId:
 		ack, err = h.consumer.HandleTransferCompletion(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, transfer.CompleteEndpoint, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+				transfer.CompleteEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	default:
 		middleware.WriteError(w, errors.InvalidRequestBody(transfer.CompleteEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	middleware.WriteAck(w, ack, http.StatusOK)
+}
+
+func (h *Handler) HandleTransferTermination(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	pid, ok := vars[api.ParamPid]
+	if !ok {
+		middleware.WriteError(w, errors.PathParamNotFound(transfer.TerminateEndpoint,
+			api.ParamPid), http.StatusBadRequest)
+		return
+	}
+
+	var req transfer.TerminateRequest
+	if err := middleware.ParseRequest(r, &req); err != nil {
+		middleware.WriteError(w, errors.ParseRequestFailed(transfer.TerminateEndpoint, err), http.StatusBadRequest)
+		return
+	}
+
+	var ack transfer.Ack
+	var err error
+	switch pid {
+	case req.ProvPId:
+		ack, err = h.provider.HandleTransferTermination(req)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+				transfer.TerminateEndpoint, err), http.StatusBadRequest)
+			return
+		}
+	case req.ConsPId:
+
+	default:
+		middleware.WriteError(w, errors.InvalidRequestBody(transfer.TerminateEndpoint, err), http.StatusBadRequest)
 		return
 	}
 

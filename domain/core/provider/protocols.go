@@ -25,7 +25,7 @@ type NegotiationHandler interface {
 	HandleContractRequest(cr negotiation.ContractRequest) (negotiation.Ack, error)
 	HandleAcceptOffer(providerPid string) (negotiation.Ack, error)
 	HandleAgreementVerification(providerPid string) (negotiation.Ack, error)
-	HandleTermination(ct negotiation.ContractTermination) (negotiation.Ack, error)
+	HandleContractTermination(ct negotiation.ContractTermination) (negotiation.Ack, error)
 }
 
 type TransferController interface {
@@ -35,9 +35,10 @@ type TransferController interface {
 }
 
 type TransferHandler interface {
-	HandleTransfers(tpId string) (transfer.Ack, error)
+	HandleGetProcess(tpId string) (transfer.Ack, error)
 	HandleTransferRequest(tr transfer.Request) (transfer.Ack, error) // todo: should be idempotent for multiple transfer requests
 	HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error)
 	HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error)
 	HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error)
+	HandleTransferTermination(tr transfer.TerminateRequest) (transfer.Ack, error)
 }

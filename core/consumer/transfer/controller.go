@@ -31,7 +31,22 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 	}
 }
 
-func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint, providerEndpoint string) (tpId string, err error) {
+func (c *Controller) GetProviderProcess(tpId string) (transfer.Process, error) {
+	tp, err := c.tpStore.Process(tpId)
+	if err != nil {
+		return transfer.Process{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+	}
+
+	ack, err := c.send(tpId, api.SetParamProviderPid(transfer.GetProcessEndpoint, tp.ProvPId), nil)
+	if err != nil {
+		return transfer.Process{}, errors.CustomFuncError(`send`, err)
+	}
+
+	return transfer.Process(ack), nil
+}
+
+func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
+	providerEndpoint string) (tpId string, err error) {
 	// include validations for format
 	typ := transfer.DataTransferType(dataFormat)
 
@@ -70,7 +85,8 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint, prov
 
 	c.tpStore.AddProcess(tpId, transfer.Process(ack))
 	c.log.Trace("stored transfer process", ack)
-	c.log.Debug(fmt.Sprintf("updated transfer process state (id: %s, state: %s)", tpId, transfer.StateRequested))
+	c.log.Debug(fmt.Sprintf("consumer controller updated transfer process state (id: %s, state: %s)",
+		tpId, transfer.StateRequested))
 	return tpId, nil
 }
 
@@ -103,7 +119,8 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("updated transfer process state (id: %s, state: %s)", tpId, transfer.StateSuspended))
+	c.log.Debug(fmt.Sprintf("consumer controller updated transfer process state (id: %s, state: %s)",
+		tpId, transfer.StateSuspended))
 	return nil
 }
 
@@ -123,8 +140,8 @@ func (c *Controller) StartTransfer(tpId string) error {
 	req := transfer.StartRequest{
 		Ctx:     core.Context,
 		Type:    transfer.MsgTypeStart,
-		ConsPId: tp.ConsPId,
-		ProvPId: tpId,
+		ConsPId: tpId,
+		ProvPId: tp.ProvPId,
 	}
 	// check if it needs to provide the data address as well
 
@@ -136,7 +153,7 @@ func (c *Controller) StartTransfer(tpId string) error {
 		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("updated state of the suspended transfer process (id: %s, state: %s)",
+	c.log.Debug(fmt.Sprintf("consumer controller updated state of the suspended transfer process (id: %s, state: %s)",
 		tpId, transfer.StateStarted))
 	return nil
 }
@@ -172,15 +189,50 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	return nil
 }
 
+func (c *Controller) TerminateTransfer(tpId string, code string, reasons []interface{}) error {
+	tp, err := c.tpStore.Process(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+	}
+
+	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
+		return errors.IncompatibleValues(`state`, string(tp.State),
+			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
+	}
+
+	req := transfer.TerminateRequest{
+		Ctx:     core.Context,
+		Type:    transfer.MsgTypeTerminate,
+		ConsPId: tpId,
+		ProvPId: tp.ProvPId,
+		Code:    code,
+		Reason:  reasons,
+	}
+
+	if _, err = c.send(tpId, api.SetParamPid(transfer.TerminateEndpoint, tp.ProvPId), req); err != nil {
+		return errors.CustomFuncError(`send`, err)
+	}
+
+	if err = c.tpStore.UpdateState(tpId, transfer.StateTerminated); err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	c.log.Info(fmt.Sprintf("terminated data exchange process (id: %s)", tpId))
+	return nil
+}
+
 func (c *Controller) send(tpId, endpoint string, req any) (transfer.Ack, error) {
 	providerAddr, err := c.tpStore.CallbackAddr(tpId)
 	if err != nil {
 		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
 	}
 
-	data, err := json.Marshal(req)
-	if err != nil {
-		return transfer.Ack{}, errors.MarshalError(transfer.CompleteEndpoint, err)
+	var data []byte
+	if req != nil {
+		data, err = json.Marshal(req)
+		if err != nil {
+			return transfer.Ack{}, errors.MarshalError(transfer.CompleteEndpoint, err)
+		}
 	}
 
 	res, err := c.client.Send(data, providerAddr+endpoint)

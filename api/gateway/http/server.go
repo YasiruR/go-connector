@@ -57,10 +57,12 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	r.HandleFunc(negotiation.TerminateContractEndpoint, s.nh.TerminateContract).Methods(http.MethodPost)
 
 	// endpoints related to transfer process
+	r.HandleFunc(transfer.GetProcessEndpoint, s.th.GetProviderProcess).Methods(http.MethodGet)
 	r.HandleFunc(transfer.RequestEndpoint, s.th.RequestTransfer).Methods(http.MethodPost)
 	r.HandleFunc(transfer.StartEndpoint, s.th.StartTransfer).Methods(http.MethodPost)
 	r.HandleFunc(transfer.SuspendEndpoint, s.th.SuspendTransfer).Methods(http.MethodPost)
 	r.HandleFunc(transfer.CompleteEndpoint, s.th.CompleteTransfer).Methods(http.MethodPost)
+	r.HandleFunc(transfer.TerminateEndpoint, s.th.TerminateTransfer).Methods(http.MethodPost)
 
 	return &s
 }

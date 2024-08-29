@@ -27,10 +27,12 @@ type NegotiationHandler interface {
 }
 
 type TransferController interface {
+	GetProviderProcess(tpId string) (transfer.Process, error)
 	RequestTransfer(transferType, agreementId, sinkEndpoint, providerAddr string) (tpId string, err error)
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
 	StartTransfer(tpId string) error
 	CompleteTransfer(tpId string) error
+	TerminateTransfer(tpId string, code string, reasons []interface{}) error
 }
 
 type TransferHandler interface {

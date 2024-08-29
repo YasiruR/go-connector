@@ -21,6 +21,11 @@ func loadConfig(log pkg.Log) boot.Config {
 		log.Fatal(fmt.Sprintf("unmarshalling %s failed - %s", configFile, err))
 	}
 
-	log.Info(fmt.Sprintf("loaded configuration from %s", configFile))
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Error(fmt.Sprintf("could not fetch current working directory - %s", err))
+	}
+
+	log.Info(fmt.Sprintf("loaded configuration from %s", pwd+configFile))
 	return c
 }

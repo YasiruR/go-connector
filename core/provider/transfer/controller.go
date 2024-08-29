@@ -64,7 +64,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("updated transfer process state (id: %s, state: %s)", tpId, transfer.StateStarted))
+	c.log.Debug(fmt.Sprintf("provider controller updated transfer process state (id: %s, state: %s)", tpId, transfer.StateStarted))
 	return nil
 }
 
@@ -97,7 +97,7 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("updated transfer process state (id: %s, state: %s)", tpId, transfer.StateSuspended))
+	c.log.Debug(fmt.Sprintf("provider controller updated transfer process state (id: %s, state: %s)", tpId, transfer.StateSuspended))
 	return nil
 }
 

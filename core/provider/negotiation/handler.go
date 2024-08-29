@@ -141,7 +141,7 @@ func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.A
 	return negotiation.Ack(cn), nil
 }
 
-func (h *Handler) HandleTermination(ct negotiation.ContractTermination) (negotiation.Ack, error) {
+func (h *Handler) HandleContractTermination(ct negotiation.ContractTermination) (negotiation.Ack, error) {
 	cn, err := h.cnStore.Negotiation(ct.ProvPId)
 	if err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)

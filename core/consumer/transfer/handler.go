@@ -35,7 +35,7 @@ func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, e
 	}
 
 	tp.State = transfer.StateStarted
-	h.log.Debug(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateStarted))
+	h.log.Debug(fmt.Sprintf("consumer handler updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateStarted))
 	return transfer.Ack(tp), nil
 }
 
@@ -54,7 +54,7 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 	}
 
 	tp.State = transfer.StateSuspended
-	h.log.Debug(fmt.Sprintf("updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateSuspended))
+	h.log.Debug(fmt.Sprintf("consumer handler updated transfer process (id: %s, state: %s)", sr.ConsPId, transfer.StateSuspended))
 	return transfer.Ack(tp), nil
 }
 

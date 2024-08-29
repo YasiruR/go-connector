@@ -1,8 +1,12 @@
 package transfer
 
+import "github.com/YasiruR/connector/domain/api"
+
 const (
-	RequestEndpoint  = `/gateway/transfer/request`
-	StartEndpoint    = `/gateway/transfer/start`
-	SuspendEndpoint  = `/gateway/transfer/suspend`
-	CompleteEndpoint = `/gateway/transfer/complete`
+	GetProcessEndpoint = `/gateway/transfer/get-process/{` + api.ParamConsumerPid + `}`
+	RequestEndpoint    = `/gateway/transfer/request`
+	StartEndpoint      = `/gateway/transfer/start`
+	SuspendEndpoint    = `/gateway/transfer/suspend`
+	CompleteEndpoint   = `/gateway/transfer/complete`
+	TerminateEndpoint  = `/gateway/transfer/terminate`
 )

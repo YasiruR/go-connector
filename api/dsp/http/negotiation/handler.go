@@ -158,7 +158,7 @@ func (h *Handler) HandleTermination(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ack, err := h.provider.HandleTermination(req)
+	ack, err := h.provider.HandleContractTermination(req)
 	if err != nil {
 		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, negotiation.TerminateEndpoint, err), http.StatusBadRequest)
 		return
