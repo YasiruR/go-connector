@@ -10,8 +10,6 @@ type Server interface {
 
 // Query parameters
 
-// todo: revamp negotiation controller and handler (e.g. send func)
-
 const (
 	ParamPid         = `pid`
 	ParamConsumerPid = `consumerPid`

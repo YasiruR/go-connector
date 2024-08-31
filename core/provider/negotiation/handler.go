@@ -89,18 +89,19 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 	h.cnStore.AddNegotiation(provPId, cn)
 	h.cnStore.SetParticipants(provPId, cr.CallbackAddr, cr.Offer.Assigner, cr.Offer.Assignee)
 
-	h.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
+	h.log.Trace(fmt.Sprintf("provider stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
 		provPId, cr.Offer.Assigner, cr.Offer.Assignee, cr.CallbackAddr))
-	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", provPId, negotiation.StateRequested))
+	h.log.Debug(fmt.Sprintf("provider handler updated negotiation state (id: %s, state: %s)",
+		provPId, negotiation.StateRequested))
 
 	cn.Type = negotiation.MsgTypeNegotiationAck
 	return negotiation.Ack(cn), nil
 }
 
-func (h *Handler) HandleAcceptOffer(providerPid string) (negotiation.Ack, error) {
+func (h *Handler) HandleAcceptOffer(e negotiation.ContractNegotiationEvent) (negotiation.Ack, error) {
 	// validate other attributes (consPid)
 
-	cn, err := h.cnStore.Negotiation(providerPid)
+	cn, err := h.cnStore.Negotiation(e.ProvPId)
 	if err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
@@ -109,20 +110,21 @@ func (h *Handler) HandleAcceptOffer(providerPid string) (negotiation.Ack, error)
 		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
 	}
 
-	if err = h.cnStore.UpdateState(providerPid, negotiation.StateAccepted); err != nil {
+	if err = h.cnStore.UpdateState(e.ProvPId, negotiation.StateAccepted); err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
 	cn.State = negotiation.StateAccepted
 	cn.Type = negotiation.MsgTypeNegotiationAck
-	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateAccepted))
+	h.log.Debug(fmt.Sprintf("provider handler updated negotiation state (id: %s, state: %s)",
+		e.ProvPId, negotiation.StateAccepted))
 	return negotiation.Ack(cn), nil
 }
 
-func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.Ack, error) {
+func (h *Handler) HandleAgreementVerification(cv negotiation.ContractVerification) (negotiation.Ack, error) {
 	// validate message (must contain consumerPid, providerPid)
 
-	cn, err := h.cnStore.Negotiation(providerPid)
+	cn, err := h.cnStore.Negotiation(cv.ProvPId)
 	if err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
@@ -131,13 +133,14 @@ func (h *Handler) HandleAgreementVerification(providerPid string) (negotiation.A
 		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateAgreed))
 	}
 
-	if err = h.cnStore.UpdateState(providerPid, negotiation.StateVerified); err != nil {
+	if err = h.cnStore.UpdateState(cv.ProvPId, negotiation.StateVerified); err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
 	cn.State = negotiation.StateVerified
 	cn.Type = negotiation.MsgTypeNegotiationAck
-	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateVerified))
+	h.log.Debug(fmt.Sprintf("provider handler updated negotiation state (id: %s, state: %s)",
+		cv.ProvPId, negotiation.StateVerified))
 	return negotiation.Ack(cn), nil
 }
 

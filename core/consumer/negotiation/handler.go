@@ -60,8 +60,10 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 	h.cnStore.AddNegotiation(cn.ConsPId, cn)
 	h.cnStore.SetParticipants(cn.ConsPId, co.CallbackAddr, co.Offer.Assigner, co.Offer.Assignee)
 
-	h.log.Trace(fmt.Sprintf("updated callback address for contract negotiation (id: %s, address: %s)", cn.ConsPId, co.CallbackAddr))
-	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", cn.ConsPId, negotiation.StateOffered))
+	h.log.Trace(fmt.Sprintf("consumer updated callback address for contract negotiation (id: %s, address: %s)",
+		cn.ConsPId, co.CallbackAddr))
+	h.log.Debug(fmt.Sprintf("consumer handler updated negotiation state (id: %s, state: %s)", cn.ConsPId,
+		negotiation.StateOffered))
 	cn.Type = negotiation.MsgTypeNegotiationAck
 	return negotiation.Ack(cn), nil
 }
@@ -80,7 +82,7 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 	}
 
 	h.agrStore.AddAgreement(ca.Agreement.Id, ca.Agreement)
-	h.log.Trace(fmt.Sprintf("stored contract agreement (id: %s) for negotation (id: %s)",
+	h.log.Trace(fmt.Sprintf("consumer stored contract agreement (id: %s) for negotation (id: %s)",
 		ca.Agreement.Id, ca.ConsPId))
 
 	if err := h.cnStore.UpdateState(ca.ConsPId, negotiation.StateAgreed); err != nil {
@@ -88,21 +90,23 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 	}
 
 	cn.Type = negotiation.MsgTypeNegotiationAck
-	h.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", ca.ConsPId, negotiation.StateAgreed))
+	h.log.Debug(fmt.Sprintf("consumer handler updated negotiation state (id: %s, state: %s)",
+		ca.ConsPId, negotiation.StateAgreed))
 	return negotiation.Ack(cn), nil
 }
 
-func (h *Handler) HandleFinalizedEvent(consumerPid string) (negotiation.Ack, error) {
-	if err := h.cnStore.UpdateState(consumerPid, negotiation.StateFinalized); err != nil {
+func (h *Handler) HandleFinalizedEvent(e negotiation.ContractNegotiationEvent) (negotiation.Ack, error) {
+	if err := h.cnStore.UpdateState(e.ConsPId, negotiation.StateFinalized); err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	cn, err := h.cnStore.Negotiation(consumerPid)
+	cn, err := h.cnStore.Negotiation(e.ConsPId)
 	if err != nil {
 		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
-	h.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateFinalized))
+	h.log.Info(fmt.Sprintf("consumer handler updated negotiation state (id: %s, state: %s)",
+		e.ConsPId, negotiation.StateFinalized))
 	return negotiation.Ack(cn), nil
 }
 

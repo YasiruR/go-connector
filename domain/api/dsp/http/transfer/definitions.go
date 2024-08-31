@@ -27,6 +27,7 @@ const (
 	MsgTypeSuspend          = `dspace:TransferSuspensionMessage`
 	MsgTypeComplete         = `dspace:TransferCompletionMessage`
 	MsgTypeTerminate        = `dspace:TransferTerminationMessage`
+	MsgTypeError            = `dspace:TransferError`
 	MsgTypeDataAddress      = `dspace:DataAddress`
 	MsgTypeEndpointProperty = `dspace:EndpointProperty`
 )
@@ -37,15 +38,11 @@ const (
 	RequestEndpoint    = `/transfers/request`
 )
 
-// Consumer endpoints
-const ()
-
 // Common endpoints
 const (
 	StartEndpoint     = `/transfers/{` + api.ParamPid + `}/start`
 	SuspendEndpoint   = `/transfers/{` + api.ParamPid + `}/suspension`
 	CompleteEndpoint  = `/transfers/{` + api.ParamPid + `}/completion`
 	TerminateEndpoint = `/transfers/{` + api.ParamPid + `}/termination`
-
-	EndpointTypeHTTP = `https://w3id.org/idsa/v4.1/HTTP`
+	EndpointTypeHTTP  = `https://w3id.org/idsa/v4.1/HTTP`
 )

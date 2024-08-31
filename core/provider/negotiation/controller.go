@@ -108,7 +108,7 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 	ack.Type = negotiation.MsgTypeNegotiation
 	c.cnStore.AddNegotiation(providerPid, negotiation.Negotiation(ack))
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateOffered))
+	c.log.Info(fmt.Sprintf("provider controller updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateOffered))
 	return providerPid, nil
 }
 
@@ -168,7 +168,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)",
+	c.log.Debug(fmt.Sprintf("provider controller updated negotiation state (id: %s, state: %s)",
 		providerPid, negotiation.StateAgreed))
 	return agreementId, nil
 }
@@ -199,7 +199,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("updated negotiation state (id: %s, state: %s)",
+	c.log.Info(fmt.Sprintf("provider controller updated negotiation state (id: %s, state: %s)",
 		providerPid, negotiation.StateFinalized))
 	return nil
 }

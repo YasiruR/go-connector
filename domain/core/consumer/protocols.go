@@ -23,7 +23,7 @@ type NegotiationController interface {
 type NegotiationHandler interface {
 	HandleContractOffer(co negotiation.ContractOffer) (ack negotiation.Ack, err error)
 	HandleContractAgreement(ca negotiation.ContractAgreement) (negotiation.Ack, error)
-	HandleFinalizedEvent(consumerPid string) (negotiation.Ack, error)
+	HandleFinalizedEvent(e negotiation.ContractNegotiationEvent) (negotiation.Ack, error)
 }
 
 type TransferController interface {

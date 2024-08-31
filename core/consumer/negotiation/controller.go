@@ -87,9 +87,9 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 	ack.Type = negotiation.MsgTypeNegotiation
 	c.cnStore.AddNegotiation(consumerPid, negotiation.Negotiation(ack))
 
-	c.log.Trace(fmt.Sprintf("stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
+	c.log.Trace(fmt.Sprintf("consumer stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
 		consumerPid, ofr.Assigner, ofr.Assignee, providerAddr))
-	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateRequested))
+	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateRequested))
 	return consumerPid, nil
 }
 
@@ -119,7 +119,7 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateAccepted))
+	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateAccepted))
 	return nil
 }
 
@@ -148,7 +148,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateVerified))
+	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateVerified))
 	return nil
 }
 
@@ -184,7 +184,7 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Info(fmt.Sprintf("terminated the negotiation flow successfully (id: %s)", consumerPid))
+	c.log.Info(fmt.Sprintf("consumer terminated the negotiation flow successfully (id: %s)", consumerPid))
 	return nil
 }
 
