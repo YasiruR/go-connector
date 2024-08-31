@@ -209,7 +209,12 @@ func (h *Handler) HandleTransferTermination(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	case req.ConsPId:
-
+		ack, err = h.consumer.HandleTransferTermination(req)
+		if err != nil {
+			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+				transfer.TerminateEndpoint, err), http.StatusBadRequest)
+			return
+		}
 	default:
 		middleware.WriteError(w, errors.InvalidRequestBody(transfer.TerminateEndpoint, err), http.StatusBadRequest)
 		return

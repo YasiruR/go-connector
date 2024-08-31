@@ -64,7 +64,8 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("provider controller updated transfer process state (id: %s, state: %s)", tpId, transfer.StateStarted))
+	c.log.Debug(fmt.Sprintf("provider controller updated transfer process state (id: %s, state: %s)",
+		tpId, transfer.StateStarted))
 	return nil
 }
 
@@ -97,7 +98,8 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("provider controller updated transfer process state (id: %s, state: %s)", tpId, transfer.StateSuspended))
+	c.log.Debug(fmt.Sprintf("provider controller updated transfer process state (id: %s, state: %s)",
+		tpId, transfer.StateSuspended))
 	return nil
 }
 
@@ -129,6 +131,40 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	}
 
 	c.log.Info(fmt.Sprintf("data exchange process completed successfully (id: %s)", tpId))
+	return nil
+}
+
+func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{}) error {
+	tp, err := c.tpStore.Process(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+	}
+
+	// validate tp
+
+	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
+		return errors.IncompatibleValues(`state`, string(tp.State),
+			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
+	}
+
+	req := transfer.TerminateRequest{
+		Ctx:     core.Context,
+		Type:    transfer.MsgTypeTerminate,
+		ConsPId: tpId,
+		ProvPId: tp.ProvPId,
+		Code:    code,
+		Reason:  reasons,
+	}
+
+	if err = c.send(tpId, api.SetParamPid(transfer.TerminateEndpoint, tp.ConsPId), req); err != nil {
+		return errors.CustomFuncError(`send`, err)
+	}
+
+	if err = c.tpStore.UpdateState(tpId, transfer.StateTerminated); err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	c.log.Info(fmt.Sprintf("terminated data exchange process (id: %s)", tpId))
 	return nil
 }
 

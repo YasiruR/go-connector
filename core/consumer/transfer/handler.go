@@ -72,3 +72,24 @@ func (h *Handler) HandleTransferCompletion(cr transfer.CompleteRequest) (transfe
 	h.log.Info(fmt.Sprintf("data exchange process completed successfully (id: %s)", cr.ConsPId))
 	return transfer.Ack(tp), nil
 }
+
+func (h *Handler) HandleTransferTermination(tr transfer.TerminateRequest) (transfer.Ack, error) {
+	tp, err := h.tpStore.Process(tr.ProvPId)
+	if err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+	}
+
+	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
+		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State),
+			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
+	}
+
+	if err = h.tpStore.UpdateState(tr.ProvPId, transfer.StateTerminated); err != nil {
+		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+	}
+
+	tp.State = transfer.StateTerminated
+	h.log.Info(fmt.Sprintf("data exchange process was terminated by provider (id: %s, reasons: %v)",
+		tr.ProvPId, tr.Reason))
+	return transfer.Ack(tp), nil
+}

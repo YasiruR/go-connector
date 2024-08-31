@@ -125,7 +125,6 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 }
 
 func (c *Controller) StartTransfer(tpId string) error {
-	// todo handler for start in provider
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
@@ -189,7 +188,7 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	return nil
 }
 
-func (c *Controller) TerminateTransfer(tpId string, code string, reasons []interface{}) error {
+func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{}) error {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
 		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)

@@ -32,11 +32,12 @@ type TransferController interface {
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
 	StartTransfer(tpId string) error
 	CompleteTransfer(tpId string) error
-	TerminateTransfer(tpId string, code string, reasons []interface{}) error
+	TerminateTransfer(tpId, code string, reasons []interface{}) error
 }
 
 type TransferHandler interface {
 	HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error)
 	HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error)
 	HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error)
+	HandleTransferTermination(tr transfer.TerminateRequest) (transfer.Ack, error)
 }

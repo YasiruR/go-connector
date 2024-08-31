@@ -32,6 +32,7 @@ type TransferController interface {
 	StartTransfer(tpId, sourceEndpoint string) error
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
 	CompleteTransfer(tpId string) error
+	TerminateTransfer(tpId, code string, reasons []interface{}) error
 }
 
 type TransferHandler interface {

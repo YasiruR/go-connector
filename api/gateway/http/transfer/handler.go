@@ -135,7 +135,10 @@ func (h *Handler) TerminateTransfer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Provider {
-
+		if err := h.provider.TerminateTransfer(req.TransferId, req.Code, req.Reasons); err != nil {
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `TerminateTransfer`, err), http.StatusBadRequest)
+			return
+		}
 	} else {
 		if err := h.consumer.TerminateTransfer(req.TransferId, req.Code, req.Reasons); err != nil {
 			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `TerminateTransfer`, err), http.StatusBadRequest)
