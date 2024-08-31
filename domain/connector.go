@@ -14,8 +14,9 @@ type Roles struct {
 }
 
 type Stores struct {
-	ProviderCatalog stores.CatalogStore
-	stores.PolicyStore
+	stores.ProviderCatalog
+	stores.ConsumerCatalog
+	stores.OfferStore
 	stores.ContractNegotiationStore
 	stores.AgreementStore
 	stores.TransferStore

@@ -21,7 +21,7 @@ type Target string
 type Offer struct {
 	Id           string   `json:"@id"`
 	Type         string   `json:"@type" default:"odrl:Offer"`
-	Target       Target   `json:"odrl:target"`
+	Target       Target   `json:"odrl:target"` // dataset id
 	Assigner     Assigner `json:"odrl:assigner"`
 	Assignee     Assignee `json:"odrl:assignee"`
 	Permissions  []Rule   `json:"odrl:permission"`

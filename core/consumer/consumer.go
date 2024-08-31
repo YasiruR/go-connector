@@ -20,7 +20,7 @@ type Consumer struct {
 
 func New(port int, stores domain.Stores, plugins domain.Plugins) *Consumer {
 	return &Consumer{
-		CatalogController:     catalog.NewController(plugins.Client),
+		CatalogController:     catalog.NewController(stores, plugins.Client, plugins),
 		NegotiationController: negotiation.NewController(port, stores, plugins),
 		NegotiationHandler:    negotiation.NewHandler(stores, plugins),
 		TransferController:    transfer.NewController(port, stores, plugins),

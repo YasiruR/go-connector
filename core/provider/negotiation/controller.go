@@ -18,7 +18,7 @@ import (
 type Controller struct {
 	callbackAddr string
 	cnStore      stores.ContractNegotiationStore
-	policyStore  stores.PolicyStore
+	policyStore  stores.OfferStore
 	agrStore     stores.AgreementStore
 	urn          pkg.URNService
 	client       pkg.Client
@@ -29,7 +29,7 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 	return &Controller{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
 		cnStore:      stores.ContractNegotiationStore,
-		policyStore:  stores.PolicyStore,
+		policyStore:  stores.OfferStore,
 		agrStore:     stores.AgreementStore,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
@@ -42,7 +42,7 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 
 	ofr, err := c.policyStore.Offer(offerId)
 	if err != nil {
-		return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
+		return ``, errors.StoreFailed(stores.TypeOffer, `Offer`, err)
 	}
 
 	var consumerPid, endpoint string
@@ -95,6 +95,7 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 		Offer:        ofr,
 		CallbackAddr: c.callbackAddr,
 	}
+	// todo offer must have a target but not in policies
 
 	ack, err := c.send(providerPid, endpoint, req)
 	if err != nil {
@@ -130,7 +131,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 
 	offer, err := c.policyStore.Offer(offerId)
 	if err != nil {
-		return ``, errors.StoreFailed(stores.TypePolicy, `Offer`, err)
+		return ``, errors.StoreFailed(stores.TypeOffer, `Offer`, err)
 	}
 
 	assignee, err := c.cnStore.Assignee(providerPid)
@@ -154,6 +155,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		},
 		CallbackAddr: c.callbackAddr,
 	}
+	// todo agreement must have a target but not in policies
 
 	if _, err = c.send(providerPid, api.SetParamConsumerPid(negotiation.ContractAgreementEndpoint,
 		cn.ConsPId), req); err != nil {

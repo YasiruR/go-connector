@@ -1,12 +1,12 @@
 package catalog
 
 import (
-	"github.com/YasiruR/connector/api/dsp/http/middleware"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/pkg/middleware"
 	"net/http"
 )
 

@@ -11,7 +11,9 @@ import (
 	"github.com/YasiruR/connector/pkg/database/memory"
 	pkgLog "github.com/YasiruR/connector/pkg/log"
 	"github.com/YasiruR/connector/pkg/urn"
-	pkgStores "github.com/YasiruR/connector/stores"
+	"github.com/YasiruR/connector/stores/catalog"
+	"github.com/YasiruR/connector/stores/policy"
+	"github.com/YasiruR/connector/stores/protocol"
 )
 
 var log = pkgLog.NewLogger()
@@ -26,11 +28,12 @@ var plugins = domain.Plugins{
 }
 
 var stores = domain.Stores{
-	ProviderCatalog:          pkgStores.NewCatalog(config, plugins),
-	PolicyStore:              pkgStores.NewPolicyStore(plugins),
-	ContractNegotiationStore: pkgStores.NewContractNegotiationStore(plugins),
-	AgreementStore:           pkgStores.NewAgreementStore(plugins),
-	TransferStore:            pkgStores.NewTransferStore(plugins),
+	ProviderCatalog:          catalog.NewProviderCatalog(config, plugins),
+	ConsumerCatalog:          catalog.NewConsumerCatalog(plugins),
+	OfferStore:               policy.NewOfferStore(plugins),
+	ContractNegotiationStore: protocol.NewContractNegotiationStore(plugins),
+	AgreementStore:           policy.NewAgreementStore(plugins),
+	TransferStore:            protocol.NewTransferStore(plugins),
 }
 
 var roles = domain.Roles{

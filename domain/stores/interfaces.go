@@ -1,6 +1,7 @@
 package stores
 
 import (
+	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/models/dcat"
@@ -10,16 +11,24 @@ import (
 const (
 	TypeCatalog             = `catalog`
 	TypeContractNegotiation = `contract-negotiation`
-	TypePolicy              = `policy`
+	TypeOffer               = `offer`
 	TypeAgreement           = `agreement`
 	TypeTransfer            = `transfer`
 )
 
-// CatalogStore stores Datasets as per the DCAT profile recommended by IDSA
-type CatalogStore interface {
+// ProviderCatalog stores Datasets as per the DCAT profile recommended by IDSA
+type ProviderCatalog interface {
 	Catalog() (dcat.Catalog, error)
 	AddDataset(id string, val dcat.Dataset)
 	Dataset(id string) (dcat.Dataset, error)
+}
+
+// ConsumerCatalog stores catalogs received by providers
+type ConsumerCatalog interface {
+	AddCatalog(res catalog.Response)
+	Catalog(providerId string) (catalog.Response, error)
+	Offer(offerId string) (ofr odrl.Offer, err error)
+	AllCatalogs() ([]catalog.Response, error)
 }
 
 // ContractNegotiationStore includes get and set methods for attributes required
@@ -35,7 +44,7 @@ type ContractNegotiationStore interface {
 	CallbackAddr(cnId string) (string, error)
 }
 
-type PolicyStore interface {
+type OfferStore interface {
 	AddOffer(id string, val odrl.Offer)
 	Offer(id string) (odrl.Offer, error)
 }

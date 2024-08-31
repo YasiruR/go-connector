@@ -20,7 +20,7 @@ Sample requests provided in this document assume the following endpoints to be u
 
 ### Contract Negotiation
 
-1. Request contract (Consumer): ``curl -X POST -d '{"offerId": "<offer-id>", "providerEndpoint": "http://localhost:9080", "odrlTarget": "test-target", "assigner": "provider1", "assignee": "consumer1", "action": "odrl:use"}' http://localhost:8081/gateway/request-contract``
+1. Request contract (Consumer): ``curl -X POST -d '{"offerId": "<offer-id>", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/request-contract``
 2. Offer contract (Provider): ``curl -X POST -d '{"offerId": "<offer-id>", "consumerAddr": "http://localhost:8080"}' http://localhost:9081/gateway/offer-contract``
 3. Accept contract (Consumer): ``curl -X POST http://localhost:8081/gateway/accept-offer/<consumerPid>``
 4. Get negotiation (Provider): ``curl -X GET http://localhost:9080/negotiations/{providerPid} | jq`` 

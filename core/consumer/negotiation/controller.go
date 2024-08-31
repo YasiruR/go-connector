@@ -16,6 +16,8 @@ import (
 
 type Controller struct {
 	callbackAddr string
+	assigneeId   string
+	catalog      stores.ConsumerCatalog
 	cnStore      stores.ContractNegotiationStore
 	urn          pkg.URNService
 	client       pkg.Client
@@ -25,6 +27,7 @@ type Controller struct {
 func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
 		callbackAddr: `http://localhost:` + strconv.Itoa(port),
+		catalog:      stores.ConsumerCatalog,
 		cnStore:      stores.ContractNegotiationStore,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
@@ -32,7 +35,7 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 	}
 }
 
-func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error) {
+func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string, constraints map[string]string) (cnId string, err error) {
 	var providerPid, endpoint string
 	if consumerPid != `` {
 		cn, err := c.cnStore.Negotiation(consumerPid)
@@ -45,7 +48,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 		}
 
 		// if provider's address is not provided, use the stored one. If provided, it will override
-		// the existing address.
+		// the existing address. (alternatively, can fetch from consumer catalog)
 		if providerAddr == `` {
 			providerAddr, err = c.cnStore.CallbackAddr(consumerPid)
 			if err != nil {
@@ -63,6 +66,12 @@ func (c *Controller) RequestContract(consumerPid, providerAddr string, ofr odrl.
 			return ``, errors.URNFailed(`consumerPid`, `NewURN`, err)
 		}
 		endpoint = negotiation.ContractRequestEndpoint
+	}
+
+	// fetch offer from store
+	ofr, err := c.setConstraints(offerId, constraints)
+	if err != nil {
+		return ``, errors.CustomFuncError(`setConstraints`, err)
 	}
 
 	c.cnStore.SetParticipants(consumerPid, providerAddr, ofr.Assigner, ofr.Assignee)
@@ -210,6 +219,35 @@ func (c *Controller) send(consumerPid, endpoint string, req any) (negotiation.Ac
 	}
 
 	return ack, nil
+}
+
+func (c *Controller) setConstraints(offerId string, vals map[string]string) (odrl.Offer, error) {
+	var permList []odrl.Rule
+	ofr, err := c.catalog.Offer(offerId)
+	if err != nil {
+		return odrl.Offer{}, errors.StoreFailed(stores.TypeOffer, `Offer`, err)
+	}
+
+	for _, perm := range ofr.Permissions {
+		var consList []odrl.Constraint
+		for _, cons := range perm.Constraints {
+			val, ok := vals[cons.LeftOperand]
+			if !ok {
+				return odrl.Offer{}, errors.MissingRequiredAttr(cons.LeftOperand, `mandatory constraint`)
+			}
+			cons.RightOperand = val
+			consList = append(consList, cons)
+		}
+
+		permList = append(permList, odrl.Rule{
+			Action:      perm.Action,
+			Constraints: consList,
+		})
+	}
+
+	ofr.Assignee = odrl.Assignee(c.assigneeId)
+	ofr.Permissions = permList
+	return ofr, nil
 }
 
 func (c *Controller) validAck(pid string, ack negotiation.Ack, state negotiation.State) bool {

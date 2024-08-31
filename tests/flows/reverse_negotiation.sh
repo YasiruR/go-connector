@@ -11,8 +11,10 @@ data='{"offerId": "'$policy_id'", "consumerAddr": "http://localhost:8080"}'
 res=$(curl --silent -X POST -d "$data" http://localhost:9081/gateway/offer-contract)
 negProvPid=$(echo "$res" | awk -F[\"\"] '{print $4}')
 
+curl --silent -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/catalog
+
 read -p "Contract Negotiation ID (Consumer): " negConsPid
-data='{"offerId": "'$policy_id'", "consumerPid": "'$negConsPid'", "providerEndpoint": "http://localhost:9080", "odrlTarget": "test-target", "assigner": "provider1", "assignee": "consumer1", "action": "odrl:use"}'
+data='{"offerId": "'$policy_id'", "consumerPid": "'$negConsPid'", "providerEndpoint": "http://localhost:9080", "constraints": {"region": "eu"}}'
 res=$(curl --silent -X POST -d "$data" http://localhost:8081/gateway/request-contract)
 #negConsPid=$(echo "$res" | awk -F[\"\"] '{print $4}')
 

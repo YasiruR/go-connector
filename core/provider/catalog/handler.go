@@ -12,13 +12,13 @@ import (
 
 type Handler struct {
 	participantId string // data space specific identifier for Provider
-	catStore      stores.CatalogStore
+	catStore      stores.ProviderCatalog
 	log           pkg.Log
 }
 
-func NewHandler(cnStore stores.CatalogStore, log pkg.Log) *Handler {
+func NewHandler(participantId string, cnStore stores.ProviderCatalog, log pkg.Log) *Handler {
 	return &Handler{
-		participantId: `participant-id-provider`,
+		participantId: participantId,
 		catStore:      cnStore,
 		log:           log,
 	}

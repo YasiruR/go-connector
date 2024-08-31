@@ -1,4 +1,4 @@
-package stores
+package protocol
 
 import (
 	"github.com/YasiruR/connector/domain"

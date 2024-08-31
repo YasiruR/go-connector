@@ -1,4 +1,4 @@
-package stores
+package policy
 
 import (
 	"github.com/YasiruR/connector/domain"

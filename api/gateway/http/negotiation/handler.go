@@ -2,14 +2,13 @@ package negotiation
 
 import (
 	"fmt"
-	"github.com/YasiruR/connector/api/gateway/http/middleware"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
-	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
+	"github.com/YasiruR/connector/pkg/middleware"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -38,16 +37,16 @@ func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// todo store offer details when fetched (store dataset id as the target) and provide only the constraints here
-	ofr := odrl.Offer{
-		Id:          req.OfferId,
-		Type:        odrl.TypeOffer,
-		Target:      odrl.Target(req.OdrlTarget),
-		Assigner:    odrl.Assigner(req.Assigner),
-		Assignee:    odrl.Assignee(req.Assignee),
-		Permissions: []odrl.Rule{{Action: odrl.Action(req.Action)}}, // should handle constraints
-	}
+	//ofr := odrl.Offer{
+	//	Id:   req.OfferId,
+	//	Type: odrl.TypeOffer,
+	//	//Target:      odrl.Target(req.OdrlTarget),
+	//	Assigner:    odrl.Assigner(req.Assigner),
+	//	Assignee:    odrl.Assignee(req.Assignee),
+	//	Permissions: []odrl.Rule{{Action: odrl.Action(req.Action)}}, // should handle constraints
+	//}
 
-	cnId, err := h.consumer.RequestContract(req.ConsumerPId, req.ProviderEndpoint, ofr)
+	cnId, err := h.consumer.RequestContract(req.ConsumerPId, req.ProviderEndpoint, req.OfferId, req.Constraints)
 	if err != nil {
 		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestContract`, err), http.StatusBadRequest)
 		return

@@ -4,7 +4,6 @@ import (
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
-	"github.com/YasiruR/connector/domain/models/odrl"
 )
 
 type CatalogController interface {
@@ -13,8 +12,7 @@ type CatalogController interface {
 }
 
 type NegotiationController interface {
-	// change endpoint to general params
-	RequestContract(consumerPid, providerAddr string, ofr odrl.Offer) (cnId string, err error)
+	RequestContract(consumerPid, providerAddr, offerId string, constraints map[string]string) (cnId string, err error)
 	AcceptOffer(consumerPid string) error
 	VerifyAgreement(consumerPid string) error
 	TerminateContract(consumerPid, code string, reasons []string) error

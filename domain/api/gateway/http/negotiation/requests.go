@@ -1,13 +1,10 @@
 package negotiation
 
 type ContractRequest struct {
-	OfferId          string `json:"offerId"`
-	ConsumerPId      string `json:"consumerPid"`
-	ProviderEndpoint string `json:"providerEndpoint"`
-	OdrlTarget       string `json:"odrlTarget"`
-	Assigner         string `json:"assigner"`
-	Assignee         string `json:"assignee"`
-	Action           string `json:"action"`
+	ConsumerPId      string            `json:"consumerPid"`
+	OfferId          string            `json:"offerId"`
+	ProviderEndpoint string            `json:"providerEndpoint"`
+	Constraints      map[string]string `json:"constraints"`
 }
 
 type OfferRequest struct {

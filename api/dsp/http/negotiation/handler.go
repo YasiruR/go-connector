@@ -1,13 +1,13 @@
 package negotiation
 
 import (
-	"github.com/YasiruR/connector/api/dsp/http/middleware"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/pkg/middleware"
 	"github.com/gorilla/mux"
 	"net/http"
 )

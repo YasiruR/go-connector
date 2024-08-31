@@ -19,7 +19,7 @@ type Provider struct {
 
 func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Provider {
 	return &Provider{
-		CatalogHandler:        catalog.NewHandler(stores.ProviderCatalog, plugins.Log),
+		CatalogHandler:        catalog.NewHandler(cfg.DataSpace.ParticipantId, stores.ProviderCatalog, plugins.Log),
 		NegotiationController: negotiation.NewController(cfg.Servers.DSP.HTTP.Port, stores, plugins),
 		NegotiationHandler:    negotiation.NewHandler(cfg, stores, plugins),
 		TransferController:    transfer.NewController(stores.TransferStore, plugins),

@@ -15,7 +15,7 @@ import (
 type Handler struct {
 	assignerId  string
 	cnStore     stores.ContractNegotiationStore
-	policyStore stores.PolicyStore
+	policyStore stores.OfferStore
 	urn         pkg.URNService
 	log         pkg.Log
 }
@@ -24,7 +24,7 @@ func NewHandler(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *
 	return &Handler{
 		assignerId:  cfg.DataSpace.AssignerId,
 		cnStore:     stores.ContractNegotiationStore,
-		policyStore: stores.PolicyStore,
+		policyStore: stores.OfferStore,
 		urn:         plugins.URNService,
 		log:         plugins.Log,
 	}
@@ -165,7 +165,7 @@ func (h *Handler) HandleContractTermination(ct negotiation.ContractTermination) 
 func (h *Handler) validOffer(receivedOfr odrl.Offer) bool {
 	storedOfr, err := h.policyStore.Offer(receivedOfr.Id)
 	if err != nil {
-		h.log.Debug(errors.StoreFailed(stores.TypePolicy, `Offer`, err))
+		h.log.Debug(errors.StoreFailed(stores.TypeOffer, `Offer`, err))
 		return false
 	}
 
