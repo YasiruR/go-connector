@@ -27,7 +27,7 @@ func NewHandler(participantId string, cnStore stores.ProviderCatalog, log pkg.Lo
 func (h *Handler) HandleCatalogRequest(_ any) (catalog.Response, error) {
 	cat, err := h.catStore.Catalog()
 	if err != nil {
-		return catalog.Response{}, errors.StoreFailed(stores.TypeCatalog, `Get`, err)
+		return catalog.Response{}, errors.StoreFailed(stores.TypeProviderCatalog, `Get`, err)
 	}
 
 	return catalog.Response{
@@ -40,7 +40,7 @@ func (h *Handler) HandleCatalogRequest(_ any) (catalog.Response, error) {
 func (h *Handler) HandleDatasetRequest(id string) (catalog.DatasetResponse, error) {
 	ds, err := h.catStore.Dataset(id)
 	if err != nil {
-		return catalog.DatasetResponse{}, errors.StoreFailed(stores.TypeCatalog, `Dataset`, err)
+		return catalog.DatasetResponse{}, errors.StoreFailed(stores.TypeProviderCatalog, `Dataset`, err)
 	}
 
 	return catalog.DatasetResponse{

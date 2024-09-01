@@ -4,6 +4,7 @@ type Config struct {
 	DataSpace struct {
 		ParticipantId string `yaml:"participant_id"`
 		AssignerId    string `yaml:"assigner_id"`
+		AssigneeId    string `yaml:"assignee_id"`
 	} `yaml:"data_space"`
 	Catalog struct {
 		Title          string   `yaml:"title"`

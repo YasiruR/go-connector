@@ -8,27 +8,27 @@ import (
 )
 
 const (
-	transferCollection = `transfer`
+	collTransfer = `transfer`
 )
 
 type Transfer struct {
-	store        pkg.Collection
+	coll         pkg.Collection
 	callbackAddr pkg.Collection
 }
 
 func NewTransferStore(plugins domain.Plugins) *Transfer {
 	plugins.Log.Info("initialized transfer process store")
-	return &Transfer{store: plugins.Database.NewCollection(), callbackAddr: plugins.Database.NewCollection()}
+	return &Transfer{coll: plugins.Database.NewCollection(), callbackAddr: plugins.Database.NewCollection()}
 }
 
 func (t *Transfer) AddProcess(tpId string, val transfer.Process) {
-	_ = t.store.Set(tpId, val)
+	_ = t.coll.Set(tpId, val)
 }
 
 func (t *Transfer) Process(id string) (transfer.Process, error) {
-	val, err := t.store.Get(id)
+	val, err := t.coll.Get(id)
 	if err != nil {
-		return transfer.Process{}, errors.QueryFailed(transferCollection, `Get`, err)
+		return transfer.Process{}, errors.QueryFailed(collTransfer, `Get`, err)
 	}
 	return val.(transfer.Process), nil
 }
@@ -40,7 +40,7 @@ func (t *Transfer) SetCallbackAddr(tpId, addr string) {
 func (t *Transfer) CallbackAddr(tpId string) (string, error) {
 	val, err := t.callbackAddr.Get(tpId)
 	if err != nil {
-		return ``, errors.QueryFailed(callbackAddrCollection, `Get`, err)
+		return ``, errors.QueryFailed(collCallbackAddr, `Get`, err)
 	}
 	return val.(string), nil
 }
@@ -48,7 +48,7 @@ func (t *Transfer) CallbackAddr(tpId string) (string, error) {
 func (t *Transfer) UpdateState(tpId string, s transfer.State) error {
 	process, err := t.Process(tpId)
 	if err != nil {
-		return errors.QueryFailed(transferCollection, `Process`, err)
+		return errors.QueryFailed(collTransfer, `Process`, err)
 	}
 
 	process.State = s

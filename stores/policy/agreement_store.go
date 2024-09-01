@@ -8,41 +8,41 @@ import (
 )
 
 const (
-	agreementCollection            = `agreement-collection`
-	agreementNegotiationCollection = `agreement-negotiation-collection`
+	collAgreement            = `agreement`
+	collNegotiationAgreement = `negotiation-agreement`
 )
 
 type Agreement struct {
-	store pkg.Collection
-	cnMap pkg.Collection
+	agrColl  pkg.Collection
+	cnAgrMap pkg.Collection
 }
 
 func NewAgreementStore(plugins domain.Plugins) *Agreement {
 	plugins.Log.Info("initialized agreement store")
-	return &Agreement{store: plugins.Database.NewCollection(), cnMap: plugins.Database.NewCollection()}
+	return &Agreement{agrColl: plugins.Database.NewCollection(), cnAgrMap: plugins.Database.NewCollection()}
 }
 
 func (a *Agreement) AddAgreement(cnId string, val odrl.Agreement) {
-	_ = a.store.Set(val.Id, val)
+	_ = a.agrColl.Set(val.Id, val)
 	a.setNegotiationId(cnId, val.Id)
 }
 
 func (a *Agreement) setNegotiationId(cnId, agrId string) {
-	_ = a.cnMap.Set(cnId, agrId)
+	_ = a.cnAgrMap.Set(cnId, agrId)
 }
 
 func (a *Agreement) Agreement(id string) (odrl.Agreement, error) {
-	val, err := a.store.Get(id)
+	val, err := a.agrColl.Get(id)
 	if err != nil {
-		return odrl.Agreement{}, errors.QueryFailed(agreementCollection, `Get`, err)
+		return odrl.Agreement{}, errors.QueryFailed(collAgreement, `Get`, err)
 	}
 	return val.(odrl.Agreement), nil
 }
 
 func (a *Agreement) AgreementByNegotiationID(cnId string) (odrl.Agreement, error) {
-	agrId, err := a.cnMap.Get(cnId)
+	agrId, err := a.cnAgrMap.Get(cnId)
 	if err != nil {
-		return odrl.Agreement{}, errors.QueryFailed(agreementNegotiationCollection, `Get`, err)
+		return odrl.Agreement{}, errors.QueryFailed(collNegotiationAgreement, `Get`, err)
 	}
 
 	return a.Agreement(agrId.(string))

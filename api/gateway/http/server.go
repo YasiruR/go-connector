@@ -34,7 +34,7 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	s := Server{
 		port:   port,
 		router: r,
-		ch:     httpCatalog.NewHandler(roles, log),
+		ch:     httpCatalog.NewHandler(roles, stores, log),
 		nh:     httpNegotiation.NewHandler(roles, stores, log),
 		th:     httpTransfer.NewHandler(roles, log),
 		log:    log,
@@ -45,6 +45,7 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	r.HandleFunc(catalog.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)
+	r.HandleFunc(catalog.GetStoredCatalogsEndpoint, s.ch.GetStoredCatalogs).Methods(http.MethodGet)
 
 	// endpoints related to negotiation
 	r.HandleFunc(negotiation.RequestContractEndpoint, s.nh.RequestContract).Methods(http.MethodPost)

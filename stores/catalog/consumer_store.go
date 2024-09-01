@@ -8,25 +8,25 @@ import (
 	"github.com/YasiruR/connector/domain/pkg"
 )
 
-const consCatCollection = `consumer-catalog`
+const collConsumerCatalog = `consumer-catalog`
 
 type ConsumerCatalog struct {
-	urn   pkg.URNService
-	store pkg.Collection
+	urn  pkg.URNService
+	coll pkg.Collection
 }
 
 func NewConsumerCatalog(plugins domain.Plugins) *ConsumerCatalog {
-	return &ConsumerCatalog{urn: plugins.URNService, store: plugins.Database.NewCollection()}
+	return &ConsumerCatalog{urn: plugins.URNService, coll: plugins.Database.NewCollection()}
 }
 
 func (c *ConsumerCatalog) AddCatalog(res catalog.Response) {
-	_ = c.store.Set(res.DspaceParticipantID, res)
+	_ = c.coll.Set(res.DspaceParticipantID, res)
 }
 
 func (c *ConsumerCatalog) Catalog(providerId string) (catalog.Response, error) {
-	val, err := c.store.Get(providerId)
+	val, err := c.coll.Get(providerId)
 	if err != nil {
-		return catalog.Response{}, errors.QueryFailed(consCatCollection, `Get`, err)
+		return catalog.Response{}, errors.QueryFailed(collConsumerCatalog, `Get`, err)
 	}
 
 	return val.(catalog.Response), nil
@@ -38,7 +38,7 @@ func (c *ConsumerCatalog) Offer(offerId string) (ofr odrl.Offer, err error) {
 	// - nested loops
 	cats, err := c.AllCatalogs()
 	if err != nil {
-		return odrl.Offer{}, errors.StoreFailed(consCatCollection, `AllCatalogs`, err)
+		return odrl.Offer{}, errors.StoreFailed(collConsumerCatalog, `AllCatalogs`, err)
 	}
 
 	for _, cat := range cats {
@@ -76,9 +76,9 @@ func (c *ConsumerCatalog) Offer(offerId string) (ofr odrl.Offer, err error) {
 //}
 
 func (c *ConsumerCatalog) AllCatalogs() ([]catalog.Response, error) {
-	vals, err := c.store.GetAll()
+	vals, err := c.coll.GetAll()
 	if err != nil {
-		return nil, errors.QueryFailed(consCatCollection, `GetAll`, err)
+		return nil, errors.QueryFailed(collConsumerCatalog, `GetAll`, err)
 	}
 
 	res := make([]catalog.Response, len(vals))

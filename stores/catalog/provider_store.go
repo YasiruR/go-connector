@@ -10,24 +10,26 @@ import (
 	"github.com/YasiruR/connector/domain/pkg"
 )
 
+const collProviderCatalog = `provider-catalog`
+
 // ProviderCatalog stores Datasets and Data Services which can be shared through a connector
 type ProviderCatalog struct {
-	meta  dcat.CatalogMetadata
-	urn   pkg.URNService
-	store pkg.Collection
+	meta dcat.CatalogMetadata
+	urn  pkg.URNService
+	coll pkg.Collection
 }
 
 func NewProviderCatalog(cfg boot.Config, plugins domain.Plugins) *ProviderCatalog {
 	c := &ProviderCatalog{
-		urn:   plugins.URNService,
-		store: plugins.Database.NewCollection(),
+		urn:  plugins.URNService,
+		coll: plugins.Database.NewCollection(),
 	}
 
 	if err := c.init(cfg); err != nil {
 		plugins.Log.Fatal(fmt.Sprintf("init catalog store failed: %v", err))
 	}
 
-	plugins.Log.Info("initialized catalog store", "catalog id: "+c.meta.ID)
+	plugins.Log.Info(fmt.Sprintf("initialized %s store", collProviderCatalog), `catalog ID: `+c.meta.ID)
 	return c
 }
 
@@ -76,9 +78,9 @@ func (p *ProviderCatalog) init(cfg boot.Config) error {
 }
 
 func (p *ProviderCatalog) Catalog() (dcat.Catalog, error) {
-	vals, err := p.store.GetAll()
+	vals, err := p.coll.GetAll()
 	if err != nil {
-		return dcat.Catalog{}, errors.QueryFailed(`dataset`, `GetAll`, err)
+		return dcat.Catalog{}, errors.QueryFailed(collProviderCatalog, `GetAll`, err)
 	}
 
 	var cat dcat.Catalog
@@ -86,20 +88,19 @@ func (p *ProviderCatalog) Catalog() (dcat.Catalog, error) {
 
 	for _, val := range vals {
 		cat.DcatDataset = append(cat.DcatDataset, val.(dcat.Dataset))
-		fmt.Println("FETCHED DS: ", val.(dcat.Dataset))
 	}
 
 	return cat, nil
 }
 
 func (p *ProviderCatalog) AddDataset(id string, val dcat.Dataset) {
-	_ = p.store.Set(id, val)
+	_ = p.coll.Set(id, val)
 }
 
 func (p *ProviderCatalog) Dataset(id string) (dcat.Dataset, error) {
-	val, err := p.store.Get(id)
+	val, err := p.coll.Get(id)
 	if err != nil {
-		return dcat.Dataset{}, errors.QueryFailed(`dataset`, `Get`, err)
+		return dcat.Dataset{}, errors.QueryFailed(collProviderCatalog, `Get`, err)
 	}
 	return val.(dcat.Dataset), nil
 }

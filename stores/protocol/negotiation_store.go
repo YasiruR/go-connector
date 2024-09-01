@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	negotiationCollection  = `negotiation`
-	assigneeCollection     = `assignee`
-	assignerCollection     = `assigner`
-	callbackAddrCollection = `callbackAddr`
+	collNegotiation  = `negotiation`
+	collAssignee     = `assignee`
+	collAssigner     = `assigner`
+	collCallbackAddr = `callbackAddr`
 )
 
 // ContractNegotiation stores any ongoing activities related to Contract Negotiation Protocol
 type ContractNegotiation struct {
-	store        pkg.Collection
+	negotiations pkg.Collection
 	assignees    pkg.Collection
 	assigners    pkg.Collection
 	callbackAddr pkg.Collection
@@ -26,7 +26,7 @@ type ContractNegotiation struct {
 func NewContractNegotiationStore(plugins domain.Plugins) *ContractNegotiation {
 	plugins.Log.Info("initialized contract negotiation store")
 	return &ContractNegotiation{
-		store:        plugins.Database.NewCollection(),
+		negotiations: plugins.Database.NewCollection(),
 		assignees:    plugins.Database.NewCollection(),
 		assigners:    plugins.Database.NewCollection(),
 		callbackAddr: plugins.Database.NewCollection(),
@@ -34,13 +34,13 @@ func NewContractNegotiationStore(plugins domain.Plugins) *ContractNegotiation {
 }
 
 func (cn *ContractNegotiation) AddNegotiation(cnId string, val negotiation.Negotiation) {
-	_ = cn.store.Set(cnId, val)
+	_ = cn.negotiations.Set(cnId, val)
 }
 
 func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation.Negotiation, error) {
-	val, err := cn.store.Get(cnId)
+	val, err := cn.negotiations.Get(cnId)
 	if err != nil {
-		return negotiation.Negotiation{}, errors.QueryFailed(negotiationCollection, `Get`, err)
+		return negotiation.Negotiation{}, errors.QueryFailed(collNegotiation, `Get`, err)
 	}
 	return val.(negotiation.Negotiation), nil
 }
@@ -48,7 +48,7 @@ func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation.Negotiation
 func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) error {
 	neg, err := cn.Negotiation(cnId)
 	if err != nil {
-		return errors.QueryFailed(negotiationCollection, `Get`, err)
+		return errors.QueryFailed(collNegotiation, `Get`, err)
 	}
 
 	//switch s {
@@ -89,7 +89,7 @@ func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) err
 func (cn *ContractNegotiation) State(cnId string) (negotiation.State, error) {
 	neg, err := cn.Negotiation(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(negotiationCollection, `Get`, err)
+		return ``, errors.QueryFailed(collNegotiation, `Get`, err)
 	}
 	return neg.State, nil
 }
@@ -103,7 +103,7 @@ func (cn *ContractNegotiation) SetParticipants(cnId, callbackAddr string, assign
 func (cn *ContractNegotiation) Assignee(cnId string) (odrl.Assignee, error) {
 	val, err := cn.assignees.Get(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(assigneeCollection, `get`, err)
+		return ``, errors.QueryFailed(collAssignee, `get`, err)
 	}
 	return val.(odrl.Assignee), nil
 }
@@ -111,7 +111,7 @@ func (cn *ContractNegotiation) Assignee(cnId string) (odrl.Assignee, error) {
 func (cn *ContractNegotiation) Assigner(cnId string) (odrl.Assigner, error) {
 	val, err := cn.assigners.Get(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(assignerCollection, `get`, err)
+		return ``, errors.QueryFailed(collAssigner, `get`, err)
 	}
 	return val.(odrl.Assigner), nil
 }
@@ -119,7 +119,7 @@ func (cn *ContractNegotiation) Assigner(cnId string) (odrl.Assigner, error) {
 func (cn *ContractNegotiation) CallbackAddr(cnId string) (string, error) {
 	addr, err := cn.callbackAddr.Get(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(callbackAddrCollection, `get`, err)
+		return ``, errors.QueryFailed(collCallbackAddr, `get`, err)
 	}
 	return addr.(string), nil
 }

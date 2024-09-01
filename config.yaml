@@ -1,6 +1,7 @@
 data_space:
-  participant_id: test-participant
-  assigner_id: provider1
+  participant_id: test-participant  # e.g. Connector ID
+  assigner_id: provider1  # Data space specific ID for agreements
+  assignee_id: consumer1
 catalog:
   title: Ceit catalog
   keywords:

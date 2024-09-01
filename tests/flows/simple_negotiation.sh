@@ -10,7 +10,7 @@ dataset_id=$(echo "$res" | awk -F[\"\"] '{print $4}')
 
 echo "$data" | jq
 
-curl --silent -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/catalog
+curl --silent -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/request-catalog
 
 data='{"offerId": "'$policy_id'", "providerEndpoint": "http://localhost:9080", "constraints": {"region": "eu"}}'
 res=$(curl --silent -X POST -d "$data" http://localhost:8081/gateway/request-contract)

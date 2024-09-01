@@ -7,21 +7,24 @@ import (
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/stores"
 	"github.com/YasiruR/connector/pkg/middleware"
 	"net/http"
 )
 
 type Handler struct {
-	consumer core.Consumer
-	owner    core.Owner
-	log      pkg.Log
+	consumer    core.Consumer
+	owner       core.Owner
+	consCatalog stores.ConsumerCatalog
+	log         pkg.Log
 }
 
-func NewHandler(roles domain.Roles, log pkg.Log) *Handler {
+func NewHandler(roles domain.Roles, stores domain.Stores, log pkg.Log) *Handler {
 	return &Handler{
-		consumer: roles.Consumer,
-		owner:    roles.Owner,
-		log:      log,
+		consumer:    roles.Consumer,
+		owner:       roles.Owner,
+		consCatalog: stores.ConsumerCatalog,
+		log:         log,
 	}
 }
 
@@ -100,4 +103,14 @@ func (h *Handler) RequestDataset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	middleware.WriteAck(w, ds, http.StatusOK)
+}
+
+func (h *Handler) GetStoredCatalogs(w http.ResponseWriter, _ *http.Request) {
+	cats, err := h.consCatalog.AllCatalogs()
+	if err != nil {
+		middleware.WriteError(w, errors.StoreFailed(stores.TypeConsumerCatalog, `AllCatalogs`, err), http.StatusInternalServerError)
+		return
+	}
+
+	middleware.WriteAck(w, cats, http.StatusOK)
 }

@@ -38,7 +38,7 @@ var stores = domain.Stores{
 
 var roles = domain.Roles{
 	Provider: provider.New(config, stores, plugins),
-	Consumer: consumer.New(config.Servers.DSP.HTTP.Port, stores, plugins),
+	Consumer: consumer.New(config, stores, plugins),
 	Owner:    owner.New(config, stores, plugins),
 }
 

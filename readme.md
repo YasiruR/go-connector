@@ -15,8 +15,9 @@ Sample requests provided in this document assume the following endpoints to be u
 
 1. Create policy (Provider): ``curl -X POST -d '{"permissions": [{"action": "use", "constraints": [{"leftOperand": "region", "operator": "eq", "rightOperand": "eu"}]}]}' http://localhost:9081/gateway/create-policy``
 2. Create dataset (Provider): ``curl -X POST -d '{"title": "sample dataset", "description": ["sample description"], "endpoints": ["http://localhost:9080/datasource"], "policyIds": ["<policy-id>"], "keywords": ["dataspace", "connector"]}' http://localhost:9081/gateway/create-dataset``
-3. Get Catalog (Consumer): ``curl -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/catalog | jq``
-4. Get Dataset (Consumer): ``curl -X POST -d '{"datasetId": "<dataset-id>", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/dataset | jq``
+3. Request catalog (Consumer): ``curl -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/request-catalog | jq``
+4. Request dataset (Consumer): ``curl -X POST -d '{"datasetId": "<dataset-id>", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/request-dataset | jq``
+5. Get stored catalogs: ````
 
 ### Contract Negotiation
 

@@ -6,6 +6,7 @@ import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
@@ -24,9 +25,10 @@ type Controller struct {
 	log          pkg.Log
 }
 
-func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
+func NewController(config boot.Config, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
-		callbackAddr: `http://localhost:` + strconv.Itoa(port),
+		callbackAddr: `http://localhost:` + strconv.Itoa(config.Servers.DSP.HTTP.Port),
+		assigneeId:   config.DataSpace.AssigneeId,
 		catalog:      stores.ConsumerCatalog,
 		cnStore:      stores.ContractNegotiationStore,
 		urn:          plugins.URNService,

@@ -26,6 +26,6 @@ func loadConfig(log pkg.Log) boot.Config {
 		log.Error(fmt.Sprintf("could not fetch current working directory - %s", err))
 	}
 
-	log.Info(fmt.Sprintf("loaded configuration from %s", pwd+configFile))
+	log.Info("loaded configuration values", `file: `+pwd+configFile)
 	return c
 }
