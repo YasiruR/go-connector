@@ -41,7 +41,7 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	}
 
 	// endpoints related to catalog
-	r.HandleFunc(catalog.CreatePolicyEndpoint, s.ch.CreateOffer).Methods(http.MethodPost)
+	r.HandleFunc(catalog.CreatePolicyEndpoint, s.ch.CreatePolicy).Methods(http.MethodPost)
 	r.HandleFunc(catalog.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)

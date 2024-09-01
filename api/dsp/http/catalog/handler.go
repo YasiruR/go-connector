@@ -31,7 +31,8 @@ func (h *Handler) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
 
 	cat, err := h.provider.HandleCatalogRequest(nil)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, catalog.RequestEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, catalog.RequestEndpoint, err),
+			http.StatusInternalServerError)
 		return
 	}
 

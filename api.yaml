@@ -1,0 +1,261 @@
+openapi: 3.0.0
+info:
+  title: Ceit Connector
+  description: A connector framework in Golang based on IDSA standards
+  version: 0.0.1
+servers:
+  - url: http://localhost:8080
+    description: dev server
+paths:
+  /gateway/create-policy:
+    post:
+      tags:
+        - Gateway API - Catalog
+      summary: Creates a policy
+      description: Supported only by providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target:
+                  type: string
+                  description: ID of the dataset associated with the policy
+                permissions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/rule'
+                prohibitions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/rule'
+                obligations:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/rule'
+      responses:
+        '200':
+          description: Returns ID of the created policy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policyId:
+                    type: string
+                    format: uuid
+                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        '400':
+          description: Invalid request body for policy
+        '500':
+          description: Internal error (e.g. generation of policy UUID failed)
+        default:
+          description: Unexpected error
+  /gateway/create-dataset:
+    post:
+      tags:
+        - Gateway API - Catalog
+      summary: Creates a dataset
+      description: Supported only by provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Title of the dataset
+                description:
+                  type: array
+                  items:
+                    type: string
+                endpoints:
+                  type: array
+                  items:
+                    type: string
+                    description: Endpoints of data sources that provide the dataset
+                    example: http://provider.com/datasource
+                offerIds:
+                  type: array
+                  description: Valid IDs of policies created by the provider
+                  items:
+                    type: string
+                    format: uuid
+                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                  minItems: 1
+                keywords:
+                  type: array
+                  items:
+                    type: string
+                    description: Keywords relevant to the dataset
+                format:
+                  type: string
+                  enum:
+                    - HTTP_PULL
+                    - HTTP_PUSH
+      responses:
+        '200':
+          description: Returns ID of the created dataset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datasetId:
+                    type: string
+                    format: uuid
+                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        '400':
+          description: Invalid request body for creating a dataset
+        '500':
+          description: Invalid policy ID or internal error (e.g. generation of UUID failed)
+  /gateway/request-catalog:
+    post:
+      tags:
+        - Gateway API - Catalog
+      summary: Requests the catalog from a provider
+      description: Once requested by the consumer, the catalog will be stored in the consumer's connector
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                providerEndpoint:
+                  type: string
+                  description: Endpoint of the provider's connector
+                  example: http://provider.com/connector
+      responses:
+        '200':
+          description: Returns catalog of the requested provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/catalog'
+        '400':
+          description: Invalid body for requesting a catalog
+        '500':
+          description: Internal error (e.g. marshalling failed) or transport error
+  /gateway/request-dataset:
+    post:
+      tags:
+        - Gateway API - Catalog
+      summary: Requests a specific dataset from a provider
+      description: Supported only by consumer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                datasetId:
+                  type: string
+                  format: uuid
+                  description: ID of the dataset
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                providerEndpoint:
+                  type: string
+                  description: Endpoint of the provider's connector
+                  example: http://provider.com/connector
+      responses:
+        '200':
+          description: Returns the requested dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dataset'
+        '400':
+          description: Invalid body for requesting a dataset
+        '500':
+          description: Internal error (e.g. marshalling failed) or transport error
+  /gateway/catalogs:
+    get:
+      tags:
+        - Gateway API - Catalog
+      summary: Returns the stored catalogs fetched from providers
+      description: Supported only by consumer
+      responses:
+        '200':
+          description: Returns catalogs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/catalog'
+        '500':
+          description: Internal error (e.g. database query failed)
+  /catalog/request:
+    post:
+      tags:
+        - DSP API - Catalog
+      summary: Returns the catalog
+      description: Supported only by provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:CatalogRequestMessage
+                "dspace:filter":
+                  type: array
+                  items:
+                    type: string
+                    description: Filters are optional and implementation-specific
+      responses:
+        '200':
+          description: Returns the catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/catalog'
+        '400':
+          description: Invalid body for requesting catalog
+        '500':
+          description: Internal error (e.g. querying catalog failed)
+
+
+
+components:
+  schemas:
+    rule:
+      type: object
+      properties:
+        action:
+          type: string
+          description: Operation that can be exercised on an asset
+        constraints:
+          type: array
+          items:
+            $ref: '#/components/schemas/constraint'
+    constraint:
+      type: object
+      properties:
+        leftOperand:
+          type: string
+        operator:
+          type: string
+        rightOperand:
+          type: string
+    catalog:
+      type: object
+    dataset:
+      type: object
+
+
+
+

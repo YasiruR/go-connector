@@ -52,7 +52,7 @@ func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.R
 
 // CreateDataset currently supports only one data distribution per a dataset
 func (s *Service) CreateDataset(title, format string, descriptions, keywords, endpoints, offerIds []string) (dsId string, err error) {
-	// construct policies (handle policies than offers later)
+	// construct policies
 	var ofrs []odrl.Offer
 	for _, ofrId := range offerIds {
 		ofr, err := s.ofrStore.Offer(ofrId)
@@ -105,8 +105,8 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 	}
 
 	if len(ofrs) == 0 {
-		s.log.Trace(fmt.Sprintf(`no policy offers associated with the dataset (dataset Id: %s, offer Ids: %s)`,
-			dsId, offerIds))
+		s.log.Trace(fmt.Sprintf(`no policy offers associated with the dataset 
+			(dataset Id: %s, offer Ids: %s)`, dsId, offerIds))
 	}
 
 	ds := dcat.Dataset{

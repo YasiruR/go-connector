@@ -28,7 +28,7 @@ func NewHandler(roles domain.Roles, stores domain.Stores, log pkg.Log) *Handler 
 	}
 }
 
-func (h *Handler) CreateOffer(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	var req catalog.CreatePolicyRequest
 	if err := middleware.ParseRequest(r, &req); err != nil {
 		middleware.WriteError(w, errors.ParseRequestFailed(catalog.CreatePolicyEndpoint, err), http.StatusBadRequest)
@@ -50,7 +50,8 @@ func (h *Handler) CreateOffer(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.owner.CreatePolicy(req.Target, perms, []odrl.Rule{})
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err),
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -66,7 +67,8 @@ func (h *Handler) CreateDataset(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.owner.CreateDataset(req.Title, req.Format, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err),
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -82,7 +84,8 @@ func (h *Handler) RequestCatalog(w http.ResponseWriter, r *http.Request) {
 
 	cat, err := h.consumer.RequestCatalog(req.ProviderEndpoint)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err),
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -98,7 +101,8 @@ func (h *Handler) RequestDataset(w http.ResponseWriter, r *http.Request) {
 
 	ds, err := h.consumer.RequestDataset(req.DatasetId, req.ProviderEndpoint)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err),
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -108,7 +112,8 @@ func (h *Handler) RequestDataset(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetStoredCatalogs(w http.ResponseWriter, _ *http.Request) {
 	cats, err := h.consCatalog.AllCatalogs()
 	if err != nil {
-		middleware.WriteError(w, errors.StoreFailed(stores.TypeConsumerCatalog, `AllCatalogs`, err), http.StatusInternalServerError)
+		middleware.WriteError(w, errors.StoreFailed(stores.TypeConsumerCatalog, `AllCatalogs`, err),
+			http.StatusInternalServerError)
 		return
 	}
 

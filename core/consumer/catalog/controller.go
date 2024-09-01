@@ -43,7 +43,7 @@ func (c *Controller) RequestCatalog(endpoint string) (catalog.Response, error) {
 	}
 
 	c.catalog.AddCatalog(cat)
-	c.log.Trace("stored the requested catalog", cat)
+	c.log.Trace("stored the requested catalog", cat.ID)
 	return cat, nil
 }
 
