@@ -11,6 +11,7 @@ import (
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 	"strconv"
 )
@@ -37,7 +38,9 @@ func NewController(config boot.Config, stores domain.Stores, plugins domain.Plug
 	}
 }
 
-func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string, constraints map[string]string) (cnId string, err error) {
+func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string,
+	constraints map[string]string) (cnId string, err error) {
+
 	var providerPid, endpoint string
 	if consumerPid != `` {
 		cn, err := c.cnStore.Negotiation(consumerPid)
@@ -46,7 +49,8 @@ func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string, 
 		}
 
 		if cn.State != negotiation.StateOffered {
-			return ``, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
+			return ``, ror.IncompatibleState(core.NegotiationProtocol,
+				string(negotiation.StateOffered), string(cn.State))
 		}
 
 		// if provider's address is not provided, use the stored one. If provided, it will override
@@ -73,7 +77,7 @@ func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string, 
 	// fetch offer from store
 	ofr, err := c.setConstraints(offerId, constraints)
 	if err != nil {
-		return ``, errors.CustomFuncError(`setConstraints`, err)
+		return ``, ror.CustomFuncError(`setConstraints`, err)
 	}
 
 	c.cnStore.SetParticipants(consumerPid, providerAddr, ofr.Assigner, ofr.Assignee)
@@ -88,19 +92,20 @@ func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string, 
 
 	ack, err := c.send(consumerPid, endpoint, req)
 	if err != nil {
-		return ``, errors.CustomFuncError(`send`, err)
+		return ``, ror.CustomFuncError(`send`, err)
 	}
 
 	if !c.validAck(consumerPid, ack, negotiation.StateRequested) {
-		return ``, errors.InvalidAck(`ContractRequest`, ack)
+		return ``, ror.InvalidAck(`ContractRequest`, ``, ack)
 	}
 
 	ack.Type = negotiation.MsgTypeNegotiation
 	c.cnStore.AddNegotiation(consumerPid, negotiation.Negotiation(ack))
 
-	c.log.Trace(fmt.Sprintf("consumer stored contract negotiation (id: %s, assigner: %s, assignee: %s, address: %s)",
-		consumerPid, ofr.Assigner, ofr.Assignee, providerAddr))
-	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateRequested))
+	c.log.Trace(fmt.Sprintf("consumer stored contract negotiation (id: %s, assigner: %s, "+
+		"assignee: %s, address: %s)", consumerPid, ofr.Assigner, ofr.Assignee, providerAddr))
+	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)",
+		consumerPid, negotiation.StateRequested))
 	return consumerPid, nil
 }
 
@@ -111,7 +116,7 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 	}
 
 	if cn.State != negotiation.StateOffered {
-		return errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
+		return ror.IncompatibleState(core.NegotiationProtocol, string(cn.State), string(negotiation.StateOffered))
 	}
 
 	event := negotiation.ContractNegotiationEvent{
@@ -123,14 +128,15 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 	}
 
 	if _, err = c.send(consumerPid, api.SetParamPid(negotiation.EventsEndpoint, cn.ProvPId), event); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateAccepted); err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateAccepted))
+	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)",
+		consumerPid, negotiation.StateAccepted))
 	return nil
 }
 
@@ -141,7 +147,7 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 	}
 
 	if cn.State != negotiation.StateAgreed {
-		return errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateAgreed))
+		return ror.IncompatibleState(core.NegotiationProtocol, string(cn.State), string(negotiation.StateAgreed))
 	}
 
 	req := negotiation.ContractVerification{
@@ -151,15 +157,17 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		ConsPId: consumerPid,
 	}
 
-	if _, err = c.send(consumerPid, api.SetParamProviderPid(negotiation.AgreementVerificationEndpoint, cn.ProvPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+	if _, err = c.send(consumerPid, api.SetParamProviderPid(negotiation.AgreementVerificationEndpoint,
+		cn.ProvPId), req); err != nil {
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {
 		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
-	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)", consumerPid, negotiation.StateVerified))
+	c.log.Debug(fmt.Sprintf("consumer controller updated negotiation state (id: %s, state: %s)",
+		consumerPid, negotiation.StateVerified))
 	return nil
 }
 
@@ -187,7 +195,7 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 	}
 
 	if _, err = c.send(consumerPid, api.SetParamPid(negotiation.TerminateEndpoint, cn.ProvPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	// clear all store entries for the contract negotiation
@@ -235,7 +243,7 @@ func (c *Controller) setConstraints(offerId string, vals map[string]string) (odr
 		for _, cons := range perm.Constraints {
 			val, ok := vals[cons.LeftOperand]
 			if !ok {
-				return odrl.Offer{}, errors.MissingRequiredAttr(cons.LeftOperand, `mandatory constraint`)
+				return odrl.Offer{}, ror.MissingRequiredAttr(cons.LeftOperand, `mandatory constraint`)
 			}
 			cons.RightOperand = val
 			consList = append(consList, cons)

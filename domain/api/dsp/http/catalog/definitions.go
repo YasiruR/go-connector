@@ -1,5 +1,7 @@
 package catalog
 
+import "github.com/YasiruR/connector/domain/api"
+
 // Message types
 const (
 	MsgTypRequest        = `dspace:CatalogRequestMessage`
@@ -9,5 +11,5 @@ const (
 // Endpoints
 const (
 	RequestEndpoint        = `/catalog/request`
-	RequestDatasetEndpoint = `/catalog/datasets`
+	RequestDatasetEndpoint = `/catalog/datasets{` + api.ParamPid + `}`
 )

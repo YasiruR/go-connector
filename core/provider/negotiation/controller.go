@@ -10,6 +10,7 @@ import (
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 	"strconv"
 	"time"
@@ -53,7 +54,8 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 		}
 
 		if cn.State != negotiation.StateRequested {
-			return ``, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateRequested))
+			return ``, ror.IncompatibleState(core.NegotiationProtocol, string(cn.State),
+				string(negotiation.StateRequested))
 		}
 
 		assignee, err := c.cnStore.Assignee(providerPid)
@@ -76,7 +78,8 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 		c.log.Trace(fmt.Sprintf("found an existing contract negotiation for the request (id: %s)", providerPid))
 	} else {
 		if consumerAddr == `` {
-			return ``, errors.MissingRequiredAttr(`consumer address`, `must be provided when Provider is the initiator`)
+			return ``, ror.MissingRequiredAttr(`consumer address`,
+				`must be provided when Provider is the initiator`)
 		}
 
 		providerPid, err = c.urn.NewURN()
@@ -99,11 +102,11 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 
 	ack, err := c.send(providerPid, endpoint, req)
 	if err != nil {
-		return ``, errors.CustomFuncError(`send`, err)
+		return ``, ror.CustomFuncError(`send`, err)
 	}
 
 	if !c.validAck(providerPid, ack, negotiation.StateOffered) {
-		return ``, errors.InvalidAck(`ContractOffer`, ack)
+		return ``, ror.InvalidAck(`ContractOffer`, ``, ack)
 	}
 
 	ack.Type = negotiation.MsgTypeNegotiation
@@ -120,7 +123,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 	}
 
 	if cn.State != negotiation.StateRequested && cn.State != negotiation.StateAccepted {
-		return ``, errors.IncompatibleValues(`state`, string(cn.State),
+		return ``, ror.IncompatibleState(core.NegotiationProtocol, string(cn.State),
 			string(negotiation.StateRequested)+" or "+string(negotiation.StateAccepted))
 	}
 
@@ -159,7 +162,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 
 	if _, err = c.send(providerPid, api.SetParamConsumerPid(negotiation.ContractAgreementEndpoint,
 		cn.ConsPId), req); err != nil {
-		return ``, errors.CustomFuncError(`send`, err)
+		return ``, ror.CustomFuncError(`send`, err)
 	}
 
 	c.agrStore.AddAgreement(req.Agreement.Id, req.Agreement)
@@ -182,7 +185,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 	}
 
 	if cn.State != negotiation.StateVerified {
-		return errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateVerified))
+		return ror.IncompatibleState(core.NegotiationProtocol, string(cn.State), string(negotiation.StateVerified))
 	}
 
 	event := negotiation.ContractNegotiationEvent{
@@ -194,7 +197,7 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 	}
 
 	if _, err = c.send(providerPid, api.SetParamPid(negotiation.EventsEndpoint, cn.ConsPId), event); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.cnStore.UpdateState(providerPid, negotiation.StateFinalized); err != nil {

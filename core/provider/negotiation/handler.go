@@ -9,6 +9,7 @@ import (
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 )
 
@@ -51,11 +52,11 @@ func (h *Handler) HandleContractRequest(cr negotiation.ContractRequest) (ack neg
 		}
 
 		if cn.State != negotiation.StateOffered {
-			return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
+			return negotiation.Ack{}, ror.IncompatibleState(core.NegotiationProtocol, string(cn.State), string(negotiation.StateOffered))
 		}
 
 		if cn.ConsPId != cr.ConsPId {
-			return negotiation.Ack{}, errors.IncompatibleValues(`consumerPid`, cn.ConsPId, cr.ConsPId)
+			return negotiation.Ack{}, ror.IncompatibleValues(`consumerPid`, cn.ConsPId, cr.ConsPId)
 		}
 
 		cn.State = negotiation.StateRequested
@@ -107,7 +108,8 @@ func (h *Handler) HandleAcceptOffer(e negotiation.ContractNegotiationEvent) (neg
 	}
 
 	if cn.State != negotiation.StateOffered {
-		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateOffered))
+		return negotiation.Ack{}, ror.IncompatibleState(core.NegotiationProtocol, string(cn.State),
+			string(negotiation.StateOffered))
 	}
 
 	if err = h.cnStore.UpdateState(e.ProvPId, negotiation.StateAccepted); err != nil {
@@ -130,7 +132,8 @@ func (h *Handler) HandleAgreementVerification(cv negotiation.ContractVerificatio
 	}
 
 	if cn.State != negotiation.StateAgreed {
-		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateAgreed))
+		return negotiation.Ack{}, ror.IncompatibleState(core.NegotiationProtocol, string(cn.State),
+			string(negotiation.StateAgreed))
 	}
 
 	if err = h.cnStore.UpdateState(cv.ProvPId, negotiation.StateVerified); err != nil {

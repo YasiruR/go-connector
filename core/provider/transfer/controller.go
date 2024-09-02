@@ -9,6 +9,7 @@ import (
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 )
 
@@ -33,7 +34,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 	}
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateSuspended {
-		return errors.IncompatibleValues(`state`, string(tp.State),
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State),
 			string(transfer.StateRequested)+" or "+string(transfer.StateSuspended))
 	}
 
@@ -46,7 +47,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 
 	if tp.Type == transfer.HTTPPull {
 		if sourceEndpoint == `` {
-			return errors.MissingRequiredAttr(`sourceEndpoint`, `mandatory for pull transfers`)
+			return ror.MissingRequiredAttr(`source endpoint`, `mandatory for pull transfers`)
 		}
 		req.Address = transfer.Address{
 			Type:               transfer.MsgTypeDataAddress,
@@ -57,7 +58,7 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 	}
 
 	if err = c.send(tpId, api.SetParamPid(transfer.StartEndpoint, tp.ConsPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateStarted); err != nil {
@@ -78,7 +79,7 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 	// validate tp
 
 	if tp.State != transfer.StateStarted {
-		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
 	}
 
 	req := transfer.SuspendRequest{
@@ -91,7 +92,7 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 	}
 
 	if err = c.send(tpId, api.SetParamPid(transfer.SuspendEndpoint, tp.ConsPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateSuspended); err != nil {
@@ -112,7 +113,7 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	// validate tp
 
 	if tp.State != transfer.StateStarted {
-		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
 	}
 
 	req := transfer.CompleteRequest{
@@ -123,7 +124,7 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	}
 
 	if err = c.send(tpId, api.SetParamPid(transfer.CompleteEndpoint, tp.ConsPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateCompleted); err != nil {
@@ -143,7 +144,7 @@ func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{})
 	// validate tp
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
-		return errors.IncompatibleValues(`state`, string(tp.State),
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State),
 			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
 	}
 
@@ -157,7 +158,7 @@ func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{})
 	}
 
 	if err = c.send(tpId, api.SetParamPid(transfer.TerminateEndpoint, tp.ConsPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateTerminated); err != nil {

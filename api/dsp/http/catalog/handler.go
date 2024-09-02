@@ -6,6 +6,7 @@ import (
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/pkg/middleware"
 	"net/http"
 )
@@ -31,7 +32,7 @@ func (h *Handler) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
 
 	cat, err := h.provider.HandleCatalogRequest(nil)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, catalog.RequestEndpoint, err),
+		middleware.WriteError(w, ror.DSPHandlerFailed(core.RoleProvider, catalog.RequestEndpoint, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -48,7 +49,8 @@ func (h *Handler) HandleDatasetRequest(w http.ResponseWriter, r *http.Request) {
 
 	ds, err := h.provider.HandleDatasetRequest(req.DatasetId)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, catalog.RequestDatasetEndpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, ror.DSPHandlerFailed(core.RoleProvider, catalog.RequestDatasetEndpoint, err),
+			http.StatusBadRequest)
 		return
 	}
 

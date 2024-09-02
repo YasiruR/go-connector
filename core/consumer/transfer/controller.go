@@ -9,6 +9,7 @@ import (
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 	"strconv"
 )
@@ -39,7 +40,7 @@ func (c *Controller) GetProviderProcess(tpId string) (transfer.Process, error) {
 
 	ack, err := c.send(tpId, api.SetParamProviderPid(transfer.GetProcessEndpoint, tp.ProvPId), nil)
 	if err != nil {
-		return transfer.Process{}, errors.CustomFuncError(`send`, err)
+		return transfer.Process{}, ror.CustomFuncError(`send`, err)
 	}
 
 	return transfer.Process(ack), nil
@@ -66,7 +67,7 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
 
 	if typ == transfer.HTTPPush {
 		if sinkEndpoint == `` {
-			return ``, errors.MissingRequiredAttr(`sinkEndpoint`, `mandatory for push transfers`)
+			return ``, ror.MissingRequiredAttr(`sink endpoint`, `mandatory for push transfers`)
 		}
 
 		req.Address = transfer.Address{
@@ -80,7 +81,7 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
 	c.tpStore.SetCallbackAddr(tpId, providerEndpoint)
 	ack, err := c.send(tpId, transfer.RequestEndpoint, req)
 	if err != nil {
-		return ``, errors.CustomFuncError(`send`, err)
+		return ``, ror.CustomFuncError(`send`, err)
 	}
 
 	c.tpStore.AddProcess(tpId, transfer.Process(ack))
@@ -99,7 +100,7 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 	// validate tp
 
 	if tp.State != transfer.StateStarted {
-		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
 	}
 
 	req := transfer.SuspendRequest{
@@ -112,7 +113,7 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 	}
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.SuspendEndpoint, tp.ProvPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateSuspended); err != nil {
@@ -133,7 +134,7 @@ func (c *Controller) StartTransfer(tpId string) error {
 	// validate tp
 
 	if tp.State != transfer.StateSuspended {
-		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateSuspended))
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateSuspended))
 	}
 
 	req := transfer.StartRequest{
@@ -145,7 +146,7 @@ func (c *Controller) StartTransfer(tpId string) error {
 	// check if it needs to provide the data address as well
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.StartEndpoint, tp.ProvPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateStarted); err != nil {
@@ -166,7 +167,7 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	// validate tp
 
 	if tp.State != transfer.StateStarted {
-		return errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
 	}
 
 	req := transfer.CompleteRequest{
@@ -177,7 +178,7 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	}
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.CompleteEndpoint, tp.ProvPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateCompleted); err != nil {
@@ -195,7 +196,7 @@ func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{})
 	}
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
-		return errors.IncompatibleValues(`state`, string(tp.State),
+		return ror.IncompatibleState(core.TransferProtocol, string(tp.State),
 			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
 	}
 
@@ -209,7 +210,7 @@ func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{})
 	}
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.TerminateEndpoint, tp.ProvPId), req); err != nil {
-		return errors.CustomFuncError(`send`, err)
+		return ror.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateTerminated); err != nil {

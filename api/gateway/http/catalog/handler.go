@@ -7,6 +7,7 @@ import (
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 	"github.com/YasiruR/connector/pkg/middleware"
 	"net/http"
@@ -50,7 +51,7 @@ func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.owner.CreatePolicy(req.Target, perms, []odrl.Rule{})
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err),
+		middleware.WriteError(w, ror.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -67,7 +68,7 @@ func (h *Handler) CreateDataset(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.owner.CreateDataset(req.Title, req.Format, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err),
+		middleware.WriteError(w, ror.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -84,7 +85,7 @@ func (h *Handler) RequestCatalog(w http.ResponseWriter, r *http.Request) {
 
 	cat, err := h.consumer.RequestCatalog(req.ProviderEndpoint)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err),
+		middleware.WriteError(w, ror.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -101,7 +102,7 @@ func (h *Handler) RequestDataset(w http.ResponseWriter, r *http.Request) {
 
 	ds, err := h.consumer.RequestDataset(req.DatasetId, req.ProviderEndpoint)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err),
+		middleware.WriteError(w, ror.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err),
 			http.StatusInternalServerError)
 		return
 	}

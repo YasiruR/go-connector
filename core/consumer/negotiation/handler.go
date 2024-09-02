@@ -7,6 +7,7 @@ import (
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 )
 
@@ -36,11 +37,12 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 		}
 
 		if cn.State != negotiation.StateRequested {
-			return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State), string(negotiation.StateRequested))
+			return negotiation.Ack{}, ror.IncompatibleState(core.NegotiationProtocol, string(cn.State),
+				string(negotiation.StateRequested))
 		}
 
 		if co.ProvPId != cn.ProvPId {
-			return negotiation.Ack{}, errors.IncompatibleValues(`providerPid`, cn.ConsPId, co.ConsPId)
+			return negotiation.Ack{}, ror.IncompatibleValues(`providerPid`, co.ConsPId, cn.ConsPId)
 		}
 
 		h.log.Trace("a contract negotiation already exists for the contract offer", "id: "+co.ConsPId)
@@ -77,7 +79,7 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 	}
 
 	if cn.State != negotiation.StateRequested && cn.State != negotiation.StateAccepted {
-		return negotiation.Ack{}, errors.IncompatibleValues(`state`, string(cn.State),
+		return negotiation.Ack{}, ror.IncompatibleState(core.NegotiationProtocol, string(cn.State),
 			string(negotiation.StateRequested)+" or "+string(negotiation.StateAccepted))
 	}
 

@@ -2,8 +2,11 @@ package middleware
 
 import (
 	"encoding/json"
+	defaultErr "errors"
+	"fmt"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/tryfix/log"
 	"io"
 	"net/http"
@@ -57,6 +60,14 @@ func WriteAck(w http.ResponseWriter, data any, statusCode int) {
 }
 
 func WriteError(w http.ResponseWriter, err error, statusCode int) {
+	var ce *ror.ClientError
+	if defaultErr.As(err, &ce) {
+		// write error msg and code
+		fmt.Println()
+		fmt.Println("MSSSSGGG: ", ce.Code, ce.Msg)
+		fmt.Println()
+	}
+
 	w.WriteHeader(statusCode)
 	logger.Error(err)
 }

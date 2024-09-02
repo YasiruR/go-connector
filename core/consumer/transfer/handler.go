@@ -3,8 +3,10 @@ package transfer
 import (
 	"fmt"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
+	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 )
 
@@ -26,7 +28,7 @@ func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, e
 	// validate if received details are compatible with existing TP
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateSuspended {
-		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State),
+		return transfer.Ack{}, ror.IncompatibleState(core.TransferProtocol, string(tp.State),
 			string(transfer.StateRequested)+" or "+string(transfer.StateSuspended))
 	}
 
@@ -46,7 +48,8 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 	}
 
 	if tp.State != transfer.StateStarted {
-		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State), string(transfer.StateStarted))
+		return transfer.Ack{}, ror.IncompatibleState(core.TransferProtocol, string(tp.State),
+			string(transfer.StateStarted))
 	}
 
 	if err := h.tpStore.UpdateState(sr.ConsPId, transfer.StateSuspended); err != nil {
@@ -80,7 +83,7 @@ func (h *Handler) HandleTransferTermination(tr transfer.TerminateRequest) (trans
 	}
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
-		return transfer.Ack{}, errors.IncompatibleValues(`state`, string(tp.State),
+		return transfer.Ack{}, ror.IncompatibleState(core.TransferProtocol, string(tp.State),
 			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
 	}
 
