@@ -33,6 +33,7 @@ const (
 	MsgTypeAgreementVerification = `dspace:ContractAgreementVerificationMessage`
 	MsgTypeNegotiationEvent      = `dspace:ContractNegotiationEventMessage`
 	MsgTypeTermination           = `dspace:ContractNegotiationTerminationMessage`
+	MsgTypeError                 = `dspace:ContractNegotiationError`
 )
 
 // Provider endpoints

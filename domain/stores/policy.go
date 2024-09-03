@@ -20,5 +20,5 @@ type AgreementStore interface {
 	AddAgreement(id string, val odrl.Agreement)
 	// Agreement retrieves contract agreement by agreement ID
 	Agreement(id string) (odrl.Agreement, error)
-	AgreementByNegotiationID(cnId string) (odrl.Agreement, error)
+	//AgreementByNegotiationID(cnId string) (odrl.Agreement, error)
 }

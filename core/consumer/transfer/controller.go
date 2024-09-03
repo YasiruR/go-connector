@@ -2,14 +2,15 @@ package transfer
 
 import (
 	"encoding/json"
+	defaultErr "errors"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/core"
-	"github.com/YasiruR/connector/domain/errors"
+	coreErr "github.com/YasiruR/connector/domain/errors/core"
+	"github.com/YasiruR/connector/domain/errors/external"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 	"strconv"
 )
@@ -35,12 +36,15 @@ func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Cont
 func (c *Controller) GetProviderProcess(tpId string) (transfer.Process, error) {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return transfer.Process{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return transfer.Process{}, external.InvalidKeyError(stores.TypeTransfer, `transfer process id`, err)
+		}
+		return transfer.Process{}, coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	ack, err := c.send(tpId, api.SetParamProviderPid(transfer.GetProcessEndpoint, tp.ProvPId), nil)
 	if err != nil {
-		return transfer.Process{}, ror.CustomFuncError(`send`, err)
+		return transfer.Process{}, coreErr.CustomFuncError(`send`, err)
 	}
 
 	return transfer.Process(ack), nil
@@ -53,7 +57,7 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
 
 	tpId, err = c.urn.NewURN()
 	if err != nil {
-		return ``, errors.PkgFailed(pkg.TypeURN, `New`, err)
+		return ``, coreErr.NewURNFailed(`transfer process id`, err)
 	}
 
 	req := transfer.Request{
@@ -67,7 +71,7 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
 
 	if typ == transfer.HTTPPush {
 		if sinkEndpoint == `` {
-			return ``, ror.MissingRequiredAttr(`sink endpoint`, `mandatory for push transfers`)
+			return ``, external.MissingAttrError(`sink endpoint`, `mandatory for push transfers`)
 		}
 
 		req.Address = transfer.Address{
@@ -81,7 +85,7 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
 	c.tpStore.SetCallbackAddr(tpId, providerEndpoint)
 	ack, err := c.send(tpId, transfer.RequestEndpoint, req)
 	if err != nil {
-		return ``, ror.CustomFuncError(`send`, err)
+		return ``, coreErr.CustomFuncError(`send`, err)
 	}
 
 	c.tpStore.AddProcess(tpId, transfer.Process(ack))
@@ -94,13 +98,16 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
 func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) error {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return external.InvalidKeyError(stores.TypeTransfer, `transfer process id`, err)
+		}
+		return coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	// validate tp
 
 	if tp.State != transfer.StateStarted {
-		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
+		return external.StateError(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
 	}
 
 	req := transfer.SuspendRequest{
@@ -113,11 +120,11 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 	}
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.SuspendEndpoint, tp.ProvPId), req); err != nil {
-		return ror.CustomFuncError(`send`, err)
+		return coreErr.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateSuspended); err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	c.log.Debug(fmt.Sprintf("consumer controller updated transfer process state (id: %s, state: %s)",
@@ -128,13 +135,16 @@ func (c *Controller) SuspendTransfer(tpId, code string, reasons []interface{}) e
 func (c *Controller) StartTransfer(tpId string) error {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return external.InvalidKeyError(stores.TypeTransfer, `transfer process id`, err)
+		}
+		return coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	// validate tp
 
 	if tp.State != transfer.StateSuspended {
-		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateSuspended))
+		return external.StateError(core.TransferProtocol, string(tp.State), string(transfer.StateSuspended))
 	}
 
 	req := transfer.StartRequest{
@@ -146,11 +156,11 @@ func (c *Controller) StartTransfer(tpId string) error {
 	// check if it needs to provide the data address as well
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.StartEndpoint, tp.ProvPId), req); err != nil {
-		return ror.CustomFuncError(`send`, err)
+		return coreErr.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateStarted); err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	c.log.Debug(fmt.Sprintf("consumer controller updated state of the suspended transfer process (id: %s, state: %s)",
@@ -161,13 +171,16 @@ func (c *Controller) StartTransfer(tpId string) error {
 func (c *Controller) CompleteTransfer(tpId string) error {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return external.InvalidKeyError(stores.TypeTransfer, `transfer process id`, err)
+		}
+		return coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	// validate tp
 
 	if tp.State != transfer.StateStarted {
-		return ror.IncompatibleState(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
+		return external.StateError(core.TransferProtocol, string(tp.State), string(transfer.StateStarted))
 	}
 
 	req := transfer.CompleteRequest{
@@ -178,11 +191,11 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 	}
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.CompleteEndpoint, tp.ProvPId), req); err != nil {
-		return ror.CustomFuncError(`send`, err)
+		return coreErr.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateCompleted); err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	c.log.Info(fmt.Sprintf("data exchange process completed successfully (id: %s)", tpId))
@@ -192,11 +205,14 @@ func (c *Controller) CompleteTransfer(tpId string) error {
 func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{}) error {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return external.InvalidKeyError(stores.TypeTransfer, `transfer process id`, err)
+		}
+		return coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
-		return ror.IncompatibleState(core.TransferProtocol, string(tp.State),
+		return external.StateError(core.TransferProtocol, string(tp.State),
 			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
 	}
 
@@ -210,11 +226,11 @@ func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{})
 	}
 
 	if _, err = c.send(tpId, api.SetParamPid(transfer.TerminateEndpoint, tp.ProvPId), req); err != nil {
-		return ror.CustomFuncError(`send`, err)
+		return coreErr.CustomFuncError(`send`, err)
 	}
 
 	if err = c.tpStore.UpdateState(tpId, transfer.StateTerminated); err != nil {
-		return errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	c.log.Info(fmt.Sprintf("terminated data exchange process (id: %s)", tpId))
@@ -224,25 +240,25 @@ func (c *Controller) TerminateTransfer(tpId, code string, reasons []interface{})
 func (c *Controller) send(tpId, endpoint string, req any) (transfer.Ack, error) {
 	providerAddr, err := c.tpStore.CallbackAddr(tpId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
 	}
 
 	var data []byte
 	if req != nil {
 		data, err = json.Marshal(req)
 		if err != nil {
-			return transfer.Ack{}, errors.MarshalError(transfer.CompleteEndpoint, err)
+			return transfer.Ack{}, external.MarshalError(``, err)
 		}
 	}
 
 	res, err := c.client.Send(data, providerAddr+endpoint)
 	if err != nil {
-		return transfer.Ack{}, errors.PkgFailed(pkg.TypeClient, `Send`, err)
+		return transfer.Ack{}, coreErr.ClientSendError(err)
 	}
 
 	var ack transfer.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return transfer.Ack{}, errors.UnmarshalError(transfer.CompleteEndpoint, err)
+		return transfer.Ack{}, external.UnmarshalError(`transfer ack`, err)
 	}
 
 	// validate ack

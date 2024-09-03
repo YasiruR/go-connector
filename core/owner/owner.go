@@ -1,10 +1,12 @@
 package owner
 
 import (
+	defaultErr "errors"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/boot"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
+	"github.com/YasiruR/connector/domain/errors/external"
 	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
@@ -32,7 +34,7 @@ func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Service
 func (s *Service) CreatePolicy(target string, permissions, prohibitions []odrl.Rule) (ofrId string, err error) {
 	ofrId, err = s.urn.NewURN()
 	if err != nil {
-		return ``, errors.URNFailed(`offerId`, `NewURN`, err)
+		return ``, core.NewURNFailed(`offer id`, err)
 	}
 
 	// handle other policy types
@@ -57,7 +59,10 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 	for _, ofrId := range offerIds {
 		ofr, err := s.ofrStore.Offer(ofrId)
 		if err != nil {
-			return ``, errors.StoreFailed(stores.TypeOffer, `Offer`, err)
+			if defaultErr.Is(err, core.TypeInvalidKey) {
+				return ``, external.InvalidKeyError(stores.TypeOffer, `offer id`, err)
+			}
+			return ``, core.StoreFailed(stores.TypeOffer, `Offer`, err)
 		}
 
 		ofr.Target = `` // since associated dataset id represents the target implicitly
@@ -69,7 +74,7 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 	for _, e := range endpoints {
 		accessServiceId, err := s.urn.NewURN()
 		if err != nil {
-			return ``, errors.URNFailed(`accessServiceId`, `NewURN`, err)
+			return ``, core.NewURNFailed(`access service id`, err)
 		}
 
 		svcList = append(svcList, dcat.AccessService{
@@ -88,7 +93,7 @@ func (s *Service) CreateDataset(title, format string, descriptions, keywords, en
 	// construct and store final dataset
 	dsId, err = s.urn.NewURN()
 	if err != nil {
-		return ``, errors.URNFailed(`datasetId`, `NewURN`, err)
+		return ``, core.NewURNFailed(`dataset id`, err)
 	}
 
 	var descs []dcat.Description

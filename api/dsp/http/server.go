@@ -8,7 +8,7 @@ import (
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -67,6 +67,6 @@ func NewServer(port int, roles domain.Roles, log pkg.Log) *Server {
 func (s *Server) Start() {
 	s.log.Info("DSP HTTP server is listening on " + strconv.Itoa(s.port))
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
-		s.log.Fatal(errors.InitModuleFailed(`DSP API`, err))
+		s.log.Fatal(core.ModuleInitFailed(`DSP API`, err))
 	}
 }

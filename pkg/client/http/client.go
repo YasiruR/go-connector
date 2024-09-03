@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/external"
 	"github.com/YasiruR/connector/domain/pkg"
 	"io"
 	"io/ioutil"
@@ -22,24 +22,24 @@ func NewClient(log pkg.Log) *Client {
 func (c *Client) Send(data []byte, destination any) (res []byte, err error) {
 	addr, ok := destination.(string)
 	if !ok {
-		return nil, errors.InvalidURL(destination)
+		return nil, external.URLStringError(destination)
 	}
 
 	var status int
 	if data == nil {
 		res, status, err = c.get(addr)
 		if err != nil {
-			return nil, errors.SendFailed(addr, http.MethodGet, err)
+			return nil, external.SendFailed(addr, http.MethodGet, err)
 		}
 	} else {
 		res, status, err = c.post(addr, data)
 		if err != nil {
-			return nil, errors.SendFailed(addr, http.MethodPost, err)
+			return nil, external.SendFailed(addr, http.MethodPost, err)
 		}
 	}
 
 	if status != http.StatusOK && status != http.StatusCreated {
-		return nil, errors.InvalidStatusCode(status)
+		return res, external.InvalidStatusCode(status)
 	}
 
 	return res, nil

@@ -8,7 +8,7 @@ import (
 	"github.com/YasiruR/connector/domain/api/gateway/http/catalog"
 	"github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
 	"github.com/YasiruR/connector/domain/api/gateway/http/transfer"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -71,6 +71,6 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 func (s *Server) Start() {
 	s.log.Info("gateway HTTP server is listening on " + strconv.Itoa(s.port))
 	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
-		s.log.Fatal(errors.InitModuleFailed(`gateway API`, err))
+		s.log.Fatal(core.ModuleInitFailed(`gateway API`, err))
 	}
 }

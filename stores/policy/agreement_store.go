@@ -2,7 +2,7 @@ package policy
 
 import (
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
 )
@@ -34,16 +34,25 @@ func (a *Agreement) setNegotiationId(cnId, agrId string) {
 func (a *Agreement) Agreement(id string) (odrl.Agreement, error) {
 	val, err := a.agrColl.Get(id)
 	if err != nil {
-		return odrl.Agreement{}, errors.QueryFailed(collAgreement, `Get`, err)
+		return odrl.Agreement{}, core.QueryFailed(collAgreement, `Get`, err)
 	}
+
+	if val == nil {
+		return odrl.Agreement{}, core.InvalidKey(id)
+	}
+
 	return val.(odrl.Agreement), nil
 }
 
-func (a *Agreement) AgreementByNegotiationID(cnId string) (odrl.Agreement, error) {
-	agrId, err := a.cnAgrMap.Get(cnId)
-	if err != nil {
-		return odrl.Agreement{}, errors.QueryFailed(collNegotiationAgreement, `Get`, err)
-	}
-
-	return a.Agreement(agrId.(string))
-}
+//func (a *Agreement) AgreementByNegotiationID(cnId string) (odrl.Agreement, error) {
+//	agrId, err := a.cnAgrMap.Get(cnId)
+//	if err != nil {
+//		return odrl.Agreement{}, errors.QueryFailed(collNegotiationAgreement, `Get`, err)
+//	}
+//
+//	if agrId == nil {
+//		return odrl.Agreement{}, errors.InvalidKey(cnId)
+//	}
+//
+//	return a.Agreement(agrId.(string))
+//}

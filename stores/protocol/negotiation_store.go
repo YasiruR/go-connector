@@ -3,7 +3,7 @@ package protocol
 import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
 )
@@ -40,15 +40,21 @@ func (cn *ContractNegotiation) AddNegotiation(cnId string, val negotiation.Negot
 func (cn *ContractNegotiation) Negotiation(cnId string) (negotiation.Negotiation, error) {
 	val, err := cn.negotiations.Get(cnId)
 	if err != nil {
-		return negotiation.Negotiation{}, errors.QueryFailed(collNegotiation, `Get`, err)
+		return negotiation.Negotiation{}, core.QueryFailed(collNegotiation, `Get`, err)
 	}
+
+	if val == nil {
+		return negotiation.Negotiation{}, core.InvalidKey(cnId)
+	}
+
 	return val.(negotiation.Negotiation), nil
 }
 
 func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) error {
 	neg, err := cn.Negotiation(cnId)
 	if err != nil {
-		return errors.QueryFailed(collNegotiation, `Get`, err)
+		// todo should I handle invalid key error here?
+		return core.QueryFailed(collNegotiation, `Get`, err)
 	}
 
 	//switch s {
@@ -89,7 +95,8 @@ func (cn *ContractNegotiation) UpdateState(cnId string, s negotiation.State) err
 func (cn *ContractNegotiation) State(cnId string) (negotiation.State, error) {
 	neg, err := cn.Negotiation(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(collNegotiation, `Get`, err)
+		// todo should I handle invalid key error here?
+		return ``, core.QueryFailed(collNegotiation, `Get`, err)
 	}
 	return neg.State, nil
 }
@@ -103,23 +110,38 @@ func (cn *ContractNegotiation) SetParticipants(cnId, callbackAddr string, assign
 func (cn *ContractNegotiation) Assignee(cnId string) (odrl.Assignee, error) {
 	val, err := cn.assignees.Get(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(collAssignee, `get`, err)
+		return ``, core.QueryFailed(collAssignee, `get`, err)
 	}
+
+	if val == nil {
+		return ``, core.InvalidKey(cnId)
+	}
+
 	return val.(odrl.Assignee), nil
 }
 
 func (cn *ContractNegotiation) Assigner(cnId string) (odrl.Assigner, error) {
 	val, err := cn.assigners.Get(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(collAssigner, `get`, err)
+		return ``, core.QueryFailed(collAssigner, `get`, err)
 	}
+
+	if val == nil {
+		return ``, core.InvalidKey(cnId)
+	}
+
 	return val.(odrl.Assigner), nil
 }
 
 func (cn *ContractNegotiation) CallbackAddr(cnId string) (string, error) {
 	addr, err := cn.callbackAddr.Get(cnId)
 	if err != nil {
-		return ``, errors.QueryFailed(collCallbackAddr, `get`, err)
+		return ``, core.QueryFailed(collCallbackAddr, `get`, err)
 	}
+
+	if addr == nil {
+		return ``, core.InvalidKey(cnId)
+	}
+
 	return addr.(string), nil
 }

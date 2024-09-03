@@ -3,7 +3,7 @@ package protocol
 import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/pkg"
 )
 
@@ -28,8 +28,13 @@ func (t *Transfer) AddProcess(tpId string, val transfer.Process) {
 func (t *Transfer) Process(id string) (transfer.Process, error) {
 	val, err := t.coll.Get(id)
 	if err != nil {
-		return transfer.Process{}, errors.QueryFailed(collTransfer, `Get`, err)
+		return transfer.Process{}, core.QueryFailed(collTransfer, `Get`, err)
 	}
+
+	if val == nil {
+		return transfer.Process{}, core.InvalidKey(id)
+	}
+
 	return val.(transfer.Process), nil
 }
 
@@ -40,15 +45,20 @@ func (t *Transfer) SetCallbackAddr(tpId, addr string) {
 func (t *Transfer) CallbackAddr(tpId string) (string, error) {
 	val, err := t.callbackAddr.Get(tpId)
 	if err != nil {
-		return ``, errors.QueryFailed(collCallbackAddr, `Get`, err)
+		return ``, core.QueryFailed(collCallbackAddr, `Get`, err)
 	}
+
+	if val == nil {
+		return ``, core.InvalidKey(tpId)
+	}
+
 	return val.(string), nil
 }
 
 func (t *Transfer) UpdateState(tpId string, s transfer.State) error {
 	process, err := t.Process(tpId)
 	if err != nil {
-		return errors.QueryFailed(collTransfer, `Process`, err)
+		return core.QueryFailed(collTransfer, `Process`, err)
 	}
 
 	process.State = s

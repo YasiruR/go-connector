@@ -5,7 +5,7 @@ import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/core"
-	"github.com/YasiruR/connector/domain/errors"
+	coreErr "github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/pkg"
 )
@@ -37,7 +37,7 @@ func NewProviderCatalog(cfg boot.Config, plugins domain.Plugins) *ProviderCatalo
 func (p *ProviderCatalog) init(cfg boot.Config) error {
 	catId, err := p.urn.NewURN()
 	if err != nil {
-		return errors.PkgFailed(pkg.TypeURN, `New`, err)
+		return coreErr.NewURNFailed(`catalog id`, err)
 	}
 
 	var kws []dcat.Keyword
@@ -54,7 +54,7 @@ func (p *ProviderCatalog) init(cfg boot.Config) error {
 	for _, e := range cfg.Catalog.AccessServices {
 		svcId, err := p.urn.NewURN()
 		if err != nil {
-			return errors.PkgFailed(pkg.TypeURN, `New`, err)
+			return coreErr.NewURNFailed(`service id`, err)
 		}
 
 		svcs = append(svcs, dcat.AccessService{
@@ -80,7 +80,7 @@ func (p *ProviderCatalog) init(cfg boot.Config) error {
 func (p *ProviderCatalog) Catalog() (dcat.Catalog, error) {
 	vals, err := p.coll.GetAll()
 	if err != nil {
-		return dcat.Catalog{}, errors.QueryFailed(collProviderCatalog, `GetAll`, err)
+		return dcat.Catalog{}, coreErr.QueryFailed(collProviderCatalog, `GetAll`, err)
 	}
 
 	var cat dcat.Catalog
@@ -100,7 +100,12 @@ func (p *ProviderCatalog) AddDataset(id string, val dcat.Dataset) {
 func (p *ProviderCatalog) Dataset(id string) (dcat.Dataset, error) {
 	val, err := p.coll.Get(id)
 	if err != nil {
-		return dcat.Dataset{}, errors.QueryFailed(collProviderCatalog, `Get`, err)
+		return dcat.Dataset{}, coreErr.QueryFailed(collProviderCatalog, `Get`, err)
 	}
+
+	if val == nil {
+		return dcat.Dataset{}, coreErr.InvalidKey(id)
+	}
+
 	return val.(dcat.Dataset), nil
 }

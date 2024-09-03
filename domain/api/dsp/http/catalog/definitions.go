@@ -6,10 +6,11 @@ import "github.com/YasiruR/connector/domain/api"
 const (
 	MsgTypRequest        = `dspace:CatalogRequestMessage`
 	MsgTypDatasetRequest = `dspace:DatasetRequestMessage`
+	MsgTypeError         = `dspace:CatalogError`
 )
 
 // Endpoints
 const (
 	RequestEndpoint        = `/catalog/request`
-	RequestDatasetEndpoint = `/catalog/datasets{` + api.ParamPid + `}`
+	RequestDatasetEndpoint = `/catalog/datasets/{` + api.ParamPid + `}`
 )

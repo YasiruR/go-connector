@@ -3,7 +3,7 @@ package catalog
 import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
 )
@@ -26,7 +26,11 @@ func (c *ConsumerCatalog) AddCatalog(res catalog.Response) {
 func (c *ConsumerCatalog) Catalog(providerId string) (catalog.Response, error) {
 	val, err := c.coll.Get(providerId)
 	if err != nil {
-		return catalog.Response{}, errors.QueryFailed(collConsumerCatalog, `Get`, err)
+		return catalog.Response{}, core.QueryFailed(collConsumerCatalog, `Get`, err)
+	}
+
+	if val == nil {
+		return catalog.Response{}, core.InvalidKey(providerId)
 	}
 
 	return val.(catalog.Response), nil
@@ -38,7 +42,7 @@ func (c *ConsumerCatalog) Offer(offerId string) (ofr odrl.Offer, err error) {
 	// - nested loops
 	cats, err := c.AllCatalogs()
 	if err != nil {
-		return odrl.Offer{}, errors.StoreFailed(collConsumerCatalog, `AllCatalogs`, err)
+		return odrl.Offer{}, core.StoreFailed(collConsumerCatalog, `AllCatalogs`, err)
 	}
 
 	for _, cat := range cats {
@@ -52,33 +56,13 @@ func (c *ConsumerCatalog) Offer(offerId string) (ofr odrl.Offer, err error) {
 		}
 	}
 
-	return odrl.Offer{}, errors.InvalidKey(offerId)
+	return odrl.Offer{}, core.InvalidKey(offerId)
 }
-
-//func (c *ConsumerCatalog) ConnectorEndpoints(providerId string) ([]string, error) {
-//	cat, err := c.Catalog(providerId)
-//	if err != nil {
-//		return nil, errors.StoreFailed(stores.TypeOffer, `Catalog`, err)
-//	}
-//
-//	var endpoints []string
-//	for _, svc := range cat.DcatService {
-//		if svc.EndpointDescription == core.ServiceConnector {
-//			endpoints = append(endpoints, svc.EndpointURL)
-//		}
-//	}
-//
-//	if len(endpoints) == 0 {
-//		return nil, fmt.Errorf(`no connector endpoints found for provider %s`, providerId)
-//	}
-//
-//	return endpoints, nil
-//}
 
 func (c *ConsumerCatalog) AllCatalogs() ([]catalog.Response, error) {
 	vals, err := c.coll.GetAll()
 	if err != nil {
-		return nil, errors.QueryFailed(collConsumerCatalog, `GetAll`, err)
+		return nil, core.QueryFailed(collConsumerCatalog, `GetAll`, err)
 	}
 
 	res := make([]catalog.Response, len(vals))

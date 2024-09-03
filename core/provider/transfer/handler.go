@@ -1,13 +1,14 @@
 package transfer
 
 import (
+	defaultErr "errors"
 	"fmt"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/connector/domain/core"
-	"github.com/YasiruR/connector/domain/errors"
+	coreErr "github.com/YasiruR/connector/domain/errors/core"
+	"github.com/YasiruR/connector/domain/errors/dsp"
 	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/ror"
 	"github.com/YasiruR/connector/domain/stores"
 )
 
@@ -30,7 +31,11 @@ func NewHandler(stores domain.Stores, plugins domain.Plugins) *Handler {
 func (h *Handler) HandleGetProcess(tpId string) (transfer.Ack, error) {
 	tp, err := h.tpStore.Process(tpId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeAgreement, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return transfer.Ack{}, dsp.TransferInvalidKey(tpId, ``,
+				stores.TypeTransfer, `transfer process id`, err)
+		}
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeAgreement, `Process`, err)
 	}
 
 	return transfer.Ack(tp), nil
@@ -40,12 +45,13 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 	// validate agreement
 	_, err := h.agrStore.Agreement(tr.AgreementId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeAgreement, `Agreement`, err)
+		return transfer.Ack{}, dsp.TransferInvalidKey(``, ``,
+			stores.TypeAgreement, `agreement id`, err)
 	}
 
 	tpId, err := h.urn.NewURN()
 	if err != nil {
-		return transfer.Ack{}, errors.PkgFailed(pkg.TypeURN, `New`, err)
+		return transfer.Ack{}, coreErr.NewURNFailed(`transfer process id`, err)
 	}
 
 	ack := transfer.Ack{
@@ -66,18 +72,21 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer.Ack, error) {
 	tp, err := h.tpStore.Process(sr.ProvPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return transfer.Ack{}, dsp.TransferInvalidKey(sr.ProvPId, sr.ConsPId,
+				stores.TypeTransfer, `transfer process id`, err)
+		}
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	// validate tp
 
 	if tp.State != transfer.StateStarted {
-		return transfer.Ack{}, ror.IncompatibleState(core.TransferProtocol, string(tp.State),
-			string(transfer.StateStarted))
+		return transfer.Ack{}, dsp.TransferStateError(tp.ProvPId, tp.ConsPId, `suspend transfer`, tp.State)
 	}
 
 	if err = h.tpStore.UpdateState(sr.ProvPId, transfer.StateSuspended); err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	tp.State = transfer.StateSuspended
@@ -89,38 +98,45 @@ func (h *Handler) HandleTransferSuspension(sr transfer.SuspendRequest) (transfer
 func (h *Handler) HandleTransferStart(sr transfer.StartRequest) (transfer.Ack, error) {
 	tp, err := h.tpStore.Process(sr.ProvPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return transfer.Ack{}, dsp.TransferInvalidKey(sr.ProvPId, sr.ConsPId,
+				stores.TypeTransfer, `transfer process id`, err)
+		}
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	// validate if received details are compatible with existing TP
 
 	if tp.State != transfer.StateSuspended {
-		return transfer.Ack{}, ror.IncompatibleState(core.TransferProtocol, string(tp.State),
-			string(transfer.StateSuspended))
+		return transfer.Ack{}, dsp.TransferStateError(tp.ProvPId, tp.ConsPId, `start transfer`, tp.State)
 	}
 
 	if err = h.tpStore.UpdateState(sr.ProvPId, transfer.StateStarted); err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	tp.State = transfer.StateStarted
-	h.log.Debug(fmt.Sprintf("provider handler updated transfer process (id: %s, state: %s)", sr.ProvPId, transfer.StateStarted))
+	h.log.Debug(fmt.Sprintf("provider handler updated transfer process (id: %s, state: %s)",
+		sr.ProvPId, transfer.StateStarted))
 	return transfer.Ack(tp), nil
 }
 
 func (h *Handler) HandleTransferCompletion(cr transfer.CompleteRequest) (transfer.Ack, error) {
 	tp, err := h.tpStore.Process(cr.ProvPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return transfer.Ack{}, dsp.TransferInvalidKey(cr.ProvPId, cr.ConsPId,
+				stores.TypeTransfer, `transfer process id`, err)
+		}
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	if tp.State != transfer.StateStarted {
-		return transfer.Ack{}, ror.IncompatibleState(core.TransferProtocol, string(tp.State),
-			string(transfer.StateStarted))
+		return transfer.Ack{}, dsp.TransferStateError(tp.ProvPId, tp.ConsPId, `complete transfer`, tp.State)
 	}
 
 	if err = h.tpStore.UpdateState(cr.ProvPId, transfer.StateCompleted); err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	tp.State = transfer.StateCompleted
@@ -131,16 +147,19 @@ func (h *Handler) HandleTransferCompletion(cr transfer.CompleteRequest) (transfe
 func (h *Handler) HandleTransferTermination(tr transfer.TerminateRequest) (transfer.Ack, error) {
 	tp, err := h.tpStore.Process(tr.ProvPId)
 	if err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `Process`, err)
+		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
+			return transfer.Ack{}, dsp.TransferInvalidKey(tr.ProvPId, tr.ConsPId,
+				stores.TypeTransfer, `transfer process id`, err)
+		}
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `Process`, err)
 	}
 
 	if tp.State != transfer.StateRequested && tp.State != transfer.StateStarted && tp.State != transfer.StateSuspended {
-		return transfer.Ack{}, ror.IncompatibleState(core.TransferProtocol, string(tp.State),
-			string(transfer.StateStarted)+" or "+string(transfer.StateStarted)+" or "+string(transfer.StateSuspended))
+		return transfer.Ack{}, dsp.TransferStateError(tp.ProvPId, tp.ConsPId, `terminate transfer`, tp.State)
 	}
 
 	if err = h.tpStore.UpdateState(tr.ProvPId, transfer.StateTerminated); err != nil {
-		return transfer.Ack{}, errors.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
+		return transfer.Ack{}, coreErr.StoreFailed(stores.TypeTransfer, `UpdateState`, err)
 	}
 
 	tp.State = transfer.StateTerminated

@@ -2,7 +2,7 @@ package policy
 
 import (
 	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/errors"
+	"github.com/YasiruR/connector/domain/errors/core"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
 )
@@ -24,7 +24,12 @@ func (o *OfferStore) AddOffer(id string, val odrl.Offer) {
 func (o *OfferStore) Offer(id string) (odrl.Offer, error) {
 	val, err := o.store.Get(id)
 	if err != nil {
-		return odrl.Offer{}, errors.QueryFailed(`policy`, `get`, err)
+		return odrl.Offer{}, core.QueryFailed(`policy`, `get`, err)
 	}
+
+	if val == nil {
+		return odrl.Offer{}, core.InvalidKey(id)
+	}
+
 	return val.(odrl.Offer), nil
 }

@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"sync"
 )
@@ -33,7 +32,7 @@ func (m *Map) Set(key string, value any) error {
 func (m *Map) Get(key string) (any, error) {
 	val, ok := m.data.Load(key)
 	if val == nil || !ok {
-		return nil, errors.InvalidKey(key)
+		return nil, nil
 	}
 
 	return val, nil
