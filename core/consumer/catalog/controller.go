@@ -5,9 +5,7 @@ import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/core"
-	coreErr "github.com/YasiruR/connector/domain/errors/core"
-	"github.com/YasiruR/connector/domain/errors/dsp"
-	"github.com/YasiruR/connector/domain/errors/external"
+	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
 )
@@ -31,22 +29,22 @@ func (c *Controller) RequestCatalog(endpoint string) (catalog.Response, error) {
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return catalog.Response{}, external.MarshalError(`catalog request`, err)
+		return catalog.Response{}, errors.Client(errors.MarshalError(`catalog request`, err))
 	}
 
 	res, err := c.client.Send(data, endpoint+catalog.RequestEndpoint)
 	if err != nil {
 		var catErr catalog.Error
 		if unmarshalErr := json.Unmarshal(res, &catErr); unmarshalErr != nil {
-			return catalog.Response{}, coreErr.ClientSendError(unmarshalErr)
+			return catalog.Response{}, errors.Client(errors.SendFailed(unmarshalErr))
 		}
 
-		return catalog.Response{}, dsp.NewCatalogError(catErr, err)
+		return catalog.Response{}, errors.Client(errors.ProtocolFailed(core.CatalogProtocol, catErr, err))
 	}
 
 	var cat catalog.Response
 	if err = json.Unmarshal(res, &cat); err != nil {
-		return catalog.Response{}, external.UnmarshalError(`catalog response`, err)
+		return catalog.Response{}, errors.Client(errors.UnmarshalError(`catalog response`, err))
 	}
 
 	c.catalog.AddCatalog(cat)
@@ -63,22 +61,22 @@ func (c *Controller) RequestDataset(id, endpoint string) (catalog.DatasetRespons
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return catalog.DatasetResponse{}, external.MarshalError(`dataset request`, err)
+		return catalog.DatasetResponse{}, errors.Client(errors.MarshalError(`dataset request`, err))
 	}
 
 	res, err := c.client.Send(data, endpoint+catalog.RequestDatasetEndpoint)
 	if err != nil {
 		var catErr catalog.Error
 		if unmarshalErr := json.Unmarshal(res, &catErr); unmarshalErr != nil {
-			return catalog.DatasetResponse{}, coreErr.ClientSendError(unmarshalErr)
+			return catalog.DatasetResponse{}, errors.Client(errors.SendFailed(unmarshalErr))
 		}
 
-		return catalog.DatasetResponse{}, dsp.NewCatalogError(catErr, err)
+		return catalog.DatasetResponse{}, errors.Client(errors.ProtocolFailed(core.CatalogProtocol, catErr, err))
 	}
 
 	var dataset catalog.DatasetResponse
 	if err = json.Unmarshal(res, &dataset); err != nil {
-		return catalog.DatasetResponse{}, external.UnmarshalError(`dataset response`, err)
+		return catalog.DatasetResponse{}, errors.Client(errors.UnmarshalError(`dataset response`, err))
 	}
 
 	return dataset, nil

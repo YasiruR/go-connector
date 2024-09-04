@@ -3,8 +3,7 @@ package catalog
 import (
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/core"
-	coreErr "github.com/YasiruR/connector/domain/errors/core"
-	"github.com/YasiruR/connector/domain/errors/dsp"
+	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
 )
@@ -28,7 +27,7 @@ func NewHandler(participantId string, cnStore stores.ProviderCatalog, log pkg.Lo
 func (h *Handler) HandleCatalogRequest(_ any) (catalog.Response, error) {
 	cat, err := h.catStore.Catalog()
 	if err != nil {
-		return catalog.Response{}, coreErr.StoreFailed(stores.TypeProviderCatalog, `Get`, err)
+		return catalog.Response{}, errors.StoreFailed(stores.TypeProviderCatalog, `Get`, err)
 	}
 
 	return catalog.Response{
@@ -41,7 +40,8 @@ func (h *Handler) HandleCatalogRequest(_ any) (catalog.Response, error) {
 func (h *Handler) HandleDatasetRequest(id string) (catalog.DatasetResponse, error) {
 	ds, err := h.catStore.Dataset(id)
 	if err != nil {
-		return catalog.DatasetResponse{}, dsp.CatalogInvalidKey(stores.TypeProviderCatalog, `dataset id`, err)
+		return catalog.DatasetResponse{}, errors.Catalog(errors.InvalidKey(
+			stores.TypeProviderCatalog, `dataset id`, err))
 	}
 
 	return catalog.DatasetResponse{

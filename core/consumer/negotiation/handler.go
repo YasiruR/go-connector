@@ -6,8 +6,7 @@ import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
-	coreErr "github.com/YasiruR/connector/domain/errors/core"
-	"github.com/YasiruR/connector/domain/errors/dsp"
+	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
 )
@@ -34,28 +33,28 @@ func (h *Handler) HandleContractOffer(co negotiation.ContractOffer) (ack negotia
 		// validate the given consumerPid
 		cn, err = h.cnStore.Negotiation(co.ConsPId)
 		if err != nil {
-			if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-				return negotiation.Ack{}, dsp.NegotiationInvalidKey(``, co.ConsPId,
-					stores.TypeContractNegotiation, `contract negotiation id`, err)
+			if defaultErr.Is(err, stores.TypeInvalidKey) {
+				return negotiation.Ack{}, errors.Negotiation(``, co.ConsPId,
+					errors.InvalidKey(stores.TypeContractNegotiation, `contract negotiation id`, err))
 			}
-			return negotiation.Ack{}, coreErr.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+			return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 		}
 
 		if co.ProvPId != cn.ProvPId {
-			return negotiation.Ack{}, dsp.NegotiationValError(cn.ProvPId, co.ConsPId,
-				`providerPid`, cn.ProvPId, co.ProvPId)
+			return negotiation.Ack{}, errors.Negotiation(cn.ProvPId, co.ConsPId,
+				errors.InvalidValue(`providerPid`, cn.ProvPId, co.ProvPId))
 		}
 
 		if cn.State != negotiation.StateRequested {
-			return negotiation.Ack{}, dsp.NegotiationStateError(co.ProvPId,
-				co.ConsPId, `offer contract`, cn.State)
+			return negotiation.Ack{}, errors.Negotiation(co.ProvPId, co.ConsPId,
+				errors.StateError(`offer contract`, string(cn.State)))
 		}
 
 		h.log.Trace("a contract negotiation already exists for the contract offer", "id: "+co.ConsPId)
 	} else {
 		consumerPid, err := h.urn.NewURN()
 		if err != nil {
-			return negotiation.Ack{}, coreErr.NewURNFailed(`contract negotiation id`, err)
+			return negotiation.Ack{}, errors.PkgError(pkg.TypeURN, `NewURN`, err, `contract negotiation id`)
 		}
 
 		cn.Ctx = core.Context
@@ -81,15 +80,16 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 
 	cn, err := h.cnStore.Negotiation(ca.ConsPId)
 	if err != nil {
-		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-			return negotiation.Ack{}, dsp.NegotiationInvalidKey(``, ca.ConsPId,
-				stores.TypeContractNegotiation, `contract negotiation id`, err)
+		if defaultErr.Is(err, stores.TypeInvalidKey) {
+			return negotiation.Ack{}, errors.Negotiation(``, ca.ConsPId,
+				errors.InvalidKey(stores.TypeContractNegotiation, `contract negotiation id`, err))
 		}
-		return negotiation.Ack{}, coreErr.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	if cn.State != negotiation.StateRequested && cn.State != negotiation.StateAccepted {
-		return negotiation.Ack{}, dsp.NegotiationStateError(ca.ProvPId, ca.ConsPId, `agree contract`, cn.State)
+		return negotiation.Ack{}, errors.Negotiation(ca.ProvPId, ca.ConsPId,
+			errors.StateError(`agree contract`, string(cn.State)))
 	}
 
 	h.agrStore.AddAgreement(ca.Agreement.Id, ca.Agreement)
@@ -97,7 +97,7 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 		ca.Agreement.Id, ca.ConsPId))
 
 	if err := h.cnStore.UpdateState(ca.ConsPId, negotiation.StateAgreed); err != nil {
-		return negotiation.Ack{}, coreErr.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
 	cn.Type = negotiation.MsgTypeNegotiationAck
@@ -108,16 +108,16 @@ func (h *Handler) HandleContractAgreement(ca negotiation.ContractAgreement) (neg
 
 func (h *Handler) HandleFinalizedEvent(e negotiation.ContractNegotiationEvent) (negotiation.Ack, error) {
 	if err := h.cnStore.UpdateState(e.ConsPId, negotiation.StateFinalized); err != nil {
-		return negotiation.Ack{}, coreErr.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
 	cn, err := h.cnStore.Negotiation(e.ConsPId)
 	if err != nil {
-		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-			return negotiation.Ack{}, dsp.NegotiationInvalidKey(``, e.ConsPId,
-				stores.TypeContractNegotiation, `contract negotiation id`, err)
+		if defaultErr.Is(err, stores.TypeInvalidKey) {
+			return negotiation.Ack{}, errors.Negotiation(``, e.ConsPId,
+				errors.InvalidKey(stores.TypeContractNegotiation, `contract negotiation id`, err))
 		}
-		return negotiation.Ack{}, coreErr.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	h.log.Info(fmt.Sprintf("consumer handler updated negotiation state (id: %s, state: %s)",

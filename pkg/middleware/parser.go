@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	defaultErr "errors"
 	"fmt"
-	"github.com/YasiruR/connector/domain/errors/core"
-	"github.com/YasiruR/connector/domain/errors/dsp"
-	"github.com/YasiruR/connector/domain/errors/external"
+	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
+	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
+	"github.com/YasiruR/connector/domain/core"
+	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	pkgLog "github.com/tryfix/log"
 	"io"
@@ -28,12 +30,12 @@ func ParseRequest(r *http.Request, val any) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		r.Body.Close()
-		return core.ReadBodyFailed(err)
+		return readBodyFailed(err)
 	}
 	defer r.Body.Close()
 
 	if err = json.Unmarshal(body, &val); err != nil {
-		return core.UnmarshalError(err)
+		return unmarshalError(err)
 	}
 
 	return nil
@@ -43,12 +45,12 @@ func WriteAck(w http.ResponseWriter, data any, statusCode int) error {
 	if data != nil {
 		body, err := json.Marshal(data)
 		if err != nil {
-			return core.WriteAckFailed(err)
+			return writeAckFailed(err)
 		}
 
 		w.WriteHeader(statusCode)
 		if _, err = w.Write(body); err != nil {
-			return core.WriteAckFailed(err)
+			return writeAckFailed(err)
 		}
 
 		return nil
@@ -59,41 +61,71 @@ func WriteAck(w http.ResponseWriter, data any, statusCode int) error {
 }
 
 func WriteError(w http.ResponseWriter, err error, statusCode int) {
-	var ge external.GatewayError
-	var ce dsp.CatalogError
-	var ne dsp.NegotiationError
-	var te dsp.TransferError
+	var clientErr errors.ClientError
+	var catErr errors.CatalogError
+	var negErr errors.NegotiationError
+	var trnErr errors.TransferError
 
-	var data []byte
+	var res any
 	var tmpErr error
-
 	switch {
-	case defaultErr.As(err, &ge):
-		data, tmpErr = json.Marshal(ge)
-		fmt.Println("GEEEE")
-	case defaultErr.As(err, &ne):
-		fmt.Println("NEEEE")
-		data, tmpErr = json.Marshal(ne.Body)
-	case defaultErr.As(err, &te):
-		fmt.Println("TEEEE")
-		data, tmpErr = json.Marshal(te.Body)
-	case defaultErr.As(err, &ce):
-		fmt.Println("CEEEE")
-		data, tmpErr = json.Marshal(ce.Body)
+	case defaultErr.As(err, &clientErr):
+		res = clientErr
+	case defaultErr.As(err, &negErr):
+		res = parseNegotiationErr(negErr)
+	case defaultErr.As(err, &trnErr):
+		res = parseTransferErr(trnErr)
+	case defaultErr.As(err, &catErr):
+		res = parseCatalogErr(catErr)
 	}
 
-	fmt.Println("DAATAA: ", string(data))
+	data, tmpErr := json.Marshal(res)
+	if tmpErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Error(fmt.Errorf("%w AND %s", err, tmpErr))
+		return
+	}
 
 	w.WriteHeader(statusCode)
-	if tmpErr == nil {
-		if _, tmpErr = w.Write(data); tmpErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			err = fmt.Errorf("%w AND %s", err, tmpErr)
-		}
-	} else {
+	if _, tmpErr = w.Write(data); tmpErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		err = fmt.Errorf("%w AND %s", err, tmpErr)
 	}
 
 	log.Error(err)
+}
+
+func parseCatalogErr(ce errors.CatalogError) catalog.Error {
+	return catalog.Error{
+		Context:    core.Context,
+		Type:       catalog.MsgTypeError,
+		DspaceCode: ce.Code,
+		DspaceReason: []struct {
+			Value    string `json:"@value"`
+			Language string `json:"@language"`
+		}{{Value: ce.Message, Language: `en`}},
+	}
+}
+
+func parseNegotiationErr(ne errors.NegotiationError) negotiation.Error {
+	return negotiation.Error{
+		Ctx:     core.Context,
+		Type:    negotiation.MsgTypeError,
+		ProvPId: ne.ProvPid,
+		ConsPId: ne.ConsPid,
+		Code:    ne.Code,
+		Reason:  []interface{}{ne.Message},
+		Desc:    nil,
+	}
+}
+
+func parseTransferErr(te errors.TransferError) transfer.Error {
+	return transfer.Error{
+		Ctx:     core.Context,
+		Type:    transfer.MsgTypeError,
+		ProvPId: te.ProvPid,
+		ConsPId: te.ConsPid,
+		Code:    te.Code,
+		Reason:  []interface{}{te.Message},
+	}
 }

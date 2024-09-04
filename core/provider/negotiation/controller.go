@@ -8,8 +8,7 @@ import (
 	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/connector/domain/core"
-	coreErr "github.com/YasiruR/connector/domain/errors/core"
-	"github.com/YasiruR/connector/domain/errors/external"
+	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/YasiruR/connector/domain/stores"
@@ -44,30 +43,30 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 
 	ofr, err := c.policyStore.Offer(offerId)
 	if err != nil {
-		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-			return ``, external.InvalidKeyError(stores.TypeOffer, `offer id`, err)
+		if defaultErr.Is(err, stores.TypeInvalidKey) {
+			return ``, errors.Client(errors.InvalidKey(stores.TypeOffer, `offer id`, err))
 		}
-		return ``, coreErr.StoreFailed(stores.TypeOffer, `Offer`, err)
+		return ``, errors.StoreFailed(stores.TypeOffer, `Offer`, err)
 	}
 
 	var consumerPid, endpoint string
 	if providerPid != `` {
 		cn, err := c.cnStore.Negotiation(providerPid)
 		if err != nil {
-			if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-				return ``, external.InvalidKeyError(stores.TypeContractNegotiation, `contract negotiation id`, err)
+			if defaultErr.Is(err, stores.TypeInvalidKey) {
+				return ``, errors.Client(errors.InvalidKey(stores.TypeContractNegotiation,
+					`contract negotiation id`, err))
 			}
-			return ``, coreErr.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 		}
 
 		if cn.State != negotiation.StateRequested {
-			return ``, external.StateError(core.NegotiationProtocol, string(cn.State),
-				string(negotiation.StateRequested))
+			return ``, errors.Client(errors.StateError(`offer contract`, string(cn.State)))
 		}
 
 		assignee, err := c.cnStore.Assignee(providerPid)
 		if err != nil {
-			return ``, coreErr.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
+			return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
 		}
 
 		// if consumer's address is not provided, use the stored one. If provided, it will override
@@ -75,7 +74,7 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 		if consumerAddr == `` {
 			consumerAddr, err = c.cnStore.CallbackAddr(providerPid)
 			if err != nil {
-				return ``, coreErr.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
+				return ``, errors.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
 			}
 		}
 
@@ -85,13 +84,13 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 		c.log.Trace(fmt.Sprintf("found an existing contract negotiation for the request (id: %s)", providerPid))
 	} else {
 		if consumerAddr == `` {
-			return ``, external.MissingAttrError(`consumer address`,
-				`must be provided when Provider is the initiator`)
+			return ``, errors.Client(errors.MissingAttrError(`consumer address`,
+				`must be provided when Provider is the initiator`))
 		}
 
 		providerPid, err = c.urn.NewURN()
 		if err != nil {
-			return ``, coreErr.NewURNFailed(`contract negotiation id`, err)
+			return ``, errors.PkgError(pkg.TypeURN, `NewURN`, err, `contract negotiation id`)
 		}
 		endpoint = negotiation.ContractOfferEndpoint
 	}
@@ -109,50 +108,51 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 
 	ack, err := c.send(providerPid, endpoint, req)
 	if err != nil {
-		return ``, coreErr.CustomFuncError(`send`, err)
+		return ``, errors.CustomFuncError(`send`, err)
 	}
 
 	if !c.validAck(providerPid, ack, negotiation.StateOffered) {
-		return ``, external.InvalidAckError(`ContractOffer`, ``, ack)
+		return ``, errors.Client(errors.InvalidAckError(`ContractOffer`, ``, ack))
 	}
 
 	ack.Type = negotiation.MsgTypeNegotiation
 	c.cnStore.AddNegotiation(providerPid, negotiation.Negotiation(ack))
 
-	c.log.Info(fmt.Sprintf("provider controller updated negotiation state (id: %s, state: %s)", providerPid, negotiation.StateOffered))
+	c.log.Info(fmt.Sprintf("provider controller updated negotiation state (id: %s, state: %s)",
+		providerPid, negotiation.StateOffered))
 	return providerPid, nil
 }
 
 func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId string, err error) {
 	cn, err := c.cnStore.Negotiation(providerPid)
 	if err != nil {
-		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-			return ``, external.InvalidKeyError(stores.TypeContractNegotiation, `contract negotiation id`, err)
+		if defaultErr.Is(err, stores.TypeInvalidKey) {
+			return ``, errors.Client(errors.InvalidKey(stores.TypeContractNegotiation,
+				`contract negotiation id`, err))
 		}
-		return ``, coreErr.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	if cn.State != negotiation.StateRequested && cn.State != negotiation.StateAccepted {
-		return ``, external.StateError(core.NegotiationProtocol, string(cn.State),
-			string(negotiation.StateRequested)+" or "+string(negotiation.StateAccepted))
+		return ``, errors.Client(errors.StateError(`agree contract`, string(cn.State)))
 	}
 
 	agreementId, err = c.urn.NewURN()
 	if err != nil {
-		return ``, coreErr.NewURNFailed(`contract negotiation id`, err)
+		return ``, errors.PkgError(pkg.TypeURN, `NewURN`, err, `contract negotiation id`)
 	}
 
 	offer, err := c.policyStore.Offer(offerId)
 	if err != nil {
-		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-			return ``, external.InvalidKeyError(stores.TypeOffer, `offer id`, err)
+		if defaultErr.Is(err, stores.TypeInvalidKey) {
+			return ``, errors.Client(errors.InvalidKey(stores.TypeOffer, `offer id`, err))
 		}
-		return ``, coreErr.StoreFailed(stores.TypeOffer, `Offer`, err)
+		return ``, errors.StoreFailed(stores.TypeOffer, `Offer`, err)
 	}
 
 	assignee, err := c.cnStore.Assignee(providerPid)
 	if err != nil {
-		return ``, coreErr.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
+		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
 	}
 
 	req := negotiation.ContractAgreement{
@@ -175,7 +175,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 
 	if _, err = c.send(providerPid, api.SetParamConsumerPid(negotiation.ContractAgreementEndpoint,
 		cn.ConsPId), req); err != nil {
-		return ``, coreErr.CustomFuncError(`send`, err)
+		return ``, errors.CustomFuncError(`send`, err)
 	}
 
 	c.agrStore.AddAgreement(req.Agreement.Id, req.Agreement)
@@ -183,7 +183,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		req.Agreement.Id, providerPid))
 
 	if err = c.cnStore.UpdateState(providerPid, negotiation.StateAgreed); err != nil {
-		return ``, coreErr.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
 	c.log.Debug(fmt.Sprintf("provider controller updated negotiation state (id: %s, state: %s)",
@@ -194,14 +194,15 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 func (c *Controller) FinalizeContract(providerPid string) error {
 	cn, err := c.cnStore.Negotiation(providerPid)
 	if err != nil {
-		if defaultErr.Is(err, coreErr.TypeInvalidKey) {
-			return external.InvalidKeyError(stores.TypeContractNegotiation, `contract negotiation id`, err)
+		if defaultErr.Is(err, stores.TypeInvalidKey) {
+			return errors.Client(errors.InvalidKey(stores.TypeContractNegotiation,
+				`contract negotiation id`, err))
 		}
-		return coreErr.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `Negotiation`, err)
 	}
 
 	if cn.State != negotiation.StateVerified {
-		return external.StateError(core.NegotiationProtocol, string(cn.State), string(negotiation.StateVerified))
+		return errors.Client(errors.StateError(`finalize contract`, string(cn.State)))
 	}
 
 	event := negotiation.ContractNegotiationEvent{
@@ -213,11 +214,11 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 	}
 
 	if _, err = c.send(providerPid, api.SetParamPid(negotiation.EventsEndpoint, cn.ConsPId), event); err != nil {
-		return coreErr.CustomFuncError(`send`, err)
+		return errors.CustomFuncError(`send`, err)
 	}
 
 	if err = c.cnStore.UpdateState(providerPid, negotiation.StateFinalized); err != nil {
-		return coreErr.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
+		return errors.StoreFailed(stores.TypeContractNegotiation, `UpdateState`, err)
 	}
 
 	c.log.Info(fmt.Sprintf("provider controller updated negotiation state (id: %s, state: %s)",
@@ -228,22 +229,22 @@ func (c *Controller) FinalizeContract(providerPid string) error {
 func (c *Controller) send(providerPid, endpoint string, req any) (negotiation.Ack, error) {
 	consumerAddr, err := c.cnStore.CallbackAddr(providerPid)
 	if err != nil {
-		return negotiation.Ack{}, coreErr.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
+		return negotiation.Ack{}, errors.StoreFailed(stores.TypeContractNegotiation, `CallbackAddr`, err)
 	}
 
 	data, err := json.Marshal(req)
 	if err != nil {
-		return negotiation.Ack{}, external.MarshalError(``, err)
+		return negotiation.Ack{}, errors.Client(errors.MarshalError(``, err))
 	}
 
 	res, err := c.client.Send(data, consumerAddr+endpoint)
 	if err != nil {
-		return negotiation.Ack{}, coreErr.ClientSendError(err)
+		return negotiation.Ack{}, errors.Client(errors.SendFailed(err))
 	}
 
 	var ack negotiation.Ack
 	if err = json.Unmarshal(res, &ack); err != nil {
-		return negotiation.Ack{}, external.UnmarshalError(`negotiation ack`, err)
+		return negotiation.Ack{}, errors.Client(errors.UnmarshalError(`negotiation ack`, err))
 	}
 
 	return ack, nil

@@ -5,9 +5,10 @@ import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/core"
-	coreErr "github.com/YasiruR/connector/domain/errors/core"
+	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/dcat"
 	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/connector/domain/stores"
 )
 
 const collProviderCatalog = `provider-catalog`
@@ -37,7 +38,7 @@ func NewProviderCatalog(cfg boot.Config, plugins domain.Plugins) *ProviderCatalo
 func (p *ProviderCatalog) init(cfg boot.Config) error {
 	catId, err := p.urn.NewURN()
 	if err != nil {
-		return coreErr.NewURNFailed(`catalog id`, err)
+		return errors.PkgError(pkg.TypeURN, `NewURN`, err, `catalog id`)
 	}
 
 	var kws []dcat.Keyword
@@ -54,7 +55,7 @@ func (p *ProviderCatalog) init(cfg boot.Config) error {
 	for _, e := range cfg.Catalog.AccessServices {
 		svcId, err := p.urn.NewURN()
 		if err != nil {
-			return coreErr.NewURNFailed(`service id`, err)
+			return errors.PkgError(pkg.TypeURN, `NewURN`, err, `service id`)
 		}
 
 		svcs = append(svcs, dcat.AccessService{
@@ -80,7 +81,7 @@ func (p *ProviderCatalog) init(cfg boot.Config) error {
 func (p *ProviderCatalog) Catalog() (dcat.Catalog, error) {
 	vals, err := p.coll.GetAll()
 	if err != nil {
-		return dcat.Catalog{}, coreErr.QueryFailed(collProviderCatalog, `GetAll`, err)
+		return dcat.Catalog{}, stores.QueryFailed(collProviderCatalog, `GetAll`, err)
 	}
 
 	var cat dcat.Catalog
@@ -100,11 +101,11 @@ func (p *ProviderCatalog) AddDataset(id string, val dcat.Dataset) {
 func (p *ProviderCatalog) Dataset(id string) (dcat.Dataset, error) {
 	val, err := p.coll.Get(id)
 	if err != nil {
-		return dcat.Dataset{}, coreErr.QueryFailed(collProviderCatalog, `Get`, err)
+		return dcat.Dataset{}, stores.QueryFailed(collProviderCatalog, `Get`, err)
 	}
 
 	if val == nil {
-		return dcat.Dataset{}, coreErr.InvalidKey(id)
+		return dcat.Dataset{}, stores.InvalidKey(id)
 	}
 
 	return val.(dcat.Dataset), nil
