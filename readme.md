@@ -1,6 +1,6 @@
 # go-connector
 
-_go-connector_ is a Golang framework of a data space connector which adheres to IDS Protocols.
+_go-connector_ is a Golang framework for a data space connector that enforces IDS Protocols.
 
 ## Sample requests
 

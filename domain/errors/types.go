@@ -1,5 +1,26 @@
 package errors
 
+/*
+	Type of errors that are exposed from the Connector, i.e. client errors via Gateway
+	API and protocol errors such as Catalog, Contract Negotiation and Transfer Process.
+*/
+
+type ClientError struct {
+	Code string `json:"code"`
+	ErrorMessage
+}
+
+func (c ClientError) Error() string {
+	return c.err.Error()
+}
+
+func Client(e ErrorMessage) error {
+	return ClientError{
+		Code:         `cl_` + e.code,
+		ErrorMessage: e,
+	}
+}
+
 type CatalogError struct {
 	Code string
 	ErrorMessage
@@ -52,22 +73,6 @@ func Transfer(provPid, consPid string, e ErrorMessage) error {
 		Code:         "te_" + e.code,
 		ProvPid:      provPid,
 		ConsPid:      consPid,
-		ErrorMessage: e,
-	}
-}
-
-type ClientError struct {
-	Code string `json:"code"`
-	ErrorMessage
-}
-
-func (c ClientError) Error() string {
-	return c.err.Error()
-}
-
-func Client(e ErrorMessage) error {
-	return ClientError{
-		Code:         `cl_` + e.code,
 		ErrorMessage: e,
 	}
 }

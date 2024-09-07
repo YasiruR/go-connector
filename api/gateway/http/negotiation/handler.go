@@ -39,7 +39,7 @@ func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 	cnId, err := h.consumer.RequestContract(req.ConsumerPId, req.ProviderEndpoint, req.OfferId, req.Constraints)
 	if err != nil {
 		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestContract`, err),
-			http.StatusBadRequest)
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *Handler) OfferContract(w http.ResponseWriter, r *http.Request) {
 	cnId, err := h.provider.OfferContract(req.OfferId, req.ProviderPid, req.ConsumerAddr)
 	if err != nil {
 		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `OfferContract`, err),
-			http.StatusBadRequest)
+			http.StatusInternalServerError)
 		return
 	}
 

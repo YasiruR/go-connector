@@ -4,8 +4,10 @@ info:
   description: A connector framework in Golang based on IDSA standards
   version: 0.0.1
 servers:
-  - url: http://localhost:8080
-    description: dev server
+  - url: http://localhost:8081
+    description: local consumer gateway API
+  - url: http://localhost:9081
+    description: local provider gateway API
 paths:
   /gateway/create-policy:
     post:
@@ -26,15 +28,18 @@ paths:
                 permissions:
                   type: array
                   items:
-                    $ref: '#/components/schemas/rule'
+                    $ref: '#/components/schemas/gateway:rule'
+                  example:
+                    - action: use
+                      constraints: [{"leftOperand": "region", "operator": "eq", "rightOperand": "eu"}]
                 prohibitions:
                   type: array
                   items:
-                    $ref: '#/components/schemas/rule'
+                    $ref: '#/components/schemas/gateway:rule'
                 obligations:
                   type: array
                   items:
-                    $ref: '#/components/schemas/rule'
+                    $ref: '#/components/schemas/gateway:rule'
       responses:
         '200':
           description: Returns ID of the created policy
@@ -49,6 +54,13 @@ paths:
                     example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
         '400':
           description: Invalid request body for policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: cl_20004
+                message: invalid request body for 'create policy' message
         '500':
           description: Internal error (e.g. generation of policy UUID failed)
         default:
@@ -69,17 +81,19 @@ paths:
                 title:
                   type: string
                   description: Title of the dataset
+                  example: sample dataset
                 description:
                   type: array
                   items:
                     type: string
+                    example: sample description
                 endpoints:
                   type: array
                   items:
                     type: string
                     format: url
                     description: Endpoints of data sources that provide the dataset
-                    example: http://provider.com/datasource
+                    example: http://localhost:9080/datasource
                 offerIds:
                   type: array
                   description: Valid IDs of policies created by the provider
@@ -93,6 +107,7 @@ paths:
                   items:
                     type: string
                     description: Keywords relevant to the dataset
+                  example: ["data space", "connector"]
                 format:
                   type: string
                   enum:
@@ -112,6 +127,13 @@ paths:
                     example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
         '400':
           description: Invalid request body for creating a dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: cl_20004
+                message: invalid request body for 'create dataset' message
         '500':
           description: Invalid policy ID or internal error (e.g. generation of UUID failed)
   /gateway/request-catalog:
@@ -131,16 +153,23 @@ paths:
                   type: string
                   format: url
                   description: Endpoint of the provider's connector
-                  example: http://provider.com/connector
+                  example: http://localhost:9080
       responses:
         '200':
           description: Returns catalog of the requested provider
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/catalog'
+                $ref: '#/components/schemas/dspace:catalog'
         '400':
           description: Invalid body for requesting a catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: cl_20004
+                message: invalid request body for 'request catalog' message
         '500':
           description: Internal error (e.g. marshalling failed) or transport error
   /gateway/request-dataset:
@@ -165,16 +194,23 @@ paths:
                   type: string
                   format: url
                   description: Endpoint of the provider's connector
-                  example: http://provider.com/connector
+                  example: http://localhost:9080
       responses:
         '200':
           description: Returns the requested dataset
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/dataset'
+                $ref: '#/components/schemas/dspace:dataset'
         '400':
           description: Invalid body for requesting a dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: cl_20004
+                message: invalid request body for 'request dataset' message
         '500':
           description: Internal error (e.g. marshalling failed) or transport error
   /gateway/catalogs:
@@ -191,7 +227,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/catalog'
+                  $ref: '#/components/schemas/dspace:catalog'
         '500':
           description: Internal error (e.g. database query failed)
   /catalog/request:
@@ -225,9 +261,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/catalog'
+                $ref: '#/components/schemas/dspace:catalog'
         '400':
           description: Invalid body for requesting catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:catalogError'
         '500':
           description: Internal error (e.g. querying catalog failed)
   /catalog/datasets:
@@ -261,15 +301,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/dataset'
+                $ref: '#/components/schemas/dspace:dataset'
         '400':
           description: Invalid body for requesting dataset or invalid dataset ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: cl_20004
+                message: invalid request body for 'dataset request' message
   /gateway/request-contract:
     post:
       tags:
-        - DSP API - Catalog
+        - Gateway API - Contract Negotiation
       summary: Initiates the contract negotiation flow with the associated offer and given constraints
-      description: "Supported by: consumer"
+      description: "Supported by consumer. If a contract negotiation already exists, consumerPid should be provided. 
+      If otherwise, providerEndpoint should be provided"
       requestBody:
         required: true
         content:
@@ -280,7 +328,7 @@ paths:
                 consumerPid:
                   type: string
                   format: uuid
-                  description: ID of the consumer process ID (required only if a contract negotiation already exists)
+                  description: ID of the consumer process ID (required only if a contract negotiation already exists, e.g. when a provider started flow with a contract offer)
                   example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
                 offerId:
                   type: string
@@ -291,14 +339,15 @@ paths:
                   type: string
                   format: url
                   description: Endpoint of the provider's connector (required if a contract negotiation does not exist already)
-                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                  example: http://localhost:9080
                 constraints:
                   type: object
                   additionalProperties:
                     type: string
+                  example: {region: eu}
       responses:
         '200':
-          description: Returns the consumer process ID of the created contract negotiation
+          description: Returns the consumer process ID of the created/associated contract negotiation
           content:
             application/json:
               schema:
@@ -311,12 +360,405 @@ paths:
                     example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
         '400':
           description: Invalid request body for contract initiation
-
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'contract request' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+  /gateway/offer-contract:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Provider initiates the contract negotiation flow
+      description: "Supported by provider. If contract negotiation flow already exists, the corresponding providerPid should
+      be provided. If otherwise, consumerAddr should be provided."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                providerPid:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                offerId:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                consumerAddr:
+                  type: string
+                  format: url
+                  example: http://localhost:8080
+      responses:
+        '200':
+          description: Returns the provider process ID of the created/associated contract negotiation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contractNegotiationId:
+                    type: string
+                    format: uuid
+                    description: Provider process ID
+                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        '400':
+          description: Invalid request body for contract initiation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'contract offer' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+  /gateway/accept-offer/{consumerPid}:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Consumer accepts the contract offer
+      description: "Supported by consumer. Corresponding process ID should be given as the path parameter."
+      parameters:
+        - name: consumerPid
+          in: path
+          required: true
+          description: Consumer process ID of the contract negotiation
+          schema:
+            type: string
+            format: uuid
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract offer is accepted
+        '400':
+          description: Missing path parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: ne_20005
+                message: required path parameter not found
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+  /gateway/agree-contract:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Provider agrees to the contract
+      description: "Supported by provider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offerId:
+                  type: string
+                  format: uuid
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                contractNegotiationId:
+                  type: string
+                  format: uuid
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract agreement is sent
+        '400':
+          description: Invalid request body for contract agreement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: ne_20005
+                message: invalid request body for 'agree contract' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+  /gateway/verify-agreement/{consumerPid}:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Consumer verifies the contract agreement
+      description: "Supported by consumer"
+      parameters:
+        - name: consumerPid
+          in: path
+          required: true
+          description: Consumer process ID of the contract negotiation
+          schema:
+            type: string
+            format: uuid
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract agreement is verified
+        '400':
+          description: Missing path parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: ne_20005
+                message: required path parameter not found
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+  /gateway/finalize-contract/{providerPid}:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Provider finalizes the contract
+      description: "Supported by provider"
+      parameters:
+        - name: providerPid
+          in: path
+          required: true
+          description: Provider process ID of the contract negotiation
+          schema:
+            type: string
+            format: uuid
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract is finalized
+        '400':
+          description: Missing path parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
+              example:
+                code: ne_20005
+                message: required path parameter not found
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clientError'
 
 components:
   schemas:
-    rule:
+    dspace:catalog:
+      type: object
+      properties:
+        "@context":
+          type: string
+          example: https://w3id.org/dspace/2024/1/context.json
+        "@id":
+          type: string
+          format: uuid
+          example: urn:uuid:3afeadd8-ed2d-569e-d634-8394a8836d57
+        "@type":
+          type: string
+          example: dcat:Catalog
+        "dct:title":
+          type: string
+          example: Ceit Catalog
+        "dct:description":
+          type: array
+          items:
+            type: object
+            properties:
+              "@value":
+                type: string
+                example: This is a sample catalog for Ceit Connector
+              "@language":
+                type: string
+                example: en
+        "dspace:participantId":
+          type: string
+          format: uuid
+          example: urn:uuid:3afeadd8-ed2d-569e-d634-8394a8836d57
+          description: e.g. Connector ID
+        "dcat:service":
+          type: array
+          items:
+            $ref: '#/components/schemas/dcat:service'
+        "dcat:dataset":
+          type: array
+          items:
+            $ref: '#/components/schemas/dcat:dataset'
+    dspace:dataset:
+      allOf:
+        - type: object
+          properties:
+            "@context":
+              type: string
+              example: https://w3id.org/dspace/2024/1/context.json
+        - $ref: '#/components/schemas/dcat:dataset'
+    clientError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code as defined by the Connector
+          example: cl_20003
+        message:
+          type: string
+          description: Message for client application that describes the error
+          example: incorrect value provided for dataset id
+        params:
+          description: additional parameters (e.g. error response received from a different IDS Connector during Negotiation Protocol)
+          additionalProperties:
+            type: object
+          example: {response: <dspace-negotiation-error>}
+    dspace:catalogError:
+      type: object
+      properties:
+        "@context":
+          type: string
+          example: https://w3id.org/dspace/2024/1/context.json
+        "@type":
+          type: string
+          example: dspace:CatalogError
+        "dspace:code":
+          type: string
+          example: ce_20006
+        "dspace:reason":
+          type: array
+          items:
+            type: object
+            properties:
+              "@value":
+                type: string
+                example: required path parameter not found
+              "@language":
+                type: string
+                example: en
+    "dcat:service":
+      type: object
+      description: Details about the data space Connector
+      properties:
+        "@id":
+          type: string
+          format: uuid
+          example: urn:uuid:3afeadd8-ed2d-569e-d634-8394a8836d57
+        "@type":
+          type: string
+          example: dcat:DataService
+        "dcat:endpointDescription":
+          type: string
+          example: dspace:connector
+        "dcat:endpointURL":
+          type: string
+          format: url
+          example: http://localhost:9080
+    "dcat:dataset":
+      type: object
+      properties:
+        "@id":
+          type: string
+          format: uuid
+          example: urn:uuid:3afeadd8-ed2d-569e-d634-8394a8836d57
+        "@type":
+          type: string
+          example: dcat:Dataset
+        "dct:title":
+          type: string
+          example: "Traffic data"
+        "dct:description":
+          type: array
+          items:
+            type: object
+            properties:
+              "@value":
+                type: string
+                example: This is a dataset of traffic data
+              "@language":
+                type: string
+                example: en
+        "dcat:keyword":
+          type: array
+          items:
+            type: string
+            example: traffic
+        "odrl:hasPolicy":
+          type: array
+          items:
+            type: object
+            properties:
+              "@id":
+                type: string
+                format: uuid
+                example: urn:uuid:3afeadd8-ed2d-569e-d634-8394a8836d57
+              "@type":
+                type: string
+                example: odrl:Offer
+              "odrl:assigner":
+                type: string
+                description: Data space specific identifier for the entity (not necessarily the same as participant ID)
+                example: "assigner_id"
+              "odrl:permission":
+                type: array
+                items:
+                  type: object
+                  properties:
+                    "odrl:action":
+                      type: string
+                      example: odrl:use
+                    "odrl:constraint":
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/odrl:constraint'
+        "dcat:distribution":
+          type: array
+          items:
+            $ref: '#/components/schemas/dcat:distribution'
+    "odrl:constraint":
+      type: object
+      properties:
+        "odrl:leftOperand":
+          type: string
+          example: odrl:spatial
+          description: Constraint of the policy
+        "odrl:operator":
+          type: string
+          example: odrl:eq
+        "odrl:rightOperand":
+          type: string
+          example: EU
+    "dcat:distribution":
+      type: object
+      properties:
+        "@type":
+          type: string
+          example: dcat:Distribution
+        "dcat:format":
+          type: string
+          example: HTTP_PUSH
+        "dcat:accessService":
+          type: array
+          items:
+            $ref: '#/components/schemas/dcat:service'
+    gateway:rule:
       type: object
       properties:
         action:
@@ -325,8 +767,8 @@ components:
         constraints:
           type: array
           items:
-            $ref: '#/components/schemas/constraint'
-    constraint:
+            $ref: '#/components/schemas/gateway:constraint'
+    gateway:constraint:
       type: object
       properties:
         leftOperand:
@@ -335,11 +777,3 @@ components:
           type: string
         rightOperand:
           type: string
-    catalog:
-      type: object
-    dataset:
-      type: object
-
-
-
-
