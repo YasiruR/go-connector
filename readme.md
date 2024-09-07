@@ -14,10 +14,10 @@ Sample requests provided in this document assume the following endpoints to be u
 ### Catalog Protocol
 
 1. Create policy (Provider): ``curl -X POST -d '{"permissions": [{"action": "use", "constraints": [{"leftOperand": "region", "operator": "eq", "rightOperand": "eu"}]}]}' http://localhost:9081/gateway/create-policy``
-2. Create dataset (Provider): ``curl -X POST -d '{"title": "sample dataset", "description": ["sample description"], "endpoints": ["http://localhost:9080/datasource"], "policyIds": ["<policy-id>"], "keywords": ["dataspace", "connector"]}' http://localhost:9081/gateway/create-dataset``
+2. Create dataset (Provider): ``curl -X POST -d '{"title": "sample dataset", "description": ["sample description"], "endpoints": ["http://localhost:9080/datasource"], "offerIds": ["<policy-id>"], "keywords": ["dataspace", "connector"]}' http://localhost:9081/gateway/create-dataset``
 3. Request catalog (Consumer): ``curl -X POST -d '{"providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/request-catalog | jq``
 4. Request dataset (Consumer): ``curl -X POST -d '{"datasetId": "<dataset-id>", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/request-dataset | jq``
-5. Get stored catalogs: ````
+5. Get stored catalogs: ``curl -X GET http://localhost:8081/gateway/catalogs``
 
 ### Contract Negotiation
 
@@ -33,7 +33,7 @@ Sample requests provided in this document assume the following endpoints to be u
 
 ### Transfer Process
 
-1. Request transfer (Consumer): ``curl -X POST -d '{"transferType": "HTTP_PUSH", "<agreement-id>": "<agreement-id>", "sinkEndpoint": "http://localhost:8080/datasink", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/transfer/request``
+1. Request transfer (Consumer): ``curl -X POST -d '{"transferFormat": "HTTP_PUSH", "agreement-id": "<agreement-id>", "sinkEndpoint": "http://localhost:8080/datasink", "providerEndpoint": "http://localhost:9080"}' http://localhost:8081/gateway/transfer/request``
 2. Start transfer (Provider): ``curl -X POST -d '{"transferProcessId": "<providerPid>"}' http://localhost:9081/gateway/transfer/start``
 3. Suspend transfer (Consumer/Provider): ``curl -X POST -d '{"provider": false, "<transfer-process-id>": "<consumerPid>", "code": "2400", "Reasons": ["invalid data", "incompatible syntax"]}' http://localhost:8081/gateway/transfer/suspend``
 4. Complete transfer (Consumer/Provider): ``curl -X POST -d '{"provider": true, "<transfer-process-id>": "<providerPid>"}' http://localhost:8081/gateway/transfer/complete`` 

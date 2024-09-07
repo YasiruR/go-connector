@@ -36,7 +36,8 @@ func (h *Handler) GetProviderProcess(w http.ResponseWriter, r *http.Request) {
 
 	tp, err := h.consumer.GetProviderProcess(tpId)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `GetProviderProcess`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer,
+			`GetProviderProcess`, err), http.StatusBadRequest)
 		return
 	}
 
@@ -56,7 +57,8 @@ func (h *Handler) RequestTransfer(w http.ResponseWriter, r *http.Request) {
 
 	trId, err := h.consumer.RequestTransfer(req.TransferFormat, req.AgreementId, req.SinkEndpoint, req.ProviderEndpoint)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestTransfer`, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer,
+			`RequestTransfer`, err), http.StatusInternalServerError)
 		return
 	}
 
@@ -77,13 +79,13 @@ func (h *Handler) StartTransfer(w http.ResponseWriter, r *http.Request) {
 	if req.Provider {
 		if err := h.provider.StartTransfer(req.TransferId, req.SourceEndpoint); err != nil {
 			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider,
-				`StartTransfer`, err), http.StatusBadRequest)
+				`StartTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	} else {
 		if err := h.consumer.StartTransfer(req.TransferId); err != nil {
 			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer,
-				`StartTransfer`, err), http.StatusBadRequest)
+				`StartTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -104,12 +106,14 @@ func (h *Handler) SuspendTransfer(w http.ResponseWriter, r *http.Request) {
 
 	if req.Provider {
 		if err := h.provider.SuspendTransfer(req.TransferId, req.Code, req.Reasons); err != nil {
-			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `SuspendTransfer`, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider,
+				`SuspendTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	} else {
 		if err := h.consumer.SuspendTransfer(req.TransferId, req.Code, req.Reasons); err != nil {
-			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `SuspendTransfer`, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer,
+				`SuspendTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -130,12 +134,14 @@ func (h *Handler) CompleteTransfer(w http.ResponseWriter, r *http.Request) {
 
 	if req.Provider {
 		if err := h.provider.CompleteTransfer(req.TransferId); err != nil {
-			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `CompleteTransfer`, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider,
+				`CompleteTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	} else {
 		if err := h.consumer.CompleteTransfer(req.TransferId); err != nil {
-			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `CompleteTransfer`, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer,
+				`CompleteTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -156,12 +162,14 @@ func (h *Handler) TerminateTransfer(w http.ResponseWriter, r *http.Request) {
 
 	if req.Provider {
 		if err := h.provider.TerminateTransfer(req.TransferId, req.Code, req.Reasons); err != nil {
-			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `TerminateTransfer`, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider,
+				`TerminateTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	} else {
 		if err := h.consumer.TerminateTransfer(req.TransferId, req.Code, req.Reasons); err != nil {
-			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `TerminateTransfer`, err), http.StatusBadRequest)
+			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer,
+				`TerminateTransfer`, err), http.StatusInternalServerError)
 			return
 		}
 	}

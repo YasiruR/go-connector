@@ -31,7 +31,7 @@ paths:
                     $ref: '#/components/schemas/gateway:rule'
                   example:
                     - action: use
-                      constraints: [{"leftOperand": "region", "operator": "eq", "rightOperand": "eu"}]
+                      constraints: [ { "leftOperand": "region", "operator": "eq", "rightOperand": "eu" } ]
                 prohibitions:
                   type: array
                   items:
@@ -57,7 +57,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientError'
+                $ref: '#/components/schemas/gateway:clientError'
               example:
                 code: cl_20004
                 message: invalid request body for 'create policy' message
@@ -107,7 +107,7 @@ paths:
                   items:
                     type: string
                     description: Keywords relevant to the dataset
-                  example: ["data space", "connector"]
+                  example: [ "data space", "connector" ]
                 format:
                   type: string
                   enum:
@@ -130,7 +130,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientError'
+                $ref: '#/components/schemas/gateway:clientError'
               example:
                 code: cl_20004
                 message: invalid request body for 'create dataset' message
@@ -166,7 +166,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientError'
+                $ref: '#/components/schemas/gateway:clientError'
               example:
                 code: cl_20004
                 message: invalid request body for 'request catalog' message
@@ -207,7 +207,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientError'
+                $ref: '#/components/schemas/gateway:clientError'
               example:
                 code: cl_20004
                 message: invalid request body for 'request dataset' message
@@ -230,6 +230,530 @@ paths:
                   $ref: '#/components/schemas/dspace:catalog'
         '500':
           description: Internal error (e.g. database query failed)
+  /gateway/request-contract:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Initiates the contract negotiation flow with the associated offer and given constraints
+      description: "Supported by consumer. If a contract negotiation already exists, consumerPid should be provided. 
+      If else, providerEndpoint should be provided"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                consumerPid:
+                  type: string
+                  format: uuid
+                  description: ID of the consumer process ID (required only if a contract negotiation already exists, e.g. when a provider started flow with a contract offer)
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                offerId:
+                  type: string
+                  format: uuid
+                  description: ID of the offer associated with the contract negotiation
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                providerEndpoint:
+                  type: string
+                  format: url
+                  description: Endpoint of the provider's connector (required if a contract negotiation does not exist already)
+                  example: http://localhost:9080
+                constraints:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  example: { region: eu }
+      responses:
+        '200':
+          description: Returns the consumer process ID of the created/associated contract negotiation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contractNegotiationId:
+                    type: string
+                    format: uuid
+                    description: Consumer process ID
+                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        '400':
+          description: Invalid request body for contract initiation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'contract request' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/offer-contract:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Provider initiates the contract negotiation flow
+      description: "Supported by provider. If contract negotiation flow already exists, the corresponding providerPid should
+      be provided. If else, consumerAddr should be provided."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                providerPid:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                offerId:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                consumerAddr:
+                  type: string
+                  format: url
+                  example: http://localhost:8080
+      responses:
+        '200':
+          description: Returns the provider process ID of the created/associated contract negotiation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contractNegotiationId:
+                    type: string
+                    format: uuid
+                    description: Provider process ID
+                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        '400':
+          description: Invalid request body for contract initiation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'contract offer' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/accept-offer/{consumerPid}:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Consumer accepts the contract offer
+      description: "Supported by consumer. Corresponding process ID should be given as the path parameter."
+      parameters:
+        - name: consumerPid
+          in: path
+          required: true
+          description: Consumer process ID of the contract negotiation
+          schema:
+            type: string
+            format: uuid
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract offer is accepted
+        '400':
+          description: Missing path parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20005
+                message: required path parameter not found
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/agree-contract:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Provider agrees to the contract
+      description: "Supported by provider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                offerId:
+                  type: string
+                  format: uuid
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                contractNegotiationId:
+                  type: string
+                  format: uuid
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract agreement is sent
+        '400':
+          description: Invalid request body for contract agreement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20005
+                message: invalid request body for 'agree contract' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/verify-agreement/{consumerPid}:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Consumer verifies the contract agreement
+      description: "Supported by consumer"
+      parameters:
+        - name: consumerPid
+          in: path
+          required: true
+          description: Consumer process ID of the contract negotiation
+          schema:
+            type: string
+            #            format: uuid
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract agreement is verified
+        '400':
+          description: Missing path parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20005
+                message: required path parameter not found
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/finalize-contract/{providerPid}:
+    post:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Provider finalizes the contract
+      description: "Supported by provider"
+      parameters:
+        - name: providerPid
+          in: path
+          required: true
+          description: Provider process ID of the contract negotiation
+          schema:
+            type: string
+            #            format: uuid
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Contract is finalized
+        '400':
+          description: Missing path parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20005
+                message: required path parameter not found
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/agreement/{agreementId}:
+    get:
+      tags:
+        - Gateway API - Contract Negotiation
+      summary: Consumer requests the stored agreement by ID
+      description: "Supported by consumer"
+      parameters:
+        - name: agreementId
+          in: path
+          required: true
+          description: ID of the agreement
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Returns the requested agreement
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/odrl:agreement'
+                  - type: object
+                    properties:
+                      dspace:timestamp:
+                        type: string
+                        example: 2024-09-07 07:58:02.870985866 +0000 UTC
+        '400':
+          description: Missing path parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20005
+                message: required path parameter not found
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/transfer/request:
+    post:
+      tags:
+        - Gateway API - Transfer Process
+      summary: Consumer requests a data transfer
+      description: "Supported by consumer. Sink endpoint must be provided if the transfer format is PUSH."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transferFormat:
+                  type: string
+                  enum:
+                    - HTTP_PUSH
+                    - HTTP_PULL
+                agreementId:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                sinkEndpoint:
+                  type: string
+                  format: url
+                  example: http://localhost:8080/datasink
+                  description: Destination endpoint for transferring data (must be provided only if the transfer format is PUSH)
+                providerEndpoint:
+                  type: string
+                  format: url
+                  example: http://localhost:9080
+      responses:
+        '200':
+          description: Returns the consumer process ID of the transfer process
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transferProcessId:
+                    type: string
+                    description: Transfer process ID of consumer
+                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        '400':
+          description: Invalid request body for requesting a transfer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'request transfer' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/transfer/start:
+    post:
+      tags:
+        - Gateway API - Transfer Process
+      summary: Consumer/Provider starts a data transfer
+      description: "Supported by both consumer and provider. Provider argument should be set to 'true' in case of the provider. 
+      Further, if the transfer format is PULL (and participant is provider), source endpoint should be provided. 
+      Consumers are only allowed to send start messages for suspended transfer processes."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: boolean
+                  description: Must be set to true, if provider starts the data transfer
+                transferProcessId:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                sourceEndpoint:
+                  type: string
+                  format: url
+                  example: http://localhost:9080/datasource
+                  description: Source endpoint for fetching data (must be provided only if the transfer format is PULL)
+      responses:
+        '200':
+          description: Transfer process is started
+        '400':
+          description: Invalid request body for starting the transfer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'start transfer' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/transfer/suspend:
+    post:
+      tags:
+        - Gateway API - Transfer Process
+      summary: Consumer/Provider suspends a data transfer
+      description: "Supported by both consumer and provider."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: boolean
+                  description: Must be set to true, if provider suspends the data transfer
+                transferProcessId:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                code:
+                  type: string
+                  example: 2400
+                reasons:
+                  type: array
+                  items:
+                    type: string
+                  example: [ "invalid data", "incompatible syntax" ]
+      responses:
+        '200':
+          description: Transfer process is suspended
+        '400':
+          description: Invalid request body for suspending the transfer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'suspend transfer' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+
+  /gateway/transfer/complete:
+    post:
+      tags:
+        - Gateway API - Transfer Process
+      summary: Consumer/Provider completes a data transfer
+      description: "Supported by both consumer and provider."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: boolean
+                  description: Must be set to true, if provider completes the data transfer
+                transferProcessId:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Transfer process is completed
+        '400':
+          description: Invalid request body for completing the transfer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'complete transfer' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+  /gateway/transfer/terminate:
+    post:
+      tags:
+        - Gateway API - Transfer Process
+      summary: Consumer/Provider terminates a data transfer
+      description: "Supported by both consumer and provider."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: boolean
+                  description: Must be set to true, if provider terminates the data transfer
+                transferProcessId:
+                  type: string
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                code:
+                  type: string
+                  example: 2333
+                reasons:
+                  type: array
+                  items:
+                    type: string
+                  example: [ "outdated data" ]
+      responses:
+        '200':
+          description: Transfer process is terminated
+        '400':
+          description: Invalid request body for terminating the transfer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+              example:
+                code: ne_20004
+                message: invalid request body for 'terminate transfer' message
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gateway:clientError'
+
   /catalog/request:
     post:
       tags:
@@ -307,262 +831,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientError'
+                $ref: '#/components/schemas/gateway:clientError'
               example:
                 code: cl_20004
                 message: invalid request body for 'dataset request' message
-  /gateway/request-contract:
-    post:
-      tags:
-        - Gateway API - Contract Negotiation
-      summary: Initiates the contract negotiation flow with the associated offer and given constraints
-      description: "Supported by consumer. If a contract negotiation already exists, consumerPid should be provided. 
-      If otherwise, providerEndpoint should be provided"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                consumerPid:
-                  type: string
-                  format: uuid
-                  description: ID of the consumer process ID (required only if a contract negotiation already exists, e.g. when a provider started flow with a contract offer)
-                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-                offerId:
-                  type: string
-                  format: uuid
-                  description: ID of the offer associated with the contract negotiation
-                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-                providerEndpoint:
-                  type: string
-                  format: url
-                  description: Endpoint of the provider's connector (required if a contract negotiation does not exist already)
-                  example: http://localhost:9080
-                constraints:
-                  type: object
-                  additionalProperties:
-                    type: string
-                  example: {region: eu}
-      responses:
-        '200':
-          description: Returns the consumer process ID of the created/associated contract negotiation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  contractNegotiationId:
-                    type: string
-                    format: uuid
-                    description: Consumer process ID
-                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-        '400':
-          description: Invalid request body for contract initiation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-              example:
-                code: ne_20004
-                message: invalid request body for 'contract request' message
-        '500':
-          description: Error during the process
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-  /gateway/offer-contract:
-    post:
-      tags:
-        - Gateway API - Contract Negotiation
-      summary: Provider initiates the contract negotiation flow
-      description: "Supported by provider. If contract negotiation flow already exists, the corresponding providerPid should
-      be provided. If otherwise, consumerAddr should be provided."
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                providerPid:
-                  type: string
-                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-                offerId:
-                  type: string
-                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-                consumerAddr:
-                  type: string
-                  format: url
-                  example: http://localhost:8080
-      responses:
-        '200':
-          description: Returns the provider process ID of the created/associated contract negotiation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  contractNegotiationId:
-                    type: string
-                    format: uuid
-                    description: Provider process ID
-                    example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-        '400':
-          description: Invalid request body for contract initiation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-              example:
-                code: ne_20004
-                message: invalid request body for 'contract offer' message
-        '500':
-          description: Error during the process
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-  /gateway/accept-offer/{consumerPid}:
-    post:
-      tags:
-        - Gateway API - Contract Negotiation
-      summary: Consumer accepts the contract offer
-      description: "Supported by consumer. Corresponding process ID should be given as the path parameter."
-      parameters:
-        - name: consumerPid
-          in: path
-          required: true
-          description: Consumer process ID of the contract negotiation
-          schema:
-            type: string
-            format: uuid
-            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-      responses:
-        '200':
-          description: Contract offer is accepted
-        '400':
-          description: Missing path parameter
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-              example:
-                code: ne_20005
-                message: required path parameter not found
-        '500':
-          description: Error during the process
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-  /gateway/agree-contract:
-    post:
-      tags:
-        - Gateway API - Contract Negotiation
-      summary: Provider agrees to the contract
-      description: "Supported by provider"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                offerId:
-                  type: string
-                  format: uuid
-                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-                contractNegotiationId:
-                  type: string
-                  format: uuid
-                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-      responses:
-        '200':
-          description: Contract agreement is sent
-        '400':
-          description: Invalid request body for contract agreement
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-              example:
-                code: ne_20005
-                message: invalid request body for 'agree contract' message
-        '500':
-          description: Error during the process
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-  /gateway/verify-agreement/{consumerPid}:
-    post:
-      tags:
-        - Gateway API - Contract Negotiation
-      summary: Consumer verifies the contract agreement
-      description: "Supported by consumer"
-      parameters:
-        - name: consumerPid
-          in: path
-          required: true
-          description: Consumer process ID of the contract negotiation
-          schema:
-            type: string
-            format: uuid
-            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-      responses:
-        '200':
-          description: Contract agreement is verified
-        '400':
-          description: Missing path parameter
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-              example:
-                code: ne_20005
-                message: required path parameter not found
-        '500':
-          description: Error during the process
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-  /gateway/finalize-contract/{providerPid}:
-    post:
-      tags:
-        - Gateway API - Contract Negotiation
-      summary: Provider finalizes the contract
-      description: "Supported by provider"
-      parameters:
-        - name: providerPid
-          in: path
-          required: true
-          description: Provider process ID of the contract negotiation
-          schema:
-            type: string
-            format: uuid
-            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
-      responses:
-        '200':
-          description: Contract is finalized
-        '400':
-          description: Missing path parameter
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
-              example:
-                code: ne_20005
-                message: required path parameter not found
-        '500':
-          description: Error during the process
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/clientError'
 
 components:
   schemas:
@@ -614,7 +886,7 @@ components:
               type: string
               example: https://w3id.org/dspace/2024/1/context.json
         - $ref: '#/components/schemas/dcat:dataset'
-    clientError:
+    gateway:clientError:
       type: object
       properties:
         code:
@@ -629,7 +901,7 @@ components:
           description: additional parameters (e.g. error response received from a different IDS Connector during Negotiation Protocol)
           additionalProperties:
             type: object
-          example: {response: <dspace-negotiation-error>}
+          example: { response: <dspace-negotiation-error> }
     dspace:catalogError:
       type: object
       properties:
@@ -653,7 +925,7 @@ components:
               "@language":
                 type: string
                 example: en
-    "dcat:service":
+    dcat:service:
       type: object
       description: Details about the data space Connector
       properties:
@@ -671,7 +943,7 @@ components:
           type: string
           format: url
           example: http://localhost:9080
-    "dcat:dataset":
+    dcat:dataset:
       type: object
       properties:
         "@id":
@@ -711,41 +983,30 @@ components:
                 example: urn:uuid:3afeadd8-ed2d-569e-d634-8394a8836d57
               "@type":
                 type: string
-                example: odrl:Offer
+                enum:
+                  - odrl:Offer
               "odrl:assigner":
-                type: string
-                description: Data space specific identifier for the entity (not necessarily the same as participant ID)
-                example: "assigner_id"
-              "odrl:permission":
-                type: array
-                items:
-                  type: object
-                  properties:
-                    "odrl:action":
-                      type: string
-                      example: odrl:use
-                    "odrl:constraint":
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/odrl:constraint'
+                $ref: '#/components/schemas/odrl:assigner'
+              odrl:permission:
+                $ref: '#/components/schemas/odrl:permission'
         "dcat:distribution":
           type: array
           items:
             $ref: '#/components/schemas/dcat:distribution'
-    "odrl:constraint":
+    odrl:constraint:
       type: object
       properties:
-        "odrl:leftOperand":
+        odrl:leftOperand:
           type: string
           example: odrl:spatial
           description: Constraint of the policy
-        "odrl:operator":
+        odrl:operator:
           type: string
           example: odrl:eq
-        "odrl:rightOperand":
+        odrl:rightOperand:
           type: string
           example: EU
-    "dcat:distribution":
+    dcat:distribution:
       type: object
       properties:
         "@type":
@@ -758,6 +1019,45 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/dcat:service'
+    odrl:agreement:
+      type: object
+      properties:
+        "@id":
+          type: string
+          example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        "@type":
+          type: string
+          enum:
+            - odrl:Agreement
+        odrl:target:
+          type: string
+          description: ID of the target (e.g. dataset)
+        odrl:assigner:
+          $ref: '#/components/schemas/odrl:assigner'
+        odrl:assignee:
+          $ref: '#/components/schemas/odrl:assignee'
+        odrl:permission:
+          $ref: '#/components/schemas/odrl:permission'
+    odrl:permission:
+      type: array
+      items:
+        type: object
+        properties:
+          "odrl:action":
+            type: string
+            example: odrl:use
+          "odrl:constraint":
+            type: array
+            items:
+              $ref: '#/components/schemas/odrl:constraint'
+    odrl:assigner:
+      type: string
+      description: Data space specific identifier for the entity (not necessarily the same as participant ID)
+      example: "assigner-id"
+    odrl:assignee:
+      type: string
+      description: Data space specific identifier for the entity (not necessarily the same as participant ID)
+      example: "assignee-id"
     gateway:rule:
       type: object
       properties:

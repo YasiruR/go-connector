@@ -11,6 +11,7 @@ import (
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"net/http"
 	"strconv"
 )
@@ -70,7 +71,12 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 
 func (s *Server) Start() {
 	s.log.Info("gateway HTTP server is listening on " + strconv.Itoa(s.port))
-	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost", "http://127.0.0.1"},
+		AllowCredentials: true,
+	})
+
+	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), c.Handler(s.router)); err != nil {
 		s.log.Fatal(errors.ModuleInitFailed(`gateway API`, err))
 	}
 }
