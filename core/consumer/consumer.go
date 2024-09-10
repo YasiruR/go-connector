@@ -19,12 +19,12 @@ type Consumer struct {
 	consumer.TransferHandler
 }
 
-func New(config boot.Config, stores domain.Stores, plugins domain.Plugins) *Consumer {
+func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Consumer {
 	return &Consumer{
 		CatalogController:     catalog.NewController(stores, plugins.Client, plugins),
-		NegotiationController: negotiation.NewController(config, stores, plugins),
+		NegotiationController: negotiation.NewController(cfg, stores, plugins),
 		NegotiationHandler:    negotiation.NewHandler(stores, plugins),
-		TransferController:    transfer.NewController(config.Servers.DSP.HTTP.Port, stores, plugins),
+		TransferController:    transfer.NewController(cfg, stores, plugins),
 		TransferHandler:       transfer.NewHandler(stores.TransferStore, plugins.Log),
 	}
 }

@@ -72,7 +72,9 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 func (s *Server) Start() {
 	s.log.Info("gateway HTTP server is listening on " + strconv.Itoa(s.port))
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost", "http://127.0.0.1"},
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut,
+			http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		AllowCredentials: true,
 	})
 

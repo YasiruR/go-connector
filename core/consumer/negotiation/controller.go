@@ -26,10 +26,10 @@ type Controller struct {
 	log          pkg.Log
 }
 
-func NewController(config boot.Config, stores domain.Stores, plugins domain.Plugins) *Controller {
+func NewController(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
-		callbackAddr: `http://localhost:` + strconv.Itoa(config.Servers.DSP.HTTP.Port),
-		assigneeId:   config.DataSpace.AssigneeId,
+		callbackAddr: cfg.Servers.IP + `:` + strconv.Itoa(cfg.Servers.DSP.HTTP.Port),
+		assigneeId:   cfg.DataSpace.AssigneeId,
 		catalog:      stores.ConsumerCatalog,
 		cnStore:      stores.ContractNegotiationStore,
 		urn:          plugins.URNService,

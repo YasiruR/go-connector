@@ -13,6 +13,7 @@ type Config struct {
 		Descriptions   []string `yaml:"descriptions"`
 	}
 	Servers struct {
+		IP  string
 		DSP struct {
 			HTTP struct {
 				Port int `yaml:"port"`

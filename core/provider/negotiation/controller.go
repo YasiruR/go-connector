@@ -7,6 +7,7 @@ import (
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api"
 	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/core"
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/models/odrl"
@@ -26,9 +27,9 @@ type Controller struct {
 	log          pkg.Log
 }
 
-func NewController(port int, stores domain.Stores, plugins domain.Plugins) *Controller {
+func NewController(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
-		callbackAddr: `http://localhost:` + strconv.Itoa(port),
+		callbackAddr: cfg.Servers.IP + `:` + strconv.Itoa(cfg.Servers.DSP.HTTP.Port),
 		cnStore:      stores.ContractNegotiationStore,
 		policyStore:  stores.OfferStore,
 		agrStore:     stores.AgreementStore,
