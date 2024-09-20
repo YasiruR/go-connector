@@ -19,8 +19,6 @@ import (
 // gateway.http.Server contains the endpoints which will be used by a client to initiate
 // message flows or manage both control and data planes
 
-// todo check return error codes
-
 type Server struct {
 	port   int
 	router *mux.Router

@@ -27,14 +27,14 @@ func loadConfig(log pkg.Log) boot.Config {
 		log.Error(fmt.Sprintf("could not fetch current working directory - %s", err))
 	}
 
-	ipAddr := `http://` + getOutboundIP().String()
+	ipAddr := `http://` + outboundIP().String()
 	c.Servers.IP = ipAddr
 
 	log.Info("loaded configuration values", `file: `+pwd+configFile, "ip: "+ipAddr)
 	return c
 }
 
-func getOutboundIP() net.IP {
+func outboundIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Fatal(err)

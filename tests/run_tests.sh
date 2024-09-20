@@ -35,3 +35,5 @@ agrId=$(readFile)
 bash flows/terminate_transfer.sh $agrId
 
 rm tmp.txt
+
+printf "Execution of test scripts is completed!"

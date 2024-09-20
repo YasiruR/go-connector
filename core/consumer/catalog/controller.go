@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/YasiruR/connector/domain"
 	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/connector/domain/core"
@@ -48,7 +49,7 @@ func (c *Controller) RequestCatalog(endpoint string) (catalog.Response, error) {
 	}
 
 	c.catalog.AddCatalog(cat)
-	c.log.Trace("stored the requested catalog", cat.ID)
+	c.log.Trace(fmt.Sprintf("stored the requested catalog (id: %s)", cat.ID))
 	return cat, nil
 }
 

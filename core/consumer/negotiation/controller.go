@@ -98,8 +98,8 @@ func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string,
 		return ``, errors.CustomFuncError(`send`, err)
 	}
 
-	if !c.validAck(consumerPid, ack, negotiation.StateRequested) {
-		return ``, errors.Client(errors.InvalidAckError(`ContractRequest`, ``, ack))
+	if errMsg := c.validAck(consumerPid, ack, negotiation.StateRequested); errMsg != `` {
+		return ``, errors.Client(errors.InvalidAckError(`ContractRequest`, errMsg, ack))
 	}
 
 	ack.Type = negotiation.MsgTypeNegotiation
@@ -134,8 +134,13 @@ func (c *Controller) AcceptOffer(consumerPid string) error {
 		EventType: negotiation.EventAccepted,
 	}
 
-	if _, err = c.send(consumerPid, api.SetParamPid(negotiation.EventsEndpoint, cn.ProvPId), event); err != nil {
+	ack, err := c.send(consumerPid, api.SetParamPid(negotiation.EventsEndpoint, cn.ProvPId), event)
+	if err != nil {
 		return errors.CustomFuncError(`send`, err)
+	}
+
+	if errMsg := c.validAck(consumerPid, ack, negotiation.StateAccepted); errMsg != `` {
+		return errors.Client(errors.InvalidAckError(`AcceptOffer`, errMsg, ack))
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateAccepted); err != nil {
@@ -168,9 +173,13 @@ func (c *Controller) VerifyAgreement(consumerPid string) error {
 		ConsPId: consumerPid,
 	}
 
-	if _, err = c.send(consumerPid, api.SetParamProviderPid(negotiation.AgreementVerificationEndpoint,
-		cn.ProvPId), req); err != nil {
+	ack, err := c.send(consumerPid, api.SetParamProviderPid(negotiation.AgreementVerificationEndpoint, cn.ProvPId), req)
+	if err != nil {
 		return errors.CustomFuncError(`send`, err)
+	}
+
+	if errMsg := c.validAck(consumerPid, ack, negotiation.StateVerified); errMsg != `` {
+		return errors.Client(errors.InvalidAckError(`VerifyAgreement`, errMsg, ack))
 	}
 
 	if err = c.cnStore.UpdateState(consumerPid, negotiation.StateVerified); err != nil {
@@ -209,8 +218,13 @@ func (c *Controller) TerminateContract(consumerPid, code string, reasons []strin
 		Reason:  rsnList,
 	}
 
-	if _, err = c.send(consumerPid, api.SetParamPid(negotiation.TerminateEndpoint, cn.ProvPId), req); err != nil {
+	ack, err := c.send(consumerPid, api.SetParamPid(negotiation.TerminateEndpoint, cn.ProvPId), req)
+	if err != nil {
 		return errors.CustomFuncError(`send`, err)
+	}
+
+	if errMsg := c.validAck(consumerPid, ack, negotiation.StateTerminated); errMsg != `` {
+		return errors.Client(errors.InvalidAckError(`TerminateContract`, errMsg, ack))
 	}
 
 	// clear all store entries for the contract negotiation
@@ -276,14 +290,18 @@ func (c *Controller) setConstraints(offerId string, vals map[string]string) (odr
 	return ofr, nil
 }
 
-func (c *Controller) validAck(pid string, ack negotiation.Ack, state negotiation.State) bool {
+func (c *Controller) validAck(pid string, ack negotiation.Ack, state negotiation.State) (errMsg string) {
+	if ack.Type != negotiation.MsgTypeNegotiationAck {
+		return `invalid message type`
+	}
+
 	if ack.ConsPId != pid {
-		return false
+		return `incorrect consumer process id`
 	}
 
 	if ack.State != state {
-		return false
+		return `invalid state`
 	}
 
-	return true
+	return ``
 }
