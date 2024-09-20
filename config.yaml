@@ -1,12 +1,14 @@
 data_space:
-  participantId: test-participant
+  participant_id: test-participant  # e.g. Connector ID
+  assigner_id: provider1  # Data space specific ID for agreements
+  assignee_id: consumer1
 catalog:
   title: Ceit catalog
   keywords:
     - data spaces
     - machine learning
   access_services:
-    - http://localhost:9090/connector
+    - http://localhost:9080
   descriptions:
     - This is a sample catalog for Ceit Connector
 servers:

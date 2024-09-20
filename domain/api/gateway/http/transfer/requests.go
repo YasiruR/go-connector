@@ -8,6 +8,7 @@ type Request struct {
 }
 
 type StartRequest struct {
+	Provider       bool   `json:"provider"`
 	TransferId     string `json:"transferProcessId"`
 	SourceEndpoint string `json:"sourceEndpoint"`
 }
@@ -22,4 +23,11 @@ type SuspendRequest struct {
 type CompleteRequest struct {
 	Provider   bool   `json:"provider"`
 	TransferId string `json:"transferProcessId"`
+}
+
+type TerminateRequest struct {
+	Provider   bool          `json:"provider"`
+	TransferId string        `json:"transferProcessId"`
+	Code       string        `json:"code"`
+	Reasons    []interface{} `json:"reasons"`
 }

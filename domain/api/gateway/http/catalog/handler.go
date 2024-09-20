@@ -7,4 +7,5 @@ type Handler interface {
 	CreateDataset(w http.ResponseWriter, r *http.Request)
 	RequestCatalog(w http.ResponseWriter, r *http.Request)
 	RequestDataset(w http.ResponseWriter, r *http.Request)
+	GetStoredCatalogs(w http.ResponseWriter, r *http.Request)
 }

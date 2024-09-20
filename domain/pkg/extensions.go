@@ -1,5 +1,7 @@
 package pkg
 
+import "context"
+
 const (
 	TypeDatabase = `Database`
 	TypeURN      = `URNService`
@@ -9,6 +11,10 @@ const (
 type IAM interface {
 	Register()
 	Verify()
+}
+
+type PolicyEngine interface {
+	ValidateOffer()
 }
 
 // Database contains one or more Collection to support data storage required
@@ -41,4 +47,10 @@ type Log interface {
 	Debug(message interface{}, params ...interface{})
 	Info(message interface{}, params ...interface{})
 	Trace(message interface{}, params ...interface{})
+	FatalContext(ctx context.Context, message interface{}, params ...interface{})
+	ErrorContext(ctx context.Context, message interface{}, params ...interface{})
+	WarnContext(ctx context.Context, message interface{}, params ...interface{})
+	DebugContext(ctx context.Context, message interface{}, params ...interface{})
+	InfoContext(ctx context.Context, message interface{}, params ...interface{})
+	TraceContext(ctx context.Context, message interface{}, params ...interface{})
 }

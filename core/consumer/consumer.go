@@ -5,6 +5,7 @@ import (
 	"github.com/YasiruR/connector/core/consumer/negotiation"
 	"github.com/YasiruR/connector/core/consumer/transfer"
 	"github.com/YasiruR/connector/domain"
+	"github.com/YasiruR/connector/domain/boot"
 	"github.com/YasiruR/connector/domain/core/consumer"
 )
 
@@ -18,12 +19,12 @@ type Consumer struct {
 	consumer.TransferHandler
 }
 
-func New(port int, stores domain.Stores, plugins domain.Plugins) *Consumer {
+func New(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Consumer {
 	return &Consumer{
-		CatalogController:     catalog.NewController(plugins.Client),
-		NegotiationController: negotiation.NewController(port, stores, plugins),
+		CatalogController:     catalog.NewController(stores, plugins.Client, plugins),
+		NegotiationController: negotiation.NewController(cfg, stores, plugins),
 		NegotiationHandler:    negotiation.NewHandler(stores, plugins),
-		TransferController:    transfer.NewController(port, stores, plugins),
-		TransferHandler:       transfer.NewHandler(stores.Transfer, plugins.Log),
+		TransferController:    transfer.NewController(cfg, stores, plugins),
+		TransferHandler:       transfer.NewHandler(stores.TransferStore, plugins.Log),
 	}
 }

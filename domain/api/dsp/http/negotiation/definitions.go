@@ -1,8 +1,10 @@
 package negotiation
 
+import "github.com/YasiruR/connector/domain/api"
+
 type State string
 
-// States used during the protocol
+// States used during the negotiation protocol
 const (
 	StateRequested  State = "REQUESTED"
 	StateOffered    State = "OFFERED"
@@ -21,12 +23,6 @@ const (
 	EventFinalized EventType = `dspace:FINALIZED`
 )
 
-// Path parameters
-const (
-	ParamProviderId  = `providerPid`
-	ParamConsumerPid = `consumerPid`
-)
-
 // Message types
 const (
 	MsgTypeNegotiation           = `dspace:ContractNegotiation`
@@ -36,14 +32,27 @@ const (
 	MsgTypeContractAgreement     = `dspace:ContractAgreementMessage`
 	MsgTypeAgreementVerification = `dspace:ContractAgreementVerificationMessage`
 	MsgTypeNegotiationEvent      = `dspace:ContractNegotiationEventMessage`
+	MsgTypeTermination           = `dspace:ContractNegotiationTerminationMessage`
+	MsgTypeError                 = `dspace:ContractNegotiationError`
 )
 
-// Endpoints
+// Provider endpoints
 const (
-	RequestEndpoint               = `/negotiations/{` + ParamProviderId + `}`
-	ContractRequestEndpoint       = `/negotiations/request`
-	ContractAgreementEndpoint     = `/negotiations/{` + ParamConsumerPid + `}/agreement`
-	AgreementVerificationEndpoint = `/negotiations/{` + ParamProviderId + `}/agreement/verification`
-	EventConsumerEndpoint         = `/negotiations/{` + ParamConsumerPid + `}/events`
-	EventProviderEndpoint         = `/negotiations/{` + ParamProviderId + `}/events`
+	RequestEndpoint                = `/negotiations/{` + api.ParamProviderPid + `}`
+	ContractRequestEndpoint        = `/negotiations/request`
+	ContractRequestToOfferEndpoint = `/negotiations/{` + api.ParamProviderPid + `}/request`
+	AgreementVerificationEndpoint  = `/negotiations/{` + api.ParamProviderPid + `}/agreement/verification`
+)
+
+// Consumer endpoints
+const (
+	ContractOfferEndpoint          = `/negotiations/offers`
+	ContractOfferToRequestEndpoint = `/negotiations/{` + api.ParamConsumerPid + `}/offers`
+	ContractAgreementEndpoint      = `/negotiations/{` + api.ParamConsumerPid + `}/agreement`
+)
+
+// Common endpoints
+const (
+	EventsEndpoint    = `/negotiations/{` + api.ParamPid + `}/events`
+	TerminateEndpoint = `/negotiations/{` + api.ParamPid + `}/termination`
 )

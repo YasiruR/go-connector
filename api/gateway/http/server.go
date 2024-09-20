@@ -11,14 +11,13 @@ import (
 	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"net/http"
 	"strconv"
 )
 
 // gateway.http.Server contains the endpoints which will be used by a client to initiate
 // message flows or manage both control and data planes
-
-// todo check return error codes
 
 type Server struct {
 	port   int
@@ -34,7 +33,7 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	s := Server{
 		port:   port,
 		router: r,
-		ch:     httpCatalog.NewHandler(roles, log),
+		ch:     httpCatalog.NewHandler(roles, stores, log),
 		nh:     httpNegotiation.NewHandler(roles, stores, log),
 		th:     httpTransfer.NewHandler(roles, log),
 		log:    log,
@@ -45,26 +44,39 @@ func NewServer(port int, roles domain.Roles, stores domain.Stores, log pkg.Log) 
 	r.HandleFunc(catalog.CreateDatasetEndpoint, s.ch.CreateDataset).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestCatalogEndpoint, s.ch.RequestCatalog).Methods(http.MethodPost)
 	r.HandleFunc(catalog.RequestDatasetEndpoint, s.ch.RequestDataset).Methods(http.MethodPost)
+	r.HandleFunc(catalog.GetStoredCatalogsEndpoint, s.ch.GetStoredCatalogs).Methods(http.MethodGet)
 
 	// endpoints related to negotiation
 	r.HandleFunc(negotiation.RequestContractEndpoint, s.nh.RequestContract).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.OfferContractEndpoint, s.nh.OfferContract).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.AcceptOfferEndpoint, s.nh.AcceptOffer).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.AgreeContractEndpoint, s.nh.AgreeContract).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.GetAgreementEndpoint, s.nh.GetAgreement).Methods(http.MethodGet)
 	r.HandleFunc(negotiation.VerifyAgreementEndpoint, s.nh.VerifyAgreement).Methods(http.MethodPost)
 	r.HandleFunc(negotiation.FinalizeContractEndpoint, s.nh.FinalizeContract).Methods(http.MethodPost)
+	r.HandleFunc(negotiation.TerminateContractEndpoint, s.nh.TerminateContract).Methods(http.MethodPost)
 
 	// endpoints related to transfer process
+	r.HandleFunc(transfer.GetProcessEndpoint, s.th.GetProviderProcess).Methods(http.MethodGet)
 	r.HandleFunc(transfer.RequestEndpoint, s.th.RequestTransfer).Methods(http.MethodPost)
 	r.HandleFunc(transfer.StartEndpoint, s.th.StartTransfer).Methods(http.MethodPost)
 	r.HandleFunc(transfer.SuspendEndpoint, s.th.SuspendTransfer).Methods(http.MethodPost)
 	r.HandleFunc(transfer.CompleteEndpoint, s.th.CompleteTransfer).Methods(http.MethodPost)
+	r.HandleFunc(transfer.TerminateEndpoint, s.th.TerminateTransfer).Methods(http.MethodPost)
 
 	return &s
 }
 
 func (s *Server) Start() {
 	s.log.Info("gateway HTTP server is listening on " + strconv.Itoa(s.port))
-	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), s.router); err != nil {
-		s.log.Fatal(errors.InitModuleFailed(`gateway API`, err))
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut,
+			http.MethodPatch, http.MethodDelete, http.MethodOptions},
+		AllowCredentials: true,
+	})
+
+	if err := http.ListenAndServe(":"+strconv.Itoa(s.port), c.Handler(s.router)); err != nil {
+		s.log.Fatal(errors.ModuleInitFailed(`gateway API`, err))
 	}
 }

@@ -15,7 +15,7 @@ type DatasetResponse struct {
 	dcat.Dataset
 }
 
-type ErrorResponse struct {
+type Error struct {
 	Context      string `json:"@context" default:"https://w3id.org/dspace/2024/1/context.json"`
 	Type         string `json:"@type" default:"dspace:CatalogError"`
 	DspaceCode   string `json:"dspace:code"`

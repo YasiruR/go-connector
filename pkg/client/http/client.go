@@ -3,9 +3,9 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"github.com/YasiruR/connector/domain/errors"
 	"github.com/YasiruR/connector/domain/pkg"
 	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -18,38 +18,57 @@ func NewClient(log pkg.Log) *Client {
 	return &Client{hc: http.DefaultClient}
 }
 
-func (c *Client) Send(data []byte, destination any) (response []byte, err error) {
+func (c *Client) Send(data []byte, destination any) (res []byte, err error) {
 	addr, ok := destination.(string)
 	if !ok {
-		return nil, errors.InvalidURL(destination)
+		return nil, urlStringError(destination)
 	}
 
+	var status int
 	if data == nil {
-		return nil, fmt.Errorf("GET method is not implemented yet")
-	}
-
-	response, status, err := c.post(addr, data)
-	if err != nil {
-		return nil, errors.SendFailed(addr, http.MethodPost, err)
+		res, status, err = c.get(addr)
+		if err != nil {
+			return nil, sendFailed(addr, http.MethodGet, err)
+		}
+	} else {
+		res, status, err = c.post(addr, data)
+		if err != nil {
+			return nil, sendFailed(addr, http.MethodPost, err)
+		}
 	}
 
 	if status != http.StatusOK && status != http.StatusCreated {
-		return nil, errors.InvalidStatusCode(status)
+		return res, invalidStatusCode(status)
 	}
 
-	return response, nil
+	return res, nil
+}
+
+func (c *Client) get(addr string) (response []byte, statusCode int, err error) {
+	res, err := c.hc.Get(addr)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to send HTTP GET request: %w", err)
+	}
+	defer res.Body.Close()
+
+	resData, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to read HTTP response body: %w", err)
+	}
+
+	return resData, res.StatusCode, nil
 }
 
 func (c *Client) post(url string, data []byte) (resData []byte, statusCode int, err error) {
 	res, err := c.hc.Post(url, `application/json`, bytes.NewBuffer(data))
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to send POST request: %w", err)
+		return nil, 0, fmt.Errorf("failed to send HTTP POST request: %w", err)
 	}
 	defer res.Body.Close()
 
 	resData, err = io.ReadAll(res.Body)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to read response body: %w", err)
+		return nil, 0, fmt.Errorf("failed to read HTTP response body: %w", err)
 	}
 
 	return resData, res.StatusCode, nil

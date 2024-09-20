@@ -1,12 +1,15 @@
 package transfer
 
+import "github.com/YasiruR/connector/domain/api"
+
 type State string
 
 const (
-	StateRequested State = `dspace:REQUESTED`
-	StateStarted   State = `dspace:STARTED`
-	StateSuspended State = `dspace:SUSPENDED`
-	StateCompleted State = `dspace:COMPLETED`
+	StateRequested  State = `dspace:REQUESTED`
+	StateStarted    State = `dspace:STARTED`
+	StateSuspended  State = `dspace:SUSPENDED`
+	StateCompleted  State = `dspace:COMPLETED`
+	StateTerminated State = `dspace:TERMINATED`
 )
 
 type DataTransferType string
@@ -23,24 +26,23 @@ const (
 	MsgTypeStart            = `dspace:TransferStartMessage`
 	MsgTypeSuspend          = `dspace:TransferSuspensionMessage`
 	MsgTypeComplete         = `dspace:TransferCompletionMessage`
+	MsgTypeTerminate        = `dspace:TransferTerminationMessage`
+	MsgTypeError            = `dspace:TransferError`
 	MsgTypeDataAddress      = `dspace:DataAddress`
 	MsgTypeEndpointProperty = `dspace:EndpointProperty`
 )
 
-// Path parameters
+// Provider endpoints
 const (
-	ParamPid         = `Pid`
-	ParamConsumerPid = `consumerPid`
+	GetProcessEndpoint = `/transfers/{` + api.ParamProviderPid + `}`
+	RequestEndpoint    = `/transfers/request`
 )
 
-// Endpoints
+// Common endpoints
 const (
-	RequestEndpoint  = `/transfers/request`
-	StartEndpoint    = `/transfers/{` + ParamConsumerPid + `}/start`
-	SuspendEndpoint  = `/transfers/{` + ParamPid + `}/suspension`
-	CompleteEndpoint = `/transfers/{` + ParamPid + `}/completion`
-)
-
-const (
-	EndpointTypeHTTP = `https://w3id.org/idsa/v4.1/HTTP`
+	StartEndpoint     = `/transfers/{` + api.ParamPid + `}/start`
+	SuspendEndpoint   = `/transfers/{` + api.ParamPid + `}/suspension`
+	CompleteEndpoint  = `/transfers/{` + api.ParamPid + `}/completion`
+	TerminateEndpoint = `/transfers/{` + api.ParamPid + `}/termination`
+	EndpointTypeHTTP  = `https://w3id.org/idsa/v4.1/HTTP`
 )
