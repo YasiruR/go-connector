@@ -6,13 +6,13 @@ type State string
 
 // States used during the negotiation protocol
 const (
-	StateRequested  State = "REQUESTED"
-	StateOffered    State = "OFFERED"
-	StateAccepted   State = "ACCEPTED"
-	StateAgreed     State = "AGREED"
-	StateVerified   State = "VERIFIED"
-	StateFinalized  State = "FINALIZED"
-	StateTerminated State = "TERMINATED"
+	StateRequested  State = "dspace:REQUESTED"
+	StateOffered    State = "dspace:OFFERED"
+	StateAccepted   State = "dspace:ACCEPTED"
+	StateAgreed     State = "dspace:AGREED"
+	StateVerified   State = "dspace:VERIFIED"
+	StateFinalized  State = "dspace:FINALIZED"
+	StateTerminated State = "dspace:TERMINATED"
 )
 
 type EventType string

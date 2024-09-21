@@ -836,8 +836,564 @@ paths:
                 code: cl_20004
                 message: invalid request body for 'dataset request' message
 
+  /negotiations/{negotiationId}:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Provider returns the stored negotiation process
+      description: "Supported by: provider"
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          description: ID of the provider's negotiation process
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '200':
+          description: Returns the dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid parameter for negotiation process ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/request:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Consumer requests a contract
+      description: "Supported by: provider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractRequestMessage
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                dspace:offer:
+                  $ref: '#/components/schemas/odrl:offer'
+                dspace:callbackAddress:
+                  type: string
+                  format: url
+                  description: Endpoint of the consumer's connector
+                  example: http://localhost:8081
+      responses:
+        '200':
+          description: Returns the dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for requesting contract
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/request/{negotiationId}:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Consumer requests a contract as a response to a contract offer
+      description: "Supported by: provider"
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          description: ID of the provider's negotiation process
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractRequestMessage
+                "dspace:providerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the provider's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                dspace:offer:
+                  $ref: '#/components/schemas/odrl:offer'
+                dspace:callbackAddress:
+                  type: string
+                  format: url
+                  description: Endpoint of the consumer's connector
+                  example: http://localhost:8081
+      responses:
+        '201':
+          description: Returns the acknowledgment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for requesting contract or invalid parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/offers:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Provider sends a contract offer
+      description: "Supported by: consumer"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractOfferMessage
+                "dspace:providerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the provider's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                dspace:offer:
+                  $ref: '#/components/schemas/odrl:offer'
+                dspace:callbackAddress:
+                  type: string
+                  format: url
+                  description: Endpoint of the consumer's connector
+                  example: http://localhost:8081
+      responses:
+        '201':
+          description: Returns the acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for sending offer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/{negotiationId}/offers:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Provider sends a contract offer as a response to a request
+      description: "Supported by: consumer"
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          description: ID of the consumer's negotiation process
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractOfferMessage
+                "dspace:providerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the provider's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                dspace:offer:
+                  $ref: '#/components/schemas/odrl:offer'
+                dspace:callbackAddress:
+                  type: string
+                  format: url
+                  description: Endpoint of the consumer's connector
+                  example: http://localhost:8081
+      responses:
+        '201':
+          description: Returns the acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for sending offer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/{negotiationId}/agreement:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Provider sends the agreement
+      description: "Supported by: consumer"
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          description: ID of the consumer's negotiation process
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractAgreementMessage
+                "dspace:providerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the provider's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                dspace:agreement:
+                  allOf:
+                    - $ref: '#/components/schemas/odrl:agreement'
+                    - type: object
+                      properties:
+                        dspace:timestamp:
+                          type: string
+                          example: 2024-09-07 07:58:02.870985866 +0000 UTC
+                dspace:callbackAddress:
+                  type: string
+                  format: url
+                  description: Endpoint of the consumer's connector
+                  example: http://localhost:8081
+      responses:
+        '201':
+          description: Returns the acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for sending agreement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/{negotiationId}/agreement/verification:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Consumer sends a contract offer
+      description: "Supported by: provider"
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          description: ID of the provider's negotiation process
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractAgreementVerificationMessage
+                "dspace:providerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the provider's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      responses:
+        '201':
+          description: Returns the acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for sending verification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/{negotiationId}/events:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Consumer/Provider sends an event message
+      description: "Supported by both provider and consumer. Example cases are when accepting or finalizing a contract negotiation"
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          description: ID of the provider's or consumer's negotiation process
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractNegotiationEventMessage
+                "dspace:providerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the provider's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                dspace:event:
+                  type: string
+                  enum:
+                    - dspace:ACCEPTED
+                    - dspace:FINALIZED
+      responses:
+        '201':
+          description: Returns the acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for the event message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+  /negotiations/{negotiationId}/termination:
+    post:
+      tags:
+        - DSP API - Contract Negotiation
+      summary: Consumer/Provider terminates a contract negotiation flow
+      description: "Supported by both provider and consumer"
+      parameters:
+        - name: negotiationId
+          in: path
+          required: true
+          description: ID of the provider's or consumer's negotiation process
+          schema:
+            type: string
+            example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "@context":
+                  type: string
+                  example: https://w3id.org/dspace/2024/1/context.json
+                "@type":
+                  type: string
+                  enum:
+                    - dspace:ContractNegotiationTerminationMessage
+                "dspace:providerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the provider's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                "dspace:consumerPid":
+                  type: string
+                  format: uuid
+                  description: ID of the consumer's process
+                  example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+                dspace:code:
+                  type: string
+                dspace:reason:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/description'
+      responses:
+        '201':
+          description: Returns the acknowledgement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationAck'
+        '400':
+          description: Invalid body for terminating negotiation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+        '500':
+          description: Error during the process
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dspace:negotiationError'
+
 components:
   schemas:
+    gateway:clientError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code as defined by the Connector
+          example: cl_20003
+        message:
+          type: string
+          description: Message for client application that describes the error
+          example: incorrect value provided for dataset id
+        params:
+          description: additional parameters (e.g. error response received from a different IDS Connector during Negotiation Protocol)
+          additionalProperties:
+            type: object
+          example: { response: <dspace-negotiation-error> }
+    gateway:rule:
+      type: object
+      properties:
+        action:
+          type: string
+          description: Operation that can be exercised on an asset
+        constraints:
+          type: array
+          items:
+            $ref: '#/components/schemas/gateway:constraint'
+    gateway:constraint:
+      type: object
+      properties:
+        leftOperand:
+          type: string
+        operator:
+          type: string
+        rightOperand:
+          type: string
     dspace:catalog:
       type: object
       properties:
@@ -857,14 +1413,8 @@ components:
         "dct:description":
           type: array
           items:
-            type: object
-            properties:
-              "@value":
-                type: string
-                example: This is a sample catalog for Ceit Connector
-              "@language":
-                type: string
-                example: en
+            $ref: '#/components/schemas/description'
+          example: [ { "@value": "This is a sample catalog for Ceit Connector", "@language": "en" } ]
         "dspace:participantId":
           type: string
           format: uuid
@@ -886,22 +1436,6 @@ components:
               type: string
               example: https://w3id.org/dspace/2024/1/context.json
         - $ref: '#/components/schemas/dcat:dataset'
-    gateway:clientError:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Error code as defined by the Connector
-          example: cl_20003
-        message:
-          type: string
-          description: Message for client application that describes the error
-          example: incorrect value provided for dataset id
-        params:
-          description: additional parameters (e.g. error response received from a different IDS Connector during Negotiation Protocol)
-          additionalProperties:
-            type: object
-          example: { response: <dspace-negotiation-error> }
     dspace:catalogError:
       type: object
       properties:
@@ -925,6 +1459,64 @@ components:
               "@language":
                 type: string
                 example: en
+    dspace:negotiationAck:
+      type: object
+      properties:
+        "@context":
+          type: string
+          example: https://w3id.org/dspace/2024/1/context.json
+        "@type":
+          type: string
+          example: dspace:ContractNegotiation
+        "dspace:providerPid":
+          type: string
+          format: uuid
+          description: ID of the provider's process
+          example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        "dspace:consumerPid":
+          type: string
+          format: uuid
+          description: ID of the consumer's process
+          example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        "dspace:state":
+          type: string
+          enum:
+            - dspace:REQUESTED
+            - dspace:OFFERED
+            - dspace:ACCEPTED
+            - dspace:AGREED
+            - dspace:VERIFIED
+            - dspace:FINALIZED
+            - dspace:TERMINATED
+    dspace:negotiationError:
+      type: object
+      properties:
+        "@context":
+          type: string
+          example: https://w3id.org/dspace/2024/1/context.json
+        "@type":
+          type: string
+          example: dspace:ContractNegotiationError
+        "dspace:providerPid":
+          type: string
+          format: uuid
+          description: ID of the provider's process
+          example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        "dspace:consumerPid":
+          type: string
+          format: uuid
+          description: ID of the consumer's process
+          example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        "dspace:code":
+          type: string
+        "dspace:reason":
+          type: array
+          items:
+            $ref: '#/components/schemas/description'
+        "dct:description":
+          type: array
+          items:
+            $ref: '#/components/schemas/description'
     dcat:service:
       type: object
       description: Details about the data space Connector
@@ -988,24 +1580,11 @@ components:
               "odrl:assigner":
                 $ref: '#/components/schemas/odrl:assigner'
               odrl:permission:
-                $ref: '#/components/schemas/odrl:permission'
+                $ref: '#/components/schemas/odrl:rule'
         "dcat:distribution":
           type: array
           items:
             $ref: '#/components/schemas/dcat:distribution'
-    odrl:constraint:
-      type: object
-      properties:
-        odrl:leftOperand:
-          type: string
-          example: odrl:spatial
-          description: Constraint of the policy
-        odrl:operator:
-          type: string
-          example: odrl:eq
-        odrl:rightOperand:
-          type: string
-          example: EU
     dcat:distribution:
       type: object
       properties:
@@ -1019,6 +1598,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/dcat:service'
+    odrl:constraint:
+      type: object
+      properties:
+        odrl:leftOperand:
+          type: string
+          example: odrl:spatial
+          description: Constraint of the policy
+        odrl:operator:
+          type: string
+          example: odrl:eq
+        odrl:rightOperand:
+          type: string
+          example: EU
+    odrl:offer:
+      type: object
+      properties:
+        "@id":
+          type: string
+          example: urn:uuid:f41035a9-683f-11ef-b391-7cb27ddc6923
+        "@type":
+          type: string
+          enum:
+            - odrl:Offer
+        odrl:target:
+          type: string
+          description: ID of the target (e.g. dataset)
+        odrl:assigner:
+          $ref: '#/components/schemas/odrl:assigner'
+        odrl:assignee:
+          $ref: '#/components/schemas/odrl:assignee'
+        odrl:permission:
+          $ref: '#/components/schemas/odrl:rule'
+        odrl:prohibition:
+          $ref: '#/components/schemas/odrl:rule'
     odrl:agreement:
       type: object
       properties:
@@ -1037,8 +1650,8 @@ components:
         odrl:assignee:
           $ref: '#/components/schemas/odrl:assignee'
         odrl:permission:
-          $ref: '#/components/schemas/odrl:permission'
-    odrl:permission:
+          $ref: '#/components/schemas/odrl:rule'
+    odrl:rule:
       type: array
       items:
         type: object
@@ -1058,22 +1671,12 @@ components:
       type: string
       description: Data space specific identifier for the entity (not necessarily the same as participant ID)
       example: "assignee-id"
-    gateway:rule:
+    description:
       type: object
       properties:
-        action:
+        "@value":
           type: string
-          description: Operation that can be exercised on an asset
-        constraints:
-          type: array
-          items:
-            $ref: '#/components/schemas/gateway:constraint'
-    gateway:constraint:
-      type: object
-      properties:
-        leftOperand:
+        "@language":
           type: string
-        operator:
-          type: string
-        rightOperand:
-          type: string
+          example: en
+

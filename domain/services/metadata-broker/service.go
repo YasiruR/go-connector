@@ -1,8 +1,8 @@
-package services
+package metadata_broker
 
 type SelfDescription struct{}
 
-type MetadataBroker interface {
+type Service interface {
 	SD() (SelfDescription, error)
 	AddSD(sd SelfDescription) (id string, err error)
 	UpdateSD(id string, sd SelfDescription) error
