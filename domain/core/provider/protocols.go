@@ -1,9 +1,9 @@
 package provider
 
 import (
-	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
-	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
-	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
+	"github.com/YasiruR/go-connector/domain/api/dsp/http/catalog"
+	"github.com/YasiruR/go-connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
 )
 
 type CatalogHandler interface {

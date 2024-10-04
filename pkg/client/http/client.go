@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/go-connector/domain/pkg"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,8 +14,21 @@ type Client struct {
 }
 
 func NewClient(log pkg.Log) *Client {
+	//rootCert, err := os.ReadFile(`certs/rootCA.crt`)
+	//if err != nil {
+	//	log.Fatal(`reading root certificate failed`)
+	//}
+	//
+	//caCertPool := x509.NewCertPool()
+	//caCertPool.AppendCertsFromPEM(rootCert)
+	//return &Client{hc: &http.Client{Transport: &http.Transport{
+	//	TLSClientConfig: &tls.Config{
+	//		RootCAs: caCertPool,
+	//	},
+	//}}}
+
 	log.Info("initialized an HTTP client")
-	return &Client{hc: http.DefaultClient}
+	return &Client{hc: &http.Client{}}
 }
 
 func (c *Client) Send(data []byte, destination any) (res []byte, err error) {

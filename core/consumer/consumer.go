@@ -1,12 +1,12 @@
 package consumer
 
 import (
-	"github.com/YasiruR/connector/core/consumer/catalog"
-	"github.com/YasiruR/connector/core/consumer/negotiation"
-	"github.com/YasiruR/connector/core/consumer/transfer"
-	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/boot"
-	"github.com/YasiruR/connector/domain/core/consumer"
+	"github.com/YasiruR/go-connector/core/consumer/catalog"
+	"github.com/YasiruR/go-connector/core/consumer/negotiation"
+	"github.com/YasiruR/go-connector/core/consumer/transfer"
+	"github.com/YasiruR/go-connector/domain"
+	"github.com/YasiruR/go-connector/domain/boot"
+	"github.com/YasiruR/go-connector/domain/core/consumer"
 )
 
 // validator should verify states before transitioning into next, signatures, authorization

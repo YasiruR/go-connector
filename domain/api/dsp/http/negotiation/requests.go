@@ -1,7 +1,7 @@
 package negotiation
 
 import (
-	"github.com/YasiruR/connector/domain/models/odrl"
+	"github.com/YasiruR/go-connector/domain/models/odrl"
 )
 
 // Data models required for the negotiation process as specified by

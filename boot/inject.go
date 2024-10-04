@@ -1,19 +1,20 @@
 package boot
 
 import (
-	dspSHttp "github.com/YasiruR/connector/api/dsp/http"
-	gatewayHttp "github.com/YasiruR/connector/api/gateway/http"
-	"github.com/YasiruR/connector/core/consumer"
-	"github.com/YasiruR/connector/core/owner"
-	"github.com/YasiruR/connector/core/provider"
-	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/pkg/client/http"
-	"github.com/YasiruR/connector/pkg/database/memory"
-	pkgLog "github.com/YasiruR/connector/pkg/log"
-	"github.com/YasiruR/connector/pkg/urn"
-	"github.com/YasiruR/connector/stores/catalog"
-	"github.com/YasiruR/connector/stores/policy"
-	"github.com/YasiruR/connector/stores/protocol"
+	dspSHttp "github.com/YasiruR/go-connector/api/dsp/http"
+	gatewayHttp "github.com/YasiruR/go-connector/api/gateway/http"
+	"github.com/YasiruR/go-connector/core/consumer"
+	"github.com/YasiruR/go-connector/core/owner"
+	"github.com/YasiruR/go-connector/core/provider"
+	"github.com/YasiruR/go-connector/data"
+	"github.com/YasiruR/go-connector/domain"
+	"github.com/YasiruR/go-connector/pkg/client/http"
+	"github.com/YasiruR/go-connector/pkg/database/memory"
+	pkgLog "github.com/YasiruR/go-connector/pkg/log"
+	"github.com/YasiruR/go-connector/pkg/urn"
+	"github.com/YasiruR/go-connector/stores/catalog"
+	"github.com/YasiruR/go-connector/stores/policy"
+	"github.com/YasiruR/go-connector/stores/protocol"
 )
 
 var log = pkgLog.NewLogger()
@@ -35,6 +36,8 @@ var stores = domain.Stores{
 	AgreementStore:           policy.NewAgreementStore(plugins),
 	TransferStore:            protocol.NewTransferStore(plugins),
 }
+
+var exchanger = data.NewExchanger(config, stores, plugins.Log)
 
 var roles = domain.Roles{
 	Provider: provider.New(config, stores, plugins),

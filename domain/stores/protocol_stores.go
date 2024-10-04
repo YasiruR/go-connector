@@ -1,9 +1,9 @@
 package stores
 
 import (
-	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
-	"github.com/YasiruR/connector/domain/api/dsp/http/transfer"
-	"github.com/YasiruR/connector/domain/models/odrl"
+	"github.com/YasiruR/go-connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
+	"github.com/YasiruR/go-connector/domain/models/odrl"
 )
 
 // ContractNegotiationStore includes get and set methods for attributes required

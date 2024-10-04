@@ -1,6 +1,6 @@
 package catalog
 
-import "github.com/YasiruR/connector/domain/api"
+import "github.com/YasiruR/go-connector/domain/api"
 
 // Message types
 const (

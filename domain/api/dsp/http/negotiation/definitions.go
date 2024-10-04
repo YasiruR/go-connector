@@ -1,6 +1,6 @@
 package negotiation
 
-import "github.com/YasiruR/connector/domain/api"
+import "github.com/YasiruR/go-connector/domain/api"
 
 type State string
 

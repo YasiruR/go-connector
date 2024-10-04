@@ -1,9 +1,9 @@
 package stores
 
 import (
-	"github.com/YasiruR/connector/domain/api/dsp/http/catalog"
-	"github.com/YasiruR/connector/domain/models/dcat"
-	"github.com/YasiruR/connector/domain/models/odrl"
+	"github.com/YasiruR/go-connector/domain/api/dsp/http/catalog"
+	"github.com/YasiruR/go-connector/domain/models/dcat"
+	"github.com/YasiruR/go-connector/domain/models/odrl"
 )
 
 /*

@@ -3,12 +3,12 @@ package negotiation
 import (
 	defaultErr "errors"
 	"fmt"
-	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/api/dsp/http/negotiation"
-	"github.com/YasiruR/connector/domain/core"
-	"github.com/YasiruR/connector/domain/errors"
-	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/stores"
+	"github.com/YasiruR/go-connector/domain"
+	"github.com/YasiruR/go-connector/domain/api/dsp/http/negotiation"
+	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/errors"
+	"github.com/YasiruR/go-connector/domain/pkg"
+	"github.com/YasiruR/go-connector/domain/stores"
 )
 
 type Handler struct {

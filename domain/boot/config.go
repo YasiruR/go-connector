@@ -25,4 +25,12 @@ type Config struct {
 			} `yaml:"http"`
 		} `yaml:"gateway"`
 	} `yaml:"servers"`
+	DataSources []struct {
+		Name     string `yaml:"name"`
+		Hostname string `yaml:"hostname"`
+		Port     int    `yaml:"port"`
+		Database string `yaml:"database"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"data_sources"`
 }

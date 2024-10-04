@@ -1,6 +1,6 @@
 package dcat
 
-import "github.com/YasiruR/connector/domain/models/odrl"
+import "github.com/YasiruR/go-connector/domain/models/odrl"
 
 // namespace prefix reference: https://www.w3.org/TR/vocab-dcat-2/#normative-namespaces
 

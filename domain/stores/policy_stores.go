@@ -1,6 +1,6 @@
 package stores
 
-import "github.com/YasiruR/connector/domain/models/odrl"
+import "github.com/YasiruR/go-connector/domain/models/odrl"
 
 /*
 	Data associated with ODRL policies are stored here.

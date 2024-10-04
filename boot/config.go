@@ -2,8 +2,8 @@ package boot
 
 import (
 	"fmt"
-	"github.com/YasiruR/connector/domain/boot"
-	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/go-connector/domain/boot"
+	"github.com/YasiruR/go-connector/domain/pkg"
 	"gopkg.in/yaml.v3"
 	"net"
 	"os"

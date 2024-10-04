@@ -1,7 +1,7 @@
 package metadata_broker
 
 import (
-	"github.com/YasiruR/connector/domain/services/metadata-broker"
+	"github.com/YasiruR/go-connector/domain/services/metadata-broker"
 )
 
 type CeitBroker struct{}

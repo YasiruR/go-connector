@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"github.com/YasiruR/connector/domain/pkg"
+	"github.com/YasiruR/go-connector/domain/pkg"
 	"sync"
 )
 

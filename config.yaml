@@ -18,3 +18,10 @@ servers:
   gateway:
     http:
       port: 9081
+data_sources:
+  - name: postgresql
+    hostname: test
+    port: 5432
+    database: test
+    user: test
+    password: test

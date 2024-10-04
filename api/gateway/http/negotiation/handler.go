@@ -1,13 +1,13 @@
 package negotiation
 
 import (
-	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/api/gateway/http/negotiation"
-	"github.com/YasiruR/connector/domain/core"
-	"github.com/YasiruR/connector/domain/errors"
-	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/stores"
-	"github.com/YasiruR/connector/pkg/middleware"
+	"github.com/YasiruR/go-connector/domain"
+	"github.com/YasiruR/go-connector/domain/api/gateway/http/negotiation"
+	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/errors"
+	"github.com/YasiruR/go-connector/domain/pkg"
+	"github.com/YasiruR/go-connector/domain/stores"
+	"github.com/YasiruR/go-connector/pkg/middleware"
 	"github.com/gorilla/mux"
 	"net/http"
 )

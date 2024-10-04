@@ -1,12 +1,12 @@
 package provider
 
 import (
-	"github.com/YasiruR/connector/core/provider/catalog"
-	"github.com/YasiruR/connector/core/provider/negotiation"
-	"github.com/YasiruR/connector/core/provider/transfer"
-	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/boot"
-	"github.com/YasiruR/connector/domain/core/provider"
+	"github.com/YasiruR/go-connector/core/provider/catalog"
+	"github.com/YasiruR/go-connector/core/provider/negotiation"
+	"github.com/YasiruR/go-connector/core/provider/transfer"
+	"github.com/YasiruR/go-connector/domain"
+	"github.com/YasiruR/go-connector/domain/boot"
+	"github.com/YasiruR/go-connector/domain/core/provider"
 )
 
 type Provider struct {

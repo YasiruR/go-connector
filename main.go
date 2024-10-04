@@ -1,6 +1,6 @@
 package main
 
-import "github.com/YasiruR/connector/boot"
+import "github.com/YasiruR/go-connector/boot"
 
 func main() {
 	boot.Start()

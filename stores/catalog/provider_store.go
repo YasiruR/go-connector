@@ -2,13 +2,13 @@ package catalog
 
 import (
 	"fmt"
-	"github.com/YasiruR/connector/domain"
-	"github.com/YasiruR/connector/domain/boot"
-	"github.com/YasiruR/connector/domain/core"
-	"github.com/YasiruR/connector/domain/errors"
-	"github.com/YasiruR/connector/domain/models/dcat"
-	"github.com/YasiruR/connector/domain/pkg"
-	"github.com/YasiruR/connector/domain/stores"
+	"github.com/YasiruR/go-connector/domain"
+	"github.com/YasiruR/go-connector/domain/boot"
+	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/errors"
+	"github.com/YasiruR/go-connector/domain/models/dcat"
+	"github.com/YasiruR/go-connector/domain/pkg"
+	"github.com/YasiruR/go-connector/domain/stores"
 )
 
 const collProviderCatalog = `provider-catalog`

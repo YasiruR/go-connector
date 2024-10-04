@@ -1,9 +1,9 @@
 package core
 
 import (
-	"github.com/YasiruR/connector/domain/core/consumer"
-	"github.com/YasiruR/connector/domain/core/provider"
-	"github.com/YasiruR/connector/domain/models/odrl"
+	"github.com/YasiruR/go-connector/domain/core/consumer"
+	"github.com/YasiruR/go-connector/domain/core/provider"
+	"github.com/YasiruR/go-connector/domain/models/odrl"
 )
 
 const (
