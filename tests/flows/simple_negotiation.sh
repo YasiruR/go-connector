@@ -3,7 +3,7 @@
 res=$(curl --silent -X POST -d '{"permissions": [{"action": "use", "constraints": [{"leftOperand": "region", "operator": "eq", "rightOperand": "eu"}]}]}' http://localhost:9081/gateway/create-policy)
 policy_id=$(echo "$res" | awk -F[\"\"] '{print $4}')
 
-data='{"title": "sample dataset", "description": ["sample description"], "endpoints": ["http://localhost:9080/datasource"], "offerIds": ["'$policy_id'"], "keywords": ["dataspace", "connector"]}'
+data='{"title": "sample dataset", "description": ["sample description"], "endpoints": ["http://localhost:9080/datasource"], "offerIds": ["'$policy_id'"], "keywords": ["dataspace", "connector"], "format": "dspace:postgresql+push"}'
 res=$(curl --silent -X POST -d "$data" http://localhost:9081/gateway/create-dataset)
 dataset_id=$(echo "$res" | awk -F[\"\"] '{print $4}')
 

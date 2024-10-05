@@ -15,17 +15,20 @@ import (
 )
 
 type Controller struct {
+	exchanger data.Exchanger
 	tpStore   stores.TransferStore
-	exchanger data.Exchanger // todo
+	agrStore  stores.AgreementStore
 	client    pkg.Client
 	log       pkg.Log
 }
 
-func NewController(tpStore stores.TransferStore, plugins domain.Plugins) *Controller {
+func NewController(ex data.Exchanger, s domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
-		tpStore: tpStore,
-		client:  plugins.Client,
-		log:     plugins.Log,
+		exchanger: ex,
+		tpStore:   s.TransferStore,
+		agrStore:  s.AgreementStore,
+		client:    plugins.Client,
+		log:       plugins.Log,
 	}
 }
 
@@ -72,6 +75,16 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 
 	c.log.Debug(fmt.Sprintf("provider controller updated transfer process state (id: %s, state: %s)",
 		tpId, transfer.StateStarted))
+
+	// several approaches to trigger the transfer
+	//	- synchronously by the control plane
+	// 	- asynchronously in a go-routine
+	//	- manually and separately
+
+	if err = c.transfer(tpId); err != nil {
+		return errors.CustomFuncError(`transfer`, err)
+	}
+
 	return nil
 }
 
@@ -188,12 +201,12 @@ func (c *Controller) send(tpId, endpoint string, request any) error {
 		return errors.StoreFailed(stores.TypeTransfer, `CallBackAddr`, err)
 	}
 
-	data, err := json.Marshal(request)
+	body, err := json.Marshal(request)
 	if err != nil {
 		return errors.Client(errors.MarshalError(``, err))
 	}
 
-	res, err := c.client.Send(data, consumerAddr+endpoint)
+	res, err := c.client.Send(body, consumerAddr+endpoint)
 	if err != nil {
 		return errors.Client(errors.SendFailed(err))
 	}
@@ -204,6 +217,42 @@ func (c *Controller) send(tpId, endpoint string, request any) error {
 	}
 
 	// validate ack
+
+	return nil
+}
+
+func (c *Controller) transfer(tpId string) error {
+	agrId, err := c.tpStore.AgreementId(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `AgreementId`, err)
+	}
+
+	agr, err := c.agrStore.Agreement(agrId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeAgreement, `Agreement`, err)
+	}
+
+	addr, err := c.tpStore.DataSinkAddress(tpId)
+	if err != nil {
+		return errors.StoreFailed(stores.TypeTransfer, `DataSinkAddress`, err)
+	}
+
+	var db string
+	var cr data.Credentials
+	for _, p := range addr.EndpointProperties {
+		switch p.Name {
+		case transfer.PropertyUsername:
+			cr.User = p.Value
+		case transfer.PropertyPassword:
+			cr.Password = p.Value
+		case transfer.PropertyDatabase:
+			db = p.Value
+		}
+	}
+
+	if err = c.exchanger.PushWithCredentials(string(agr.Target), addr.Endpoint, db, cr); err != nil {
+		return errors.TransferFailed(addr.Endpoint, err)
+	}
 
 	return nil
 }

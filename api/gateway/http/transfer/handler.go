@@ -5,6 +5,7 @@ import (
 	"github.com/YasiruR/go-connector/domain/api"
 	"github.com/YasiruR/go-connector/domain/api/gateway/http/transfer"
 	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/data"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/pkg/middleware"
@@ -55,7 +56,15 @@ func (h *Handler) RequestTransfer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trId, err := h.consumer.RequestTransfer(req.TransferFormat, req.AgreementId, req.SinkEndpoint, req.ProviderEndpoint)
+	trId, err := h.consumer.RequestTransfer(req.TransferFormat, req.AgreementId,
+		req.ProviderEndpoint, data.Database{
+			Name:     req.DataSink.Database,
+			Endpoint: req.DataSink.Endpoint,
+			Credentials: data.Credentials{
+				User:     req.DataSink.Username,
+				Password: req.DataSink.Password,
+			},
+		})
 	if err != nil {
 		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer,
 			`RequestTransfer`, err), http.StatusInternalServerError)

@@ -4,6 +4,7 @@ import (
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
+	"github.com/YasiruR/go-connector/domain/data"
 )
 
 type CatalogController interface {
@@ -26,7 +27,7 @@ type NegotiationHandler interface {
 
 type TransferController interface {
 	GetProviderProcess(tpId string) (transfer.Process, error)
-	RequestTransfer(transferType, agreementId, sinkEndpoint, providerAddr string) (tpId string, err error)
+	RequestTransfer(transferType, agreementId, providerAddr string, sinkDb data.Database) (tpId string, err error)
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
 	StartTransfer(tpId string) error
 	CompleteTransfer(tpId string) error

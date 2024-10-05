@@ -9,6 +9,7 @@ import (
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/go-connector/domain/boot"
 	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/data"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/domain/stores"
@@ -50,8 +51,8 @@ func (c *Controller) GetProviderProcess(tpId string) (transfer.Process, error) {
 	return transfer.Process(ack), nil
 }
 
-func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
-	providerEndpoint string) (tpId string, err error) {
+func (c *Controller) RequestTransfer(dataFormat, agreementId, providerEndpoint string,
+	sinkDb data.Database) (tpId string, err error) {
 	// include validations for format
 	typ := transfer.DataTransferType(dataFormat)
 
@@ -70,16 +71,32 @@ func (c *Controller) RequestTransfer(dataFormat, agreementId, sinkEndpoint,
 	}
 
 	if typ == transfer.HTTPPush {
-		if sinkEndpoint == `` {
+		if sinkDb.Endpoint == `` {
 			return ``, errors.Client(errors.MissingAttrError(`sink endpoint`,
 				`mandatory for push transfers`))
 		}
 
 		req.Address = transfer.Address{
-			Type:               transfer.MsgTypeDataAddress,
-			EndpointType:       transfer.EndpointTypeHTTP,
-			Endpoint:           sinkEndpoint,
-			EndpointProperties: nil, // e.g. auth tokens
+			Type:         transfer.MsgTypeDataAddress,
+			EndpointType: transfer.EndpointTypeHTTP,
+			Endpoint:     sinkDb.Endpoint,
+			EndpointProperties: []transfer.EndpointProperty{
+				{
+					Type:  transfer.MsgTypeEndpointProperty,
+					Name:  transfer.PropertyUsername,
+					Value: sinkDb.User,
+				},
+				{
+					Type:  transfer.MsgTypeEndpointProperty,
+					Name:  transfer.PropertyPassword,
+					Value: sinkDb.Password,
+				},
+				{
+					Type:  transfer.MsgTypeEndpointProperty,
+					Name:  transfer.PropertyDatabase,
+					Value: sinkDb.Name,
+				},
+			}, // e.g. auth tokens
 		}
 	}
 

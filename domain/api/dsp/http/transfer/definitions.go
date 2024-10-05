@@ -46,3 +46,10 @@ const (
 	TerminateEndpoint = `/transfers/{` + api.ParamPid + `}/termination`
 	EndpointTypeHTTP  = `https://w3id.org/idsa/v4.1/HTTP`
 )
+
+// Endpoint property values
+const (
+	PropertyUsername = `username`
+	PropertyPassword = `password`
+	PropertyDatabase = `database`
+)

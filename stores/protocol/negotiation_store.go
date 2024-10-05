@@ -26,10 +26,10 @@ type ContractNegotiation struct {
 func NewContractNegotiationStore(plugins domain.Plugins) *ContractNegotiation {
 	plugins.Log.Info("initialized contract negotiation store")
 	return &ContractNegotiation{
-		negotiations: plugins.Database.NewCollection(),
-		assignees:    plugins.Database.NewCollection(),
-		assigners:    plugins.Database.NewCollection(),
-		callbackAddr: plugins.Database.NewCollection(),
+		negotiations: plugins.Store.NewCollection(),
+		assignees:    plugins.Store.NewCollection(),
+		assigners:    plugins.Store.NewCollection(),
+		callbackAddr: plugins.Store.NewCollection(),
 	}
 }
 

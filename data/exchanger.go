@@ -29,29 +29,35 @@ func (e *Exchanger) NewToken(participantId, datasetId string) string {
 	return ``
 }
 
-func (e *Exchanger) Push(datasetId, host, db, usr, pw string) error {
-	return e.push(datasetId, host, db, usr, pw)
+func (e *Exchanger) PushWithCredentials(datasetId, host, db string, c data.Credentials) error {
+	return e.send(datasetId, host, db, c.User, c.Password)
 }
 
 func (e *Exchanger) Pull(datasetId, endpoint, token string) {
 
 }
 
-func (e *Exchanger) push(datasetId, host, db, usr, pw string) error {
+func (e *Exchanger) send(datasetId, host, db, usr, pw string) error {
 	ds, err := e.cat.Dataset(datasetId)
 	if err != nil {
-		return errors.Catalog(errors.InvalidKey(stores.TypeProviderCatalog, `dataset id`, err))
+		return errors.StoreFailed(stores.TypeProviderCatalog, `dataset`, err)
 	}
 
+	var done bool
 	for _, dist := range ds.DcatDistribution {
 		switch dist.DctFormat {
 		case data.PostgreSQLPush:
 			if err = e.psql.Migrate(host, db, usr, pw); err != nil {
 				return fmt.Errorf("postgresql failed - %s", err)
 			}
+			done = true
 		default:
 			e.log.Error(fmt.Sprintf("Unsupported dct format: %s", dist.DctFormat))
 		}
+	}
+
+	if !done {
+		return errors.Client(errors.ExchangerError(`no supported data distribution type found`))
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package daps
 
 import (
-	"fmt"
 	"github.com/tryfix/log"
 	"io"
 	"net/http"
@@ -34,11 +33,8 @@ func (i *IDS) RequestToken(jwt string) {
 	}
 	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
+	_, err = io.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(`read response body failed`, err)
 	}
-
-	fmt.Println("RES STATUS: ", res.Status)
-	fmt.Println("RES BODY: ", string(body))
 }

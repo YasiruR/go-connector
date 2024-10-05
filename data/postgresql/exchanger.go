@@ -6,14 +6,15 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"os/exec"
+	"time"
 )
 
-// pg_dump -h <src-host> -U <src-user> <src-database> > backup.sql
+// pg_dump -c -h <src-host> -U <src-user> <src-database> > backup.sql
 // psql -h <dest-host> -U <dest-user> <dest-database> < backup.sql
 
 const (
-	dumpCmd    = "PGPASSWORD=%s pg_dump -h %s -U %s %s > backup.sql"
-	restoreCmd = "PGPASSWORD=%s psql -h %s -U %s %s < backup.sql"
+	dumpCmd    = "PGPASSWORD=%s pg_dump -c -h %s -U %s %s > %s"
+	restoreCmd = "PGPASSWORD=%s psql -h %s -U %s %s < %s"
 )
 
 type Exchanger struct {
@@ -40,12 +41,17 @@ func NewExchanger(cfg boot.Config) *Exchanger {
 }
 
 func (d *Exchanger) Migrate(host, db, usr, pw string) error {
-	if _, err := exec.Command(fmt.Sprintf(dumpCmd, d.pw, host, d.usr, db)).Output(); err != nil {
-		return fmt.Errorf("failed to run dump command: %w", err)
+	fileName := fmt.Sprintf(`backup_%s_%d.sql`, host, time.Now().Unix())
+	cmd := fmt.Sprintf(dumpCmd, d.pw, d.host, d.usr, d.db, fileName)
+	out, err := exec.Command(`bash`, `-c`, cmd).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to run dump command: %w (stderr: %s)", err, string(out))
 	}
 
-	if _, err := exec.Command(fmt.Sprintf(restoreCmd, pw, host, usr, db)).Output(); err != nil {
-		return fmt.Errorf("failed to run restore command: %w", err)
+	cmd = fmt.Sprintf(restoreCmd, pw, host, usr, db, fileName)
+	out, err = exec.Command(`bash`, `-c`, cmd).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to run restore command: %w (stderr: %s)", err, string(out))
 	}
 
 	return nil

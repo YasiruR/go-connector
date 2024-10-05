@@ -19,6 +19,7 @@ import (
 
 type Controller struct {
 	callbackAddr string
+	cat          stores.ProviderCatalog
 	cnStore      stores.ContractNegotiationStore
 	policyStore  stores.OfferStore
 	agrStore     stores.AgreementStore
@@ -30,6 +31,7 @@ type Controller struct {
 func NewController(cfg boot.Config, stores domain.Stores, plugins domain.Plugins) *Controller {
 	return &Controller{
 		callbackAddr: cfg.Servers.IP + `:` + strconv.Itoa(cfg.Servers.DSP.HTTP.Port),
+		cat:          stores.ProviderCatalog,
 		cnStore:      stores.ContractNegotiationStore,
 		policyStore:  stores.OfferStore,
 		agrStore:     stores.AgreementStore,
@@ -105,7 +107,13 @@ func (c *Controller) OfferContract(offerId, providerPid, consumerAddr string) (c
 		Offer:        ofr,
 		CallbackAddr: c.callbackAddr,
 	}
-	// todo offer must have a target but not in policies
+
+	// offer must have the dataset id as its target but not in policies
+	ds, err := c.cat.DatasetByOfferId(offerId)
+	if err != nil {
+		return ``, errors.StoreFailed(stores.TypeProviderCatalog, `DatasetByOfferId`, err)
+	}
+	req.Offer.Target = odrl.Target(ds.ID)
 
 	ack, err := c.send(providerPid, endpoint, req)
 	if err != nil {
@@ -156,6 +164,12 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		return ``, errors.StoreFailed(stores.TypeContractNegotiation, `Assignee`, err)
 	}
 
+	// agreement must have a target but not in policies
+	ds, err := c.cat.DatasetByOfferId(offerId)
+	if err != nil {
+		return ``, errors.StoreFailed(stores.TypeProviderCatalog, `DatasetByOfferId`, err)
+	}
+
 	req := negotiation.ContractAgreement{
 		Ctx:     core.Context,
 		Type:    negotiation.MsgTypeContractAgreement,
@@ -164,7 +178,7 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		Agreement: odrl.Agreement{
 			Id:          agreementId,
 			Type:        odrl.TypeAgreement,
-			Target:      offer.Target,
+			Target:      odrl.Target(ds.ID),
 			Assigner:    offer.Assigner,
 			Assignee:    assignee,
 			Timestamp:   time.Now().UTC().String(), // change format into XSD
@@ -172,7 +186,6 @@ func (c *Controller) AgreeContract(offerId, providerPid string) (agreementId str
 		},
 		CallbackAddr: c.callbackAddr,
 	}
-	// todo agreement must have a target but not in policies
 
 	if _, err = c.send(providerPid, api.SetParamConsumerPid(negotiation.ContractAgreementEndpoint,
 		cn.ConsPId), req); err != nil {

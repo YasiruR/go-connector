@@ -63,6 +63,9 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 
 	h.tpStore.AddProcess(tpId, transfer.Process(ack))
 	h.tpStore.SetCallbackAddr(tpId, tr.CallbackAddr)
+	h.tpStore.SetAgreementId(tpId, tr.AgreementId)
+	h.tpStore.SetDataSinkAddress(tpId, tr.Address)
+
 	h.log.Trace("stored transfer process", ack)
 	h.log.Debug(fmt.Sprintf("provider handler updated transfer process (id: %s, state: %s)",
 		tpId, transfer.StateRequested))

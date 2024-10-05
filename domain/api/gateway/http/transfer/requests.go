@@ -3,8 +3,14 @@ package transfer
 type Request struct {
 	TransferFormat   string `json:"transferFormat"`
 	AgreementId      string `json:"agreementId"`
-	SinkEndpoint     string `json:"sinkEndpoint"`
 	ProviderEndpoint string `json:"providerEndpoint"`
+	// integrate token
+	DataSink struct {
+		Database string `json:"database"`
+		Endpoint string `json:"endpoint"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	} `json:"dataSink"`
 }
 
 type StartRequest struct {

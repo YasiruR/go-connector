@@ -14,14 +14,14 @@ catalog:
 servers:
   dsp:
     http:
-      port: 9080
+      port: 8080
   gateway:
     http:
-      port: 9081
+      port: 8081
 data_sources:
   - name: postgresql
-    hostname: test
+    hostname: localhost
     port: 5432
-    database: test
-    user: test
+    database: test_db
+    username: test
     password: test

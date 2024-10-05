@@ -17,6 +17,7 @@ type ProviderCatalog interface {
 	Catalog() (dcat.Catalog, error)
 	AddDataset(id string, val dcat.Dataset)
 	Dataset(id string) (dcat.Dataset, error)
+	DatasetByOfferId(offerId string) (dcat.Dataset, error)
 }
 
 // ConsumerCatalog stores catalogs received by providers and therefore, it may
@@ -26,4 +27,5 @@ type ConsumerCatalog interface {
 	Catalog(providerId string) (catalog.Response, error)
 	Offer(offerId string) (ofr odrl.Offer, err error)
 	AllCatalogs() ([]catalog.Response, error)
+	DatasetByOfferId(offerId string) (id string, err error)
 }

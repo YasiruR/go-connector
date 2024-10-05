@@ -19,7 +19,7 @@ type Agreement struct {
 
 func NewAgreementStore(plugins domain.Plugins) *Agreement {
 	plugins.Log.Info("initialized agreement store")
-	return &Agreement{agrColl: plugins.Database.NewCollection(), cnAgrMap: plugins.Database.NewCollection()}
+	return &Agreement{agrColl: plugins.Store.NewCollection(), cnAgrMap: plugins.Store.NewCollection()}
 }
 
 func (a *Agreement) AddAgreement(cnId string, val odrl.Agreement) {

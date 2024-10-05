@@ -28,6 +28,10 @@ func PkgError(pkg, function string, err error, params ...string) error {
 	return fmt.Errorf("package error (pkg: %s, function: %s) [%v] - %w", pkg, function, params, err)
 }
 
+func TransferFailed(endpoint string, err error) error {
+	return fmt.Errorf("transfer error (endpoint: %s) - %w", endpoint, err)
+}
+
 func CustomFuncError(function string, err error) error {
 	return fmt.Errorf("function %s failed - %w", function, err)
 }

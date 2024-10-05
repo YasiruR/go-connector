@@ -19,7 +19,7 @@ import (
 type Controller struct {
 	callbackAddr string
 	assigneeId   string
-	catalog      stores.ConsumerCatalog
+	cat          stores.ConsumerCatalog
 	cnStore      stores.ContractNegotiationStore
 	urn          pkg.URNService
 	client       pkg.Client
@@ -30,7 +30,7 @@ func NewController(cfg boot.Config, stores domain.Stores, plugins domain.Plugins
 	return &Controller{
 		callbackAddr: cfg.Servers.IP + `:` + strconv.Itoa(cfg.Servers.DSP.HTTP.Port),
 		assigneeId:   cfg.DataSpace.AssigneeId,
-		catalog:      stores.ConsumerCatalog,
+		cat:          stores.ConsumerCatalog,
 		cnStore:      stores.ContractNegotiationStore,
 		urn:          plugins.URNService,
 		client:       plugins.Client,
@@ -92,6 +92,13 @@ func (c *Controller) RequestContract(consumerPid, providerAddr, offerId string,
 		Offer:        ofr,
 		CallbackAddr: c.callbackAddr,
 	}
+
+	// request must have the dataset id as its target but not in policies
+	dsId, err := c.cat.DatasetByOfferId(offerId)
+	if err != nil {
+		return ``, errors.StoreFailed(stores.TypeConsumerCatalog, `DatasetByOfferId`, err)
+	}
+	req.Offer.Target = odrl.Target(dsId)
 
 	ack, err := c.send(consumerPid, endpoint, req)
 	if err != nil {
@@ -262,7 +269,7 @@ func (c *Controller) send(consumerPid, endpoint string, req any) (negotiation.Ac
 
 func (c *Controller) setConstraints(offerId string, vals map[string]string) (odrl.Offer, error) {
 	var permList []odrl.Rule
-	ofr, err := c.catalog.Offer(offerId)
+	ofr, err := c.cat.Offer(offerId)
 	if err != nil {
 		return odrl.Offer{}, errors.Client(errors.InvalidKey(stores.TypeTransfer, `offer id`, err))
 	}

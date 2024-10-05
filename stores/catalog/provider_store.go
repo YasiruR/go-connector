@@ -23,7 +23,7 @@ type ProviderCatalog struct {
 func NewProviderCatalog(cfg boot.Config, plugins domain.Plugins) *ProviderCatalog {
 	c := &ProviderCatalog{
 		urn:  plugins.URNService,
-		coll: plugins.Database.NewCollection(),
+		coll: plugins.Store.NewCollection(),
 	}
 
 	if err := c.init(cfg); err != nil {
@@ -109,4 +109,24 @@ func (p *ProviderCatalog) Dataset(id string) (dcat.Dataset, error) {
 	}
 
 	return val.(dcat.Dataset), nil
+}
+
+func (p *ProviderCatalog) DatasetByOfferId(offerId string) (dcat.Dataset, error) {
+	vals, err := p.coll.GetAll()
+	if err != nil {
+		return dcat.Dataset{}, stores.QueryFailed(collProviderCatalog, `GetAll`, err)
+	}
+
+	for _, val := range vals {
+		ds, ok := val.(dcat.Dataset)
+		if ok {
+			for _, offer := range ds.OdrlHasPolicy {
+				if offer.Id == offerId {
+					return ds, nil
+				}
+			}
+		}
+	}
+
+	return dcat.Dataset{}, stores.InvalidKey(offerId)
 }

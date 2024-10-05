@@ -9,19 +9,32 @@ import (
 	"github.com/YasiruR/go-connector/domain/stores"
 )
 
-const collConsumerCatalog = `consumer-catalog`
+const (
+	collConsumerCatalog = `consumer-catalog`
+	collOfferedData     = `offer-dataset`
+)
 
 type ConsumerCatalog struct {
-	urn  pkg.URNService
-	coll pkg.Collection
+	urn      pkg.URNService
+	coll     pkg.Collection
+	ofrdData pkg.Collection // key: offer id, value: dataset id
 }
 
 func NewConsumerCatalog(plugins domain.Plugins) *ConsumerCatalog {
-	return &ConsumerCatalog{urn: plugins.URNService, coll: plugins.Database.NewCollection()}
+	return &ConsumerCatalog{
+		urn:      plugins.URNService,
+		coll:     plugins.Store.NewCollection(),
+		ofrdData: plugins.Store.NewCollection(),
+	}
 }
 
 func (c *ConsumerCatalog) AddCatalog(res catalog.Response) {
 	_ = c.coll.Set(res.DspaceParticipantID, res)
+	for _, ds := range res.DcatDataset {
+		for _, ofr := range ds.OdrlHasPolicy {
+			_ = c.ofrdData.Set(ofr.Id, ds.ID)
+		}
+	}
 }
 
 func (c *ConsumerCatalog) Catalog(providerId string) (catalog.Response, error) {
@@ -72,4 +85,13 @@ func (c *ConsumerCatalog) AllCatalogs() ([]catalog.Response, error) {
 	}
 
 	return res, nil
+}
+
+func (c *ConsumerCatalog) DatasetByOfferId(offerId string) (id string, err error) {
+	val, err := c.ofrdData.Get(offerId)
+	if err != nil {
+		return ``, stores.QueryFailed(collOfferedData, `Get`, err)
+	}
+
+	return val.(string), nil
 }

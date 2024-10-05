@@ -14,7 +14,7 @@ type OfferStore struct {
 
 func NewOfferStore(plugins domain.Plugins) *OfferStore {
 	plugins.Log.Info("initialized offer store")
-	return &OfferStore{store: plugins.Database.NewCollection()}
+	return &OfferStore{store: plugins.Store.NewCollection()}
 }
 
 func (o *OfferStore) AddOffer(id string, val odrl.Offer) {

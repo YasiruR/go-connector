@@ -108,8 +108,16 @@ func MarshalError(msgType string, err error) ErrorMessage {
 func ProtocolFailed(typ string, errMsg any, err error) ErrorMessage {
 	return ErrorMessage{
 		code:    `20013`,
+		err:     fmt.Errorf("%s protocol failed - %s", typ, err),
 		Message: fmt.Sprintf("%s protocol failed", typ),
 		Params:  map[string]interface{}{"response": errMsg},
-		err:     fmt.Errorf("%s protocol failed - %s", typ, err),
+	}
+}
+
+func ExchangerError(errMsg string) ErrorMessage {
+	return ErrorMessage{
+		code:    `20014`,
+		err:     fmt.Errorf(errMsg),
+		Message: errMsg,
 	}
 }

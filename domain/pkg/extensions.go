@@ -3,9 +3,8 @@ package pkg
 import "context"
 
 const (
-	TypeDatabase = `Database`
-	TypeURN      = `URNService`
-	TypeClient   = `Client`
+	TypeURN    = `URNService`
+	TypeClient = `Client`
 )
 
 type IAM interface {
@@ -17,9 +16,9 @@ type PolicyEngine interface {
 	ValidateOffer()
 }
 
-// Database contains one or more Collection to support data storage required
+// Store contains one or more Collection to support data storage required
 // by the connector
-type Database interface {
+type Store interface {
 	NewCollection() Collection
 }
 

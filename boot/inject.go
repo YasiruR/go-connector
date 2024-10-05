@@ -23,7 +23,7 @@ var config = loadConfig(log)
 
 var plugins = domain.Plugins{
 	Client:     http.NewClient(log),
-	Database:   memory.NewStore(log),
+	Store:      memory.NewStore(log),
 	URNService: urn.NewGenerator(),
 	Log:        log,
 }
@@ -40,7 +40,7 @@ var stores = domain.Stores{
 var exchanger = data.NewExchanger(config, stores, plugins.Log)
 
 var roles = domain.Roles{
-	Provider: provider.New(config, stores, plugins),
+	Provider: provider.New(config, exchanger, stores, plugins),
 	Consumer: consumer.New(config, stores, plugins),
 	Owner:    owner.New(config, stores, plugins),
 }

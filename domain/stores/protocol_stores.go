@@ -28,5 +28,9 @@ type TransferStore interface {
 	Process(id string) (transfer.Process, error)
 	SetCallbackAddr(tpId, addr string)
 	CallbackAddr(tpId string) (string, error)
+	SetAgreementId(tpId, agreementId string)
+	AgreementId(tpId string) (string, error)
+	SetDataSinkAddress(tpId string, addr transfer.Address)
+	DataSinkAddress(tpId string) (transfer.Address, error)
 	UpdateState(tpId string, s transfer.State) error
 }

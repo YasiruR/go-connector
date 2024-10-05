@@ -29,7 +29,7 @@ type Servers struct {
 
 type Plugins struct {
 	pkg.Client
-	pkg.Database
+	pkg.Store
 	pkg.URNService
 	pkg.Log
 }
