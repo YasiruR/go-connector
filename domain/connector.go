@@ -2,15 +2,15 @@ package domain
 
 import (
 	"github.com/YasiruR/go-connector/domain/api"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/domain/stores"
 )
 
 type Roles struct {
-	core.Provider
-	core.Consumer
-	core.Owner
+	control_plane.Provider
+	control_plane.Consumer
+	control_plane.Owner
 }
 
 type Stores struct {
@@ -23,8 +23,9 @@ type Stores struct {
 }
 
 type Servers struct {
-	DSP     api.Server
-	Gateway api.Server
+	DSP       api.Server
+	Exchanger api.Server
+	Gateway   api.Server
 }
 
 type Plugins struct {

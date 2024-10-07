@@ -4,7 +4,7 @@ import (
 	"github.com/YasiruR/go-connector/domain"
 	"github.com/YasiruR/go-connector/domain/api"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/negotiation"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/pkg/middleware"
@@ -13,8 +13,8 @@ import (
 )
 
 type Handler struct {
-	provider core.Provider
-	consumer core.Consumer
+	provider control_plane.Provider
+	consumer control_plane.Consumer
 	log      pkg.Log
 }
 
@@ -37,7 +37,7 @@ func (h *Handler) GetNegotiation(w http.ResponseWriter, r *http.Request) {
 
 	neg, err := h.provider.HandleNegotiationsRequest(providerPid)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, negotiation.RequestEndpoint,
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider, negotiation.RequestEndpoint,
 			err), http.StatusBadRequest)
 		return
 	}
@@ -66,7 +66,7 @@ func (h *Handler) HandleContractRequest(w http.ResponseWriter, r *http.Request) 
 
 	ack, err := h.provider.HandleContractRequest(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, endpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider, endpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -94,7 +94,7 @@ func (h *Handler) HandleContractOffer(w http.ResponseWriter, r *http.Request) {
 
 	ack, err := h.consumer.HandleContractOffer(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, endpoint, err), http.StatusBadRequest)
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleConsumer, endpoint, err), http.StatusBadRequest)
 		return
 	}
 
@@ -114,7 +114,7 @@ func (h *Handler) HandleContractAgreement(w http.ResponseWriter, r *http.Request
 
 	ack, err := h.consumer.HandleContractAgreement(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, negotiation.ContractAgreementEndpoint,
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleConsumer, negotiation.ContractAgreementEndpoint,
 			err), http.StatusBadRequest)
 		return
 	}
@@ -135,7 +135,7 @@ func (h *Handler) HandleAgreementVerification(w http.ResponseWriter, r *http.Req
 
 	ack, err := h.provider.HandleAgreementVerification(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider,
 			negotiation.AgreementVerificationEndpoint, err), http.StatusBadRequest)
 		return
 	}
@@ -161,14 +161,14 @@ func (h *Handler) HandleNegotiationEvent(w http.ResponseWriter, r *http.Request)
 	case negotiation.EventAccepted:
 		ack, err = h.provider.HandleAcceptOffer(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, negotiation.EventsEndpoint,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider, negotiation.EventsEndpoint,
 				err), http.StatusBadRequest)
 			return
 		}
 	case negotiation.EventFinalized:
 		ack, err = h.consumer.HandleFinalizedEvent(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer, negotiation.EventsEndpoint,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleConsumer, negotiation.EventsEndpoint,
 				err), http.StatusBadRequest)
 			return
 		}
@@ -194,7 +194,7 @@ func (h *Handler) HandleTermination(w http.ResponseWriter, r *http.Request) {
 
 	ack, err := h.provider.HandleContractTermination(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, negotiation.TerminateEndpoint,
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider, negotiation.TerminateEndpoint,
 			err), http.StatusBadRequest)
 		return
 	}

@@ -3,7 +3,7 @@ package catalog
 import (
 	"github.com/YasiruR/go-connector/domain"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/catalog"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/pkg/middleware"
@@ -11,7 +11,7 @@ import (
 )
 
 type Handler struct {
-	provider core.Provider
+	provider control_plane.Provider
 	log      pkg.Log
 }
 
@@ -31,7 +31,7 @@ func (h *Handler) HandleCatalogRequest(w http.ResponseWriter, r *http.Request) {
 
 	cat, err := h.provider.HandleCatalogRequest(nil)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, catalog.RequestEndpoint, err),
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider, catalog.RequestEndpoint, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -51,7 +51,7 @@ func (h *Handler) HandleDatasetRequest(w http.ResponseWriter, r *http.Request) {
 
 	ds, err := h.provider.HandleDatasetRequest(req.DatasetId)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider, catalog.RequestDatasetEndpoint, err),
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider, catalog.RequestDatasetEndpoint, err),
 			http.StatusBadRequest)
 		return
 	}

@@ -101,7 +101,7 @@ func MarshalError(msgType string, err error) ErrorMessage {
 	return ErrorMessage{
 		code:    `20012`,
 		err:     fmt.Errorf("marshal error (message: %s) - %s", msgType, err),
-		Message: fmt.Sprintf("internal data parser error"),
+		Message: fmt.Sprintf("internal data-plane parser error"),
 	}
 }
 

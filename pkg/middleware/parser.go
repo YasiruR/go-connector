@@ -7,7 +7,7 @@ import (
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	pkgLog "github.com/tryfix/log"
@@ -97,7 +97,7 @@ func WriteError(w http.ResponseWriter, err error, statusCode int) {
 
 func parseCatalogErr(ce errors.CatalogError) catalog.Error {
 	return catalog.Error{
-		Context:    core.Context,
+		Context:    control_plane.Context,
 		Type:       catalog.MsgTypeError,
 		DspaceCode: ce.Code,
 		DspaceReason: []struct {
@@ -109,7 +109,7 @@ func parseCatalogErr(ce errors.CatalogError) catalog.Error {
 
 func parseNegotiationErr(ne errors.NegotiationError) negotiation.Error {
 	return negotiation.Error{
-		Ctx:     core.Context,
+		Ctx:     control_plane.Context,
 		Type:    negotiation.MsgTypeError,
 		ProvPId: ne.ProvPid,
 		ConsPId: ne.ConsPid,
@@ -121,7 +121,7 @@ func parseNegotiationErr(ne errors.NegotiationError) negotiation.Error {
 
 func parseTransferErr(te errors.TransferError) transfer.Error {
 	return transfer.Error{
-		Ctx:     core.Context,
+		Ctx:     control_plane.Context,
 		Type:    transfer.MsgTypeError,
 		ProvPId: te.ProvPid,
 		ConsPId: te.ConsPid,

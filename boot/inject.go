@@ -2,11 +2,12 @@ package boot
 
 import (
 	dspSHttp "github.com/YasiruR/go-connector/api/dsp/http"
+	exchHttp "github.com/YasiruR/go-connector/api/exchanger/http"
 	gatewayHttp "github.com/YasiruR/go-connector/api/gateway/http"
-	"github.com/YasiruR/go-connector/core/consumer"
-	"github.com/YasiruR/go-connector/core/owner"
-	"github.com/YasiruR/go-connector/core/provider"
-	"github.com/YasiruR/go-connector/data"
+	"github.com/YasiruR/go-connector/control-plane/consumer"
+	"github.com/YasiruR/go-connector/control-plane/owner"
+	"github.com/YasiruR/go-connector/control-plane/provider"
+	"github.com/YasiruR/go-connector/data-plane"
 	"github.com/YasiruR/go-connector/domain"
 	"github.com/YasiruR/go-connector/pkg/client/http"
 	"github.com/YasiruR/go-connector/pkg/database/memory"
@@ -37,15 +38,16 @@ var stores = domain.Stores{
 	TransferStore:            protocol.NewTransferStore(plugins),
 }
 
-var exchanger = data.NewExchanger(config, stores, plugins.Log)
+var exchanger = data_plane.NewExchanger(config, stores, plugins.Log)
 
 var roles = domain.Roles{
-	Provider: provider.New(config, exchanger, stores, plugins),
+	Provider: provider.New(config, stores, plugins),
 	Consumer: consumer.New(config, stores, plugins),
 	Owner:    owner.New(config, stores, plugins),
 }
 
 var servers = domain.Servers{
-	DSP:     dspSHttp.NewServer(config.Servers.DSP.HTTP.Port, roles, plugins.Log),
-	Gateway: gatewayHttp.NewServer(config.Servers.Gateway.HTTP.Port, roles, stores, plugins.Log),
+	DSP:       dspSHttp.NewServer(config.Servers.DSP.HTTP.Port, roles, plugins.Log),
+	Exchanger: exchHttp.NewServer(config.Servers.Exchanger.HTTP.Port, exchanger, plugins.Log),
+	Gateway:   gatewayHttp.NewServer(config.Servers.Gateway.HTTP.Port, roles, stores, plugins.Log),
 }

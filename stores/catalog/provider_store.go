@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/YasiruR/go-connector/domain"
 	"github.com/YasiruR/go-connector/domain/boot"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/models/dcat"
 	"github.com/YasiruR/go-connector/domain/pkg"
@@ -62,7 +62,7 @@ func (p *ProviderCatalog) init(cfg boot.Config) error {
 			ID:                  svcId,
 			Type:                dcat.TypeDataService,
 			EndpointURL:         e,
-			EndpointDescription: core.ServiceConnector, // should be considered in later versions
+			EndpointDescription: control_plane.ServiceConnector, // should be considered in later versions
 		})
 	}
 

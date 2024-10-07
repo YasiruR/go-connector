@@ -3,7 +3,7 @@ package negotiation
 import (
 	"github.com/YasiruR/go-connector/domain"
 	"github.com/YasiruR/go-connector/domain/api/gateway/http/negotiation"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/domain/stores"
@@ -13,8 +13,8 @@ import (
 )
 
 type Handler struct {
-	provider core.Provider
-	consumer core.Consumer
+	provider control_plane.Provider
+	consumer control_plane.Consumer
 	agrStore stores.AgreementStore
 	log      pkg.Log
 }
@@ -38,7 +38,7 @@ func (h *Handler) RequestContract(w http.ResponseWriter, r *http.Request) {
 
 	cnId, err := h.consumer.RequestContract(req.ConsumerPId, req.ProviderEndpoint, req.OfferId, req.Constraints)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestContract`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleConsumer, `RequestContract`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -59,7 +59,7 @@ func (h *Handler) OfferContract(w http.ResponseWriter, r *http.Request) {
 
 	cnId, err := h.provider.OfferContract(req.OfferId, req.ProviderPid, req.ConsumerAddr)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `OfferContract`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleProvider, `OfferContract`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -80,7 +80,7 @@ func (h *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.consumer.AcceptOffer(consumerPid); err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `AcceptOffer`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleConsumer, `AcceptOffer`, err),
 			http.StatusBadRequest)
 		return
 	}
@@ -101,7 +101,7 @@ func (h *Handler) AgreeContract(w http.ResponseWriter, r *http.Request) {
 
 	agrId, err := h.provider.AgreeContract(req.OfferId, req.NegotiationId)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `AgreeContract`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleProvider, `AgreeContract`, err),
 			http.StatusBadRequest)
 		return
 	}
@@ -144,7 +144,7 @@ func (h *Handler) VerifyAgreement(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.consumer.VerifyAgreement(consumerPid); err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `VerifyAgreement`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleConsumer, `VerifyAgreement`, err),
 			http.StatusBadRequest)
 		return
 	}
@@ -165,7 +165,7 @@ func (h *Handler) FinalizeContract(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.provider.FinalizeContract(providerPid); err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleProvider, `FinalizeContract`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleProvider, `FinalizeContract`, err),
 			http.StatusBadRequest)
 		return
 	}
@@ -186,7 +186,7 @@ func (h *Handler) TerminateContract(w http.ResponseWriter, r *http.Request) {
 
 	if req.ProviderPid == `` && req.ConsumerPid != `` {
 		if err := h.consumer.TerminateContract(req.ConsumerPid, req.Code, req.Reasons); err != nil {
-			middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `TerminateContract`,
+			middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleConsumer, `TerminateContract`,
 				err), http.StatusBadRequest)
 			return
 		}

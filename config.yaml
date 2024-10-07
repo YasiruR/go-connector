@@ -18,6 +18,9 @@ servers:
   gateway:
     http:
       port: 8081
+  exchanger:
+    http:
+      port: 8082
 data_sources:
   - name: postgresql
     hostname: localhost

@@ -19,6 +19,11 @@ type Config struct {
 				Port int `yaml:"port"`
 			} `yaml:"http"`
 		} `yaml:"dsp"`
+		Exchanger struct {
+			HTTP struct {
+				Port int `yaml:"port"`
+			} `yaml:"http"`
+		} `yaml:"exchanger"`
 		Gateway struct {
 			HTTP struct {
 				Port int `yaml:"port"`

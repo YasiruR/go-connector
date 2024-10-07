@@ -4,7 +4,7 @@ import (
 	"github.com/YasiruR/go-connector/domain"
 	"github.com/YasiruR/go-connector/domain/api"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/pkg/middleware"
@@ -13,8 +13,8 @@ import (
 )
 
 type Handler struct {
-	provider core.Provider
-	consumer core.Consumer
+	provider control_plane.Provider
+	consumer control_plane.Consumer
 	log      pkg.Log
 }
 
@@ -37,7 +37,7 @@ func (h *Handler) HandleGetProcess(w http.ResponseWriter, r *http.Request) {
 
 	ack, err := h.provider.HandleGetProcess(tpId)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider,
 			transfer.GetProcessEndpoint, err), http.StatusBadRequest)
 		return
 	}
@@ -58,7 +58,7 @@ func (h *Handler) HandleTransferRequest(w http.ResponseWriter, r *http.Request) 
 
 	ack, err := h.provider.HandleTransferRequest(req)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+		middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider,
 			transfer.RequestEndpoint, err), http.StatusBadRequest)
 		return
 	}
@@ -91,14 +91,14 @@ func (h *Handler) HandleTransferStart(w http.ResponseWriter, r *http.Request) {
 	case req.ProvPId:
 		ack, err = h.provider.HandleTransferStart(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider,
 				transfer.StartEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	case req.ConsPId:
 		ack, err = h.consumer.HandleTransferStart(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleConsumer,
 				transfer.StartEndpoint, err), http.StatusBadRequest)
 			return
 		}
@@ -136,14 +136,14 @@ func (h *Handler) HandleTransferSuspension(w http.ResponseWriter, r *http.Reques
 	case req.ProvPId:
 		ack, err = h.provider.HandleTransferSuspension(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider,
 				transfer.SuspendEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	case req.ConsPId:
 		ack, err = h.consumer.HandleTransferSuspension(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleConsumer,
 				transfer.SuspendEndpoint, err), http.StatusBadRequest)
 			return
 		}
@@ -181,14 +181,14 @@ func (h *Handler) HandleTransferCompletion(w http.ResponseWriter, r *http.Reques
 	case req.ProvPId:
 		ack, err = h.provider.HandleTransferCompletion(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider,
 				transfer.CompleteEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	case req.ConsPId:
 		ack, err = h.consumer.HandleTransferCompletion(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleConsumer,
 				transfer.CompleteEndpoint, err), http.StatusBadRequest)
 			return
 		}
@@ -226,14 +226,14 @@ func (h *Handler) HandleTransferTermination(w http.ResponseWriter, r *http.Reque
 	case req.ProvPId:
 		ack, err = h.provider.HandleTransferTermination(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleProvider,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleProvider,
 				transfer.TerminateEndpoint, err), http.StatusBadRequest)
 			return
 		}
 	case req.ConsPId:
 		ack, err = h.consumer.HandleTransferTermination(req)
 		if err != nil {
-			middleware.WriteError(w, errors.DSPHandlerFailed(core.RoleConsumer,
+			middleware.WriteError(w, errors.DSPHandlerFailed(control_plane.RoleConsumer,
 				transfer.TerminateEndpoint, err), http.StatusBadRequest)
 			return
 		}

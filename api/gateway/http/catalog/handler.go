@@ -3,7 +3,7 @@ package catalog
 import (
 	"github.com/YasiruR/go-connector/domain"
 	"github.com/YasiruR/go-connector/domain/api/gateway/http/catalog"
-	"github.com/YasiruR/go-connector/domain/core"
+	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/models/odrl"
 	"github.com/YasiruR/go-connector/domain/pkg"
@@ -13,8 +13,8 @@ import (
 )
 
 type Handler struct {
-	consumer    core.Consumer
-	owner       core.Owner
+	consumer    control_plane.Consumer
+	owner       control_plane.Owner
 	consCatalog stores.ConsumerCatalog
 	log         pkg.Log
 }
@@ -51,7 +51,7 @@ func (h *Handler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.owner.CreatePolicy(req.Target, perms, []odrl.Rule{})
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreatePolicy`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleOwner, `CreatePolicy`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -72,7 +72,7 @@ func (h *Handler) CreateDataset(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.owner.CreateDataset(req.Title, req.Format, req.Descriptions, req.Keywords, req.Endpoints, req.OfferIds)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleOwner, `CreateDataset`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleOwner, `CreateDataset`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -93,7 +93,7 @@ func (h *Handler) RequestCatalog(w http.ResponseWriter, r *http.Request) {
 
 	cat, err := h.consumer.RequestCatalog(req.ProviderEndpoint)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestCatalog`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleConsumer, `RequestCatalog`, err),
 			http.StatusInternalServerError)
 		return
 	}
@@ -114,7 +114,7 @@ func (h *Handler) RequestDataset(w http.ResponseWriter, r *http.Request) {
 
 	ds, err := h.consumer.RequestDataset(req.DatasetId, req.ProviderEndpoint)
 	if err != nil {
-		middleware.WriteError(w, errors.DSPControllerFailed(core.RoleConsumer, `RequestDataset`, err),
+		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleConsumer, `RequestDataset`, err),
 			http.StatusInternalServerError)
 		return
 	}

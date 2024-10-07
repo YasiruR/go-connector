@@ -16,7 +16,7 @@ import (
 	"strconv"
 )
 
-// dsp.http.Server contains the endpoints defined in data space protocols which will be used
+// dsp.http.Server contains the endpoints defined in data-plane space protocols which will be used
 // for the communication between connectors
 
 type Server struct {

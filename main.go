@@ -9,10 +9,6 @@ func main() {
 /*
 Todos:
  - internal error handling (ctx)
- - external error definitions
- - log stack trace
  - authentication
- - data plane functions (exchange process)
+ - data-plane plane functions (exchange process)
 */
-
-// todo: endpoints (transfers, start at provider), validations (data format, agreement, ack)

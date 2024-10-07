@@ -16,7 +16,7 @@ type PolicyEngine interface {
 	ValidateOffer()
 }
 
-// Store contains one or more Collection to support data storage required
+// Store contains one or more Collection to support data-plane storage required
 // by the connector
 type Store interface {
 	NewCollection() Collection

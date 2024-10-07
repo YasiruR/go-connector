@@ -10,7 +10,7 @@ import (
 const (
 	collTransfer   = `transfer`
 	collAgreements = `agreements`
-	collDataAddr   = `data-sinks`
+	collDataAddr   = `data-plane-sinks`
 )
 
 type Transfer struct {
