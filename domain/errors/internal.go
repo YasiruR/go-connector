@@ -28,8 +28,8 @@ func PkgError(pkg, function string, err error, params ...string) error {
 	return fmt.Errorf("package error (pkg: %s, function: %s) [%v] - %w", pkg, function, params, err)
 }
 
-func TransferFailed(typ, endpoint string, err error) error {
-	return fmt.Errorf("transfer error (type: %s, endpoint: %s) - %w", typ, endpoint, err)
+func TransferFailed(db, typ, endpoint string, err error) error {
+	return fmt.Errorf("transfer error (database: %s, type: %s, endpoint: %s) - %w", db, typ, endpoint, err)
 }
 
 func CustomFuncError(function string, err error) error {

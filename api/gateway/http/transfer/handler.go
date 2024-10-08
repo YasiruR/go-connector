@@ -5,7 +5,6 @@ import (
 	"github.com/YasiruR/go-connector/domain/api"
 	"github.com/YasiruR/go-connector/domain/api/gateway/http/transfer"
 	"github.com/YasiruR/go-connector/domain/control-plane"
-	"github.com/YasiruR/go-connector/domain/data-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/pkg/middleware"
@@ -57,14 +56,7 @@ func (h *Handler) RequestTransfer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	trId, err := h.consumer.RequestTransfer(req.TransferFormat, req.AgreementId,
-		req.ProviderEndpoint, data_plane.Database{
-			Name:     req.DataSink.Database,
-			Endpoint: req.DataSink.Endpoint,
-			Credentials: data_plane.Credentials{
-				User:     req.DataSink.Username,
-				Password: req.DataSink.Password,
-			},
-		})
+		req.ProviderEndpoint, req.DataSink.Database)
 	if err != nil {
 		middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleConsumer,
 			`RequestTransfer`, err), http.StatusInternalServerError)
@@ -86,7 +78,7 @@ func (h *Handler) StartTransfer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Provider {
-		if err := h.provider.StartTransfer(req.TransferId, req.SourceEndpoint); err != nil {
+		if err := h.provider.StartTransfer(req.TransferId, req.DataSource.Database); err != nil {
 			middleware.WriteError(w, errors.DSPControllerFailed(control_plane.RoleProvider,
 				`StartTransfer`, err), http.StatusInternalServerError)
 			return

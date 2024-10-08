@@ -1,5 +1,19 @@
 package data_plane
 
+import "github.com/YasiruR/go-connector/domain/models"
+
+type ExchangerType string
+
+// supported databases for transfers
+const (
+	DatabasePostgresql = `postgresql`
+)
+
+const (
+	PullFilePrefix = "backups/pull/"
+	PushFilePrefix = "backups/push/"
+)
+
 // several approaches to trigger the transfer
 //	- synchronously by the control plane
 // 	- asynchronously in a go-routine
@@ -7,6 +21,6 @@ package data_plane
 
 type Exchanger interface {
 	NewToken(participantId, datasetId string) string
-	PushWithCredentials(et ExchangerType, dest Database) error
-	PullWithCredentials(src Database) error
+	PushWithCredentials(db string, dest models.Database) error
+	PullWithCredentials(db string, src models.Database) error
 }

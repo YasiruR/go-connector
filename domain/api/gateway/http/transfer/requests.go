@@ -1,22 +1,24 @@
 package transfer
 
+import "github.com/YasiruR/go-connector/domain/models"
+
 type Request struct {
 	TransferFormat   string `json:"transferFormat"`
 	AgreementId      string `json:"agreementId"`
 	ProviderEndpoint string `json:"providerEndpoint"`
 	// integrate token
 	DataSink struct {
-		Database string `json:"database"`
-		Endpoint string `json:"endpoint"`
-		Username string `json:"username"`
-		Password string `json:"password"`
+		// other sink types
+		models.Database
 	} `json:"dataSink"`
 }
 
 type StartRequest struct {
-	Provider       bool   `json:"provider"`
-	TransferId     string `json:"transferProcessId"`
-	SourceEndpoint string `json:"sourceEndpoint"`
+	Provider   bool   `json:"provider"`
+	TransferId string `json:"transferProcessId"`
+	DataSource struct {
+		models.Database
+	} `json:"dataSource"`
 }
 
 type SuspendRequest struct {

@@ -9,8 +9,10 @@ import (
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/go-connector/domain/control-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
+	"github.com/YasiruR/go-connector/domain/models"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/domain/stores"
+	"strings"
 )
 
 type Controller struct {
@@ -29,7 +31,7 @@ func NewController(s domain.Stores, plugins domain.Plugins) *Controller {
 	}
 }
 
-func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
+func (c *Controller) StartTransfer(tpId string, sourceDb models.Database) error {
 	tp, err := c.tpStore.Process(tpId)
 	if err != nil {
 		if defaultErr.Is(err, stores.TypeInvalidKey) {
@@ -49,16 +51,32 @@ func (c *Controller) StartTransfer(tpId, sourceEndpoint string) error {
 		ProvPId: tpId,
 	}
 
-	if tp.Type == transfer.HTTPPull {
-		if sourceEndpoint == `` {
+	if strings.HasSuffix(string(tp.Type), `+pull`) {
+		if sourceDb.Endpoint == `` {
 			return errors.Client(errors.MissingAttrError(`source endpoint`,
 				`mandatory for pull transfers`))
 		}
 		req.Address = transfer.Address{
-			Type:               transfer.MsgTypeDataAddress,
-			EndpointType:       transfer.EndpointTypeHTTP,
-			Endpoint:           sourceEndpoint,
-			EndpointProperties: nil, // e.g. auth tokens
+			Type:         transfer.MsgTypeDataAddress,
+			EndpointType: transfer.EndpointTypeHTTP,
+			Endpoint:     sourceDb.Endpoint,
+			EndpointProperties: []transfer.EndpointProperty{
+				{
+					Type:  transfer.MsgTypeEndpointProperty,
+					Name:  transfer.PropertyUsername,
+					Value: sourceDb.User,
+				},
+				{
+					Type:  transfer.MsgTypeEndpointProperty,
+					Name:  transfer.PropertyPassword,
+					Value: sourceDb.Password,
+				},
+				{
+					Type:  transfer.MsgTypeEndpointProperty,
+					Name:  transfer.PropertyDatabase,
+					Value: sourceDb.Name,
+				},
+			}, // e.g. auth tokens
 		}
 	}
 

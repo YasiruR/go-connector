@@ -21,7 +21,7 @@ servers:
   exchanger:
     http:
       port: 8082
-data_sources:
+databases:
   - name: postgresql
     hostname: localhost
     port: 5432

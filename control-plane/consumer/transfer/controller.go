@@ -9,8 +9,8 @@ import (
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
 	"github.com/YasiruR/go-connector/domain/boot"
 	"github.com/YasiruR/go-connector/domain/control-plane"
-	"github.com/YasiruR/go-connector/domain/data-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
+	"github.com/YasiruR/go-connector/domain/models"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/domain/stores"
 	"strconv"
@@ -52,8 +52,9 @@ func (c *Controller) GetProviderProcess(tpId string) (transfer.Process, error) {
 	return transfer.Process(ack), nil
 }
 
+// RequestTransfer should support sink types other than databases later
 func (c *Controller) RequestTransfer(dataFormat, agreementId, providerEndpoint string,
-	sinkDb data_plane.Database) (tpId string, err error) {
+	sinkDb models.Database) (tpId string, err error) {
 	// include validations for format
 	typ := transfer.DataTransferType(dataFormat)
 

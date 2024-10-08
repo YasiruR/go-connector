@@ -13,6 +13,7 @@ import (
 
 type Handler struct {
 	urn      pkg.URNService
+	cat      stores.ProviderCatalog
 	agrStore stores.AgreementStore
 	tpStore  stores.TransferStore
 	log      pkg.Log
@@ -20,6 +21,7 @@ type Handler struct {
 
 func NewHandler(stores domain.Stores, plugins domain.Plugins) *Handler {
 	return &Handler{
+		cat:      stores.ProviderCatalog,
 		agrStore: stores.AgreementStore,
 		tpStore:  stores.TransferStore,
 		urn:      plugins.URNService,
@@ -42,7 +44,7 @@ func (h *Handler) HandleGetProcess(tpId string) (transfer.Ack, error) {
 
 func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, error) {
 	// validate agreement
-	_, err := h.agrStore.Agreement(tr.AgreementId)
+	agr, err := h.agrStore.Agreement(tr.AgreementId)
 	if err != nil {
 		return transfer.Ack{}, errors.Transfer(``, ``,
 			errors.InvalidKey(stores.TypeAgreement, `agreement id`, err))
@@ -61,7 +63,10 @@ func (h *Handler) HandleTransferRequest(tr transfer.Request) (transfer.Ack, erro
 		State:   transfer.StateRequested,
 	}
 
-	// todo check provided transfer format is one of the offered ones
+	// check if the request format is one of the offered ones
+	if !h.validFormat(string(tr.Format), string(agr.Target)) {
+		return transfer.Ack{}, errors.Client(errors.IncorrectReqValues(`unsupported transfer format`))
+	}
 
 	h.tpStore.AddProcess(tpId, transfer.Process(ack))
 	h.tpStore.SetCallbackAddr(tpId, tr.CallbackAddr)
@@ -177,6 +182,17 @@ func (h *Handler) HandleTransferTermination(tr transfer.TerminateRequest) (trans
 	return transfer.Ack(tp), nil
 }
 
-func (h *Handler) validFormat() {
+func (h *Handler) validFormat(reqFormat, datasetId string) bool {
+	ds, err := h.cat.Dataset(datasetId)
+	if err != nil {
+		return false
+	}
 
+	for _, dist := range ds.DcatDistribution {
+		if reqFormat == dist.DctFormat {
+			return true
+		}
+	}
+
+	return false
 }

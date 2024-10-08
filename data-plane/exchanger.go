@@ -7,6 +7,7 @@ import (
 	"github.com/YasiruR/go-connector/domain/boot"
 	"github.com/YasiruR/go-connector/domain/data-plane"
 	"github.com/YasiruR/go-connector/domain/errors"
+	"github.com/YasiruR/go-connector/domain/models"
 	"github.com/YasiruR/go-connector/domain/pkg"
 	"github.com/YasiruR/go-connector/domain/stores"
 	"os/exec"
@@ -20,7 +21,8 @@ type Exchanger struct {
 
 func NewExchanger(cfg boot.Config, s domain.Stores, log pkg.Log) *Exchanger {
 	// create new directory for data-plane backups
-	if _, err := exec.Command(`bash`, `-c`, `mkdir -p backups/pull && mkdir -p backups/push`).
+	if _, err := exec.Command(`bash`, `-c`, fmt.Sprintf(
+		"mkdir -p %s && mkdir -p %s", data_plane.PullFilePrefix, data_plane.PushFilePrefix)).
 		CombinedOutput(); err != nil {
 		log.Fatal(`creating backup folders failed`, err)
 	}
@@ -35,9 +37,9 @@ func (e *Exchanger) NewToken(participantId, datasetId string) string {
 	return ``
 }
 
-func (e *Exchanger) PushWithCredentials(et data_plane.ExchangerType, dest data_plane.Database) error {
-	switch et {
-	case data_plane.TypePostgresql:
+func (e *Exchanger) PushWithCredentials(db string, dest models.Database) error {
+	switch db {
+	case data_plane.DatabasePostgresql:
 		if err := e.psql.Dump(dest); err != nil {
 			return fmt.Errorf("postgresql failed - %s", err)
 		}
@@ -48,6 +50,15 @@ func (e *Exchanger) PushWithCredentials(et data_plane.ExchangerType, dest data_p
 	return nil
 }
 
-func (e *Exchanger) PullWithCredentials(src data_plane.Database) error {
+func (e *Exchanger) PullWithCredentials(db string, src models.Database) error {
+	switch db {
+	case data_plane.DatabasePostgresql:
+		if err := e.psql.Store(src); err != nil {
+			return fmt.Errorf("postgresql failed - %s", err)
+		}
+	default:
+		return errors.Client(errors.ExchangerError(`no supported data-plane distribution type found`))
+	}
+
 	return nil
 }

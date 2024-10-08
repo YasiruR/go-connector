@@ -24,15 +24,8 @@ func (h *Handler) HandlePush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.exchanger.PushWithCredentials(data_plane.TypePostgresql, data_plane.Database{
-		Endpoint: req.Endpoint,
-		Name:     req.Database,
-		Credentials: data_plane.Credentials{
-			User:     req.User,
-			Password: req.Password,
-		},
-	}); err != nil {
-		middleware.WriteError(w, errors.TransferFailed(string(data_plane.TypePostgresql),
+	if err := h.exchanger.PushWithCredentials(data_plane.DatabasePostgresql, req.Database); err != nil {
+		middleware.WriteError(w, errors.TransferFailed(data_plane.DatabasePostgresql, `push`,
 			req.Endpoint, err), http.StatusInternalServerError)
 		return
 	}
@@ -51,15 +44,8 @@ func (h *Handler) HandlePull(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.exchanger.PullWithCredentials(data_plane.Database{
-		Endpoint: req.Endpoint,
-		Name:     req.Database,
-		Credentials: data_plane.Credentials{
-			User:     req.User,
-			Password: req.Password,
-		},
-	}); err != nil {
-		middleware.WriteError(w, errors.TransferFailed(string(data_plane.TypePostgresql),
+	if err := h.exchanger.PullWithCredentials(data_plane.DatabasePostgresql, req.Database); err != nil {
+		middleware.WriteError(w, errors.TransferFailed(data_plane.DatabasePostgresql, `pull`,
 			req.Endpoint, err), http.StatusInternalServerError)
 		return
 	}

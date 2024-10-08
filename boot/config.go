@@ -9,17 +9,15 @@ import (
 	"os"
 )
 
-const configFile = `config.yaml`
-
 func loadConfig(log pkg.Log) boot.Config {
 	var c boot.Config
-	file, err := os.ReadFile(configFile)
+	file, err := os.ReadFile(boot.FilePath)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("%s not found - %s", configFile, err))
+		log.Fatal(fmt.Sprintf("%s not found - %s", boot.FilePath, err))
 	}
 
 	if err = yaml.Unmarshal(file, &c); err != nil {
-		log.Fatal(fmt.Sprintf("unmarshalling %s failed - %s", configFile, err))
+		log.Fatal(fmt.Sprintf("unmarshalling %s failed - %s", boot.FilePath, err))
 	}
 
 	pwd, err := os.Getwd()
@@ -30,7 +28,7 @@ func loadConfig(log pkg.Log) boot.Config {
 	ipAddr := `http://` + outboundIP().String()
 	c.Servers.IP = ipAddr
 
-	log.Info("loaded configuration values", `file: `+pwd+configFile, "ip: "+ipAddr)
+	log.Info("loaded configuration values", `file: `+pwd+boot.FilePath, "ip: "+ipAddr)
 	return c
 }
 

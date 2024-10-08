@@ -1,15 +1,11 @@
 package postgresql
 
+import "github.com/YasiruR/go-connector/domain/models"
+
 type PullRequest struct {
-	Database string `json:"database"`
-	Endpoint string `json:"endpoint"`
-	User     string `json:"user"`
-	Password string `json:"password"`
+	models.Database
 }
 
 type PushRequest struct {
-	Database string `json:"database"`
-	Endpoint string `json:"endpoint"`
-	User     string `json:"user"`
-	Password string `json:"password"`
+	models.Database
 }

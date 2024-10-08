@@ -4,6 +4,7 @@ import (
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/catalog"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/negotiation"
 	"github.com/YasiruR/go-connector/domain/api/dsp/http/transfer"
+	"github.com/YasiruR/go-connector/domain/models"
 )
 
 type CatalogHandler interface {
@@ -29,7 +30,7 @@ type NegotiationHandler interface {
 }
 
 type TransferController interface {
-	StartTransfer(tpId, sourceEndpoint string) error
+	StartTransfer(tpId string, sourceDb models.Database) error
 	SuspendTransfer(tpId, code string, reasons []interface{}) error
 	CompleteTransfer(tpId string) error
 	TerminateTransfer(tpId, code string, reasons []interface{}) error
