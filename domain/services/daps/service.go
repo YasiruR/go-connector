@@ -2,5 +2,5 @@ package daps
 
 type Service interface {
 	Metadata()
-	RequestToken()
+	Register(jwt string)
 }

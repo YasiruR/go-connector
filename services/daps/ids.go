@@ -11,7 +11,9 @@ import (
 type IDS struct {
 }
 
-func (i *IDS) RequestToken(jwt string) {
+func (i *IDS) Metadata() {}
+
+func (i *IDS) Register(jwt string) {
 	data := url.Values{}
 	// client credentials grant rfc: https://datatracker.ietf.org/doc/html/rfc6749#section-4.4
 	data.Set(`grant_type`, `client_credentials`)
